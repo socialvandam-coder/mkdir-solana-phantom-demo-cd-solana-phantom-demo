@@ -179,22 +179,28 @@ def fetch_obs(icao: str, d1: date, d2: date, hf: bool) -> list[Observation]:
 
 
 def list_all_events(d1: date, d2: date) -> list[str]:
-    """Slugs of every daily-temperature event whose day lies in [d1, d2] (also caches them)."""
-    slugs, offset = [], 0
-    lo = datetime(d1.year, d1.month, d1.day, tzinfo=timezone.utc) - timedelta(days=1)
-    hi = datetime(d2.year, d2.month, d2.day, tzinfo=timezone.utc) + timedelta(days=3)
-    while offset < 20000:
-        page = get(f"{GAMMA}/events", {"tag_id": 103040, "closed": "true", "limit": 100, "offset": offset,
-                                       "end_date_min": lo.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                                       "end_date_max": hi.strftime("%Y-%m-%dT%H:%M:%SZ")}).json()
-        for e in page:
-            if e.get("slug"):
-                slugs.append(e["slug"])
-                if e["slug"] not in _event_cache:
-                    cache_event(e)
-        if len(page) < 100:
-            break
-        offset += 100
+    """Slugs of every daily-temperature event whose day lies in [d1, d2] (also caches them).
+
+    Asks one day of end dates at a time: gamma refuses offsets beyond ~2000."""
+    slugs: list[str] = []
+    day = d1 - timedelta(days=1)
+    while day <= d2 + timedelta(days=2):
+        lo = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
+        hi = lo + timedelta(days=1)
+        offset = 0
+        while offset < 2000:
+            page = get(f"{GAMMA}/events", {"tag_id": 103040, "closed": "true", "limit": 100, "offset": offset,
+                                           "end_date_min": lo.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                                           "end_date_max": hi.strftime("%Y-%m-%dT%H:%M:%SZ")}).json()
+            for e in page:
+                if e.get("slug"):
+                    slugs.append(e["slug"])
+                    if e["slug"] not in _event_cache:
+                        cache_event(e)
+            if len(page) < 100:
+                break
+            offset += 100
+        day += timedelta(days=1)
     return sorted(set(slugs))
 
 
