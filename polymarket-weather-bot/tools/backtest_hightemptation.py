@@ -36,7 +36,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from weatherbot.markets import GAMMA, TempEvent, parse_event  # noqa: E402
-from weatherbot.metar import Observation, parse_metar  # noqa: E402
+from weatherbot.metar import Observation, displayed_bounds, parse_metar  # noqa: E402
 from weatherbot.strategy import day_observations, find_signals, guaranteed_extreme  # noqa: E402
 
 WALLET = "0x6011655c4afb76f36dd1b08a137a1ba73466b31e"
@@ -221,6 +221,50 @@ def parse_iem_csv(text: str, icao: str) -> list[Observation]:
     return sorted(out, key=lambda o: o.time)
 
 
+# --------------------------------------------------------------- variants ---
+VARIANTS = {
+    # name: (routine reports only, reports needed for the bucket right next to the reading, skip NO on lowest bracket of highs)
+    "now (METAR+SPECI)":            (False, 1, False),
+    "no SPECI":                      (True, 1, False),
+    "no SPECI, skip lowest":         (True, 1, True),
+    "no SPECI, adjacent needs 2":    (True, 2, False),
+    "no SPECI, adj 2, skip lowest":  (True, 2, True),
+    "METAR+SPECI, adj 2, skip low":  (False, 2, True),
+}
+
+
+def variant_signals(ev: TempEvent, obs: list[Observation], variant: tuple) -> list:
+    routine_only, confirm, skip_lowest = variant
+    if routine_only:
+        obs = [o for o in obs if o.time not in SPECI_TIMES[ev.station]]
+    sigs = find_signals(ev, obs)
+    if confirm <= 1 and not skip_lowest:
+        return sigs
+    day = day_observations(ev, obs)
+    ext = guaranteed_extreme(ev, obs)
+    if not ext:
+        return sigs
+    g = ext[0]
+    out = []
+    for s in sigs:
+        b = s.market.bucket
+        if skip_lowest and ev.kind == "high" and s.outcome == "NO" and b.open_low:
+            continue
+        if confirm > 1:
+            if ev.kind == "high":
+                edge = b.hi if s.outcome == "NO" else b.lo - 1   # value the reading must exceed
+                adjacent = (s.outcome == "NO" and b.hi == g - 1) or (s.outcome == "YES" and b.lo == g)
+                n = sum(1 for o in day if displayed_bounds(o, ev.unit)[0] > edge)
+            else:
+                edge = b.lo if s.outcome == "NO" else b.hi + 1
+                adjacent = (s.outcome == "NO" and b.lo == g + 1) or (s.outcome == "YES" and b.hi == g)
+                n = sum(1 for o in day if displayed_bounds(o, ev.unit)[1] < edge)
+            if adjacent and n < confirm:
+                continue
+        out.append(s)
+    return out
+
+
 # ----------------------------------------------------------------- replay ---
 def first_signal_time(ev: TempEvent, obs: list[Observation], token: str) -> datetime | None:
     seen: list[Observation] = []
@@ -335,6 +379,8 @@ def main() -> int:
             if ev is not None and start_day <= ev.day <= end_day:
                 events_seen[slug] = ev
                 winners_all[slug] = winners
+    his_tokens = {r["asset"]: r for r in results if r["category"] in ("covered", "later", "never")}
+    vstats = {name: collections.Counter() for name in VARIANTS}
     false_signals = []
     checked_buckets = 0
     speci_dependent = speci_dependent_wrong = 0
@@ -346,6 +392,23 @@ def main() -> int:
         except requests.RequestException:
             skipped_events += 1
             continue
+        for name, v in VARIANTS.items():
+            st = vstats[name]
+            vs = variant_signals(ev, obs, v)
+            vtok = {x.token_id for x in vs}
+            for x in vs:
+                w = winners.get(x.market.condition_id)
+                if w is None:
+                    continue
+                st["signals"] += 1
+                wrong = (x.outcome == "NO" and w == "YES") or (x.outcome == "YES" and w == "NO")
+                st["wrong"] += wrong
+                if x.token_id in his_tokens:
+                    st["wrong_his"] += wrong
+            for tok, r in his_tokens.items():
+                if r.get("event") == slug and tok in vtok:
+                    st["his_kept"] += 1
+                    st["his_usdc_kept_c"] += round(r["usdc"] * 100)
         sigs = find_signals(ev, obs)
         routine_only = [o for o in obs if o.time not in SPECI_TIMES[ev.station]]
         routine_tokens = {s.token_id for s in find_signals(ev, routine_only)}
@@ -384,6 +447,7 @@ def main() -> int:
         "safety_checked_signals": checked_buckets,
         "safety_speci_dependent": speci_dependent, "safety_speci_dependent_wrong": speci_dependent_wrong,
         "safety_false_signals": false_signals,
+        "variants": {k: dict(v) for k, v in vstats.items()},
     }
     Path(args.out).write_text(json.dumps({"summary": summary, "results": results}, indent=1, default=str))
     with open(args.misses, "w", newline="") as f:
@@ -411,6 +475,15 @@ def main() -> int:
           f"(wrong: {speci_dependent_wrong})")
     for fs in false_signals[:30]:
         print(f"   !! {fs}")
+    total_his = len(his_tokens)
+    total_usdc = sum(r["usdc"] for r in his_tokens.values())
+    print("\nRULE VARIANTS (all events in the period):")
+    print(f"  {'variant':30s} {'signals':>8s} {'wrong':>6s} {'wrong%':>7s} {'his buckets kept':>17s} {'his $ kept':>11s}")
+    for name, st in vstats.items():
+        sig = st["signals"] or 1
+        print(f"  {name:30s} {st['signals']:8d} {st['wrong']:6d} {st['wrong'] / sig * 100:6.3f}% "
+              f"{st['his_kept']:7d} ({st['his_kept'] / max(1, total_his) * 100:5.1f}%) "
+              f"{st['his_usdc_kept_c'] / 100 / max(1, total_usdc) * 100:9.1f}%")
     misses = [r for r in results if r["category"] != "covered"]
     if misses:
         print("\nFirst 40 non-covered buckets:")
