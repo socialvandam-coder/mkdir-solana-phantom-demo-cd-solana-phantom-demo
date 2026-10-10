@@ -181,6 +181,7 @@ class BotRunner:
         self.hot: list[str] = []         # stations whose report is due right now
         self._fetched_once: set[str] = set()   # stations fetched since the start (or the last wake-up)
         self.last_power = 0.0
+        self._last_prune = 0.0
         self.last_geo = initial_geo["checked_at"] if initial_geo else 0.0
         self.last_clock = 0.0
         self._last_wall: float | None = None
@@ -280,7 +281,8 @@ class BotRunner:
         if hasattr(self.source, "reprime"):
             self.source.reprime()
         self._fetched_once.clear()       # what comes in now was published while we slept
-        self.last_full = 0.0
+        self.last_full = 0.0             # all stations right away ...
+        self._last_hot = now             # ... and the quick look from the next loop on
         self._hot_down_until = 0.0
         self.executor.wake(now)
 
@@ -304,24 +306,27 @@ class BotRunner:
         return {e.tz for e in self.events} | {CITY_TZ[c] for c in self.cfg.cities if c in CITY_TZ}
 
     def _refresh_markets(self, t0: float, now_dt: datetime, woke: bool) -> None:
-        every = self.cfg.market_refresh_seconds
-        if near_local_midnight(now_dt, self._watched_tzs()):
-            every = min(every, MIDNIGHT_REFRESH_SECONDS)     # a new day's market is about to start
-        self.health["market_refresh_s"] = every
+        every = self._refresh_every(now_dt)
         due = woke or ((t0 - self.last_refresh >= every or not self.events) and t0 >= self._market_retry_at)
-        if not due:
-            return
-        try:
-            # also keep what becomes watchable before the next normal refresh (tomorrow from 23:30)
-            self.events = fetch_events(self.session, now_dt, self.cfg.cities,
-                                       ahead_s=self.cfg.market_refresh_seconds + 60)
-            self.last_refresh = t0
-            self.health.update(markets_ok=True, markets_error=None, markets_at=t0)
-            log.info("watching %d markets on %d stations", len(self.events), len({e.station for e in self.events}))
-        except requests.RequestException as exc:
-            self._market_retry_at = t0 + MARKET_RETRY_SECONDS
-            self.health.update(markets_ok=False, markets_error=short_error(exc), markets_at=t0)
-            log.warning("market list failed: %s", short_error(exc))
+        if due:
+            try:
+                # also keep what becomes watchable before the next normal refresh (tomorrow from 23:30)
+                self.events = fetch_events(self.session, now_dt, self.cfg.cities,
+                                           ahead_s=self.cfg.market_refresh_seconds + 60)
+                self.last_refresh = t0
+                self.health.update(markets_ok=True, markets_error=None, markets_at=t0)
+                log.info("watching %d markets on %d stations", len(self.events),
+                         len({e.station for e in self.events}))
+            except requests.RequestException as exc:
+                self._market_retry_at = t0 + MARKET_RETRY_SECONDS
+                self.health.update(markets_ok=False, markets_error=short_error(exc), markets_at=t0)
+                log.warning("market list failed: %s", short_error(exc))
+        self.health["market_refresh_s"] = self._refresh_every(now_dt)
+
+    def _refresh_every(self, now_dt: datetime) -> float:
+        if near_local_midnight(now_dt, self._watched_tzs()):
+            return min(self.cfg.market_refresh_seconds, MIDNIGHT_REFRESH_SECONDS)   # a new day's market starts
+        return self.cfg.market_refresh_seconds
 
     # -- weather -----------------------------------------------------------------
     def _ingest(self, observations, source: str, fetched: list[str]) -> int:
@@ -331,7 +336,7 @@ class BotRunner:
         for obs in observations:
             seen = time.time()
             live = obs.station in self._fetched_once
-            if self.store.add(obs, seen_at=seen, live=live):
+            if self.store.add(obs, datetime.fromtimestamp(seen, timezone.utc), seen_at=seen, live=live):
                 new += 1
                 if live:
                     self.journal.write("report_seen", station=obs.station, obs_time=obs.time.isoformat(),
@@ -370,7 +375,9 @@ class BotRunner:
             return
         self._last_hot = now
         try:
-            self._ingest(self.hot_source.fetch_changed(self.hot), "tgftp", self.hot)
+            if self._ingest(self.hot_source.fetch_changed(self.hot), "tgftp", self.hot):
+                self.hot = [st for st in self.hot if self.store.is_hot(st, time.time())]   # report is in
+                self.health["hot_stations"] = list(self.hot)
             self.health.update(hot_ok=True, hot_error=None, hot_at=now)
         except requests.RequestException as exc:
             self._hot_down_until = now + HOT_SOURCE_BACKOFF
@@ -402,7 +409,9 @@ class BotRunner:
         while self._metar_failures and self._metar_failures[0] < t0 - 3600:
             self._metar_failures.popleft()
         self.health["metar_failures_1h"] = len(self._metar_failures)
-        self.store.prune(now_dt)
+        if t0 - self._last_prune >= 60:
+            self._last_prune = t0
+            self.store.prune(now_dt)
 
         self.executor.refresh(time.time())
         # a station that went quiet (no report for 2x its usual interval) is not traded on

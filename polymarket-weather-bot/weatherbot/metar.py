@@ -231,7 +231,8 @@ class ObservationStore:
         counts = Counter(t.minute for t in times)
         top = max(counts.values(), default=0)
         # routine reports come at the same minutes every hour; a SPECI is a one-off
-        routine = {m for m, c in counts.items() if c >= max(3, 0.3 * top)}
+        # (with too little history to tell them apart, every report counts)
+        routine = {m for m, c in counts.items() if c >= max(3, 0.3 * top)} if top >= 3 else set(counts)
         delays = sorted(d for t, d in self._live.get(station, {}).items() if t.minute in routine)
         if len(delays) >= LEARN_MIN_REPORTS:
             med = statistics.median(delays)

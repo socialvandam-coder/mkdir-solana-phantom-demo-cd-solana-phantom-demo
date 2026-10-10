@@ -253,3 +253,4 @@ button.textbtn:hover:not(:disabled) { background: var(--surface-2); }
 .chip.warning { color: var(--ink); background: color-mix(in srgb, var(--warning) 22%, var(--surface)); border-color: color-mix(in srgb, var(--warning) 55%, transparent); }
 .chip.critical { color: var(--bad-text); background: color-mix(in srgb, var(--critical) 14%, var(--surface)); border-color: color-mix(in srgb, var(--critical) 50%, transparent); }
 #pos-note { margin-top: 10px; }
+#awake-note { margin-top: 12px; }

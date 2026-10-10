@@ -302,6 +302,7 @@ function setStatus(state) {
   if (h.metar_ok === false && (h.metar_fail_streak || 0) >= 3) msgs.push(["warning", "Weerdata komt al " + h.metar_fail_streak + " rondes niet binnen (beide bronnen): " + (h.metar_error || "onbekende fout")]);
   if (h.markets_ok === false) msgs.push(["warning", "Polymarket-markten konden niet geladen worden: " + (h.markets_error || "")]);
   if (state.bank && state.bank.stopped_for_today) msgs.push(["warning", "Daglimiet voor verlies bereikt: de bot koopt vandaag niets meer."]);
+  if (h.power && h.power.on_battery) msgs.push(["warning", "Mac op batterij: sluit de lader aan, anders kan de Mac gaan slapen en stopt de bot."]);
   banner.replaceChildren();
   if (msgs.length) {
     msgs.forEach(([cls, text]) => {
@@ -437,6 +438,36 @@ function render(state) {
   }
   items.push(["Markten", h.markets_ok ? "good" : h.markets_ok === false ? "critical" : "", h.markets_ok ? `${(state.events || []).length} actief` : h.markets_ok === false ? "fout" : "nog niet geladen"]);
   items.push(["Laatste ronde", h.last_step && now - h.last_step < 60 ? "good" : h.last_step ? "warning" : "", h.last_step ? `${ago(now - h.last_step)} geleden · ${h.step_ms} ms` : "–"]);
+  {
+    // every station has its own report moments; around them the bot looks every 2 s
+    const hot = h.hot_stations || [];
+    const every = (state.settings && state.settings.hot_poll_seconds) || 2;
+    let cls = "", text = "wacht op het volgende meetmoment";
+    if (h.hot_ok === false) { cls = "warning"; text = `snelle bron (NOAA) geeft geen antwoord · nu elke ${nf0.format(state.settings.poll_seconds)} s via de gewone bron`; }
+    else if (hot.length) {
+      cls = "good";
+      const names = hot.slice(0, 4).join(", ") + (hot.length > 4 ? " …" : "");
+      text = `${hot.length === 1 ? "1 station" : hot.length + " stations"} nu elke ${every} s, hun meting komt eraan (${names})`;
+    }
+    items.push(["Snel kijken", cls, text]);
+  }
+  if (h.clock_skew_s !== null && h.clock_skew_s !== undefined) {
+    const s = h.clock_skew_s, off = Math.abs(s);
+    const cls = off > 10 ? (state.mode === "live" ? "critical" : "warning") : off > 2 ? "warning" : "good";
+    const text = off <= 2 ? "loopt gelijk met Polymarket"
+      : `loopt ${nf0.format(off)} s ${s > 0 ? "voor" : "achter"} · zet in Systeeminstellingen 'Datum en tijd automatisch' aan` + (off > 10 && state.mode === "live" ? " · kopen gepauzeerd" : "");
+    items.push(["Klok", cls, text]);
+  }
+  if (h.power) {
+    const p = h.power;
+    items.push(["Stroom", p.on_battery ? "warning" : "good", p.on_battery
+      ? "Mac op batterij" + (p.percent !== null && p.percent !== undefined ? ` (${p.percent}%)` : "") + " · sluit de lader aan"
+      : "aan de lader"]);
+  }
+  if (h.last_wake && now - h.last_wake.to < 86400) {
+    const w = h.last_wake;
+    items.push(["Onderbreking", now - w.to < 3600 ? "warning" : "", `${w.slept ? "Mac sliep" : "bot keek niet"} van ${clock(w.from)} tot ${clock(w.to)}`]);
+  }
   if (h.geoblock) {
     const g = h.geoblock, where = g.country || "?";
     // grey in paper mode (nothing at stake), red when live trading is not possible in live mode
@@ -462,10 +493,11 @@ function render(state) {
 let SHOW_ALL_EVENTS = false;
 function renderEvents(events) {
   // one row per city: max and min side by side
+  // today's and tomorrow's market of a city are separate rows (tomorrow shows from 23:30 local)
   const byCity = new Map();
   events.forEach((e) => {
-    const k = e.city + "|" + e.station;
-    if (!byCity.has(k)) byCity.set(k, { city: e.city, station: e.station, local_time: e.local_time, high: null, low: null, age: null });
+    const k = e.city + "|" + e.station + "|" + (e.day || "");
+    if (!byCity.has(k)) byCity.set(k, { city: e.city, station: e.station, local_time: e.local_time, tomorrow: !!e.tomorrow, high: null, low: null, age: null, ev: e });
     const row = byCity.get(k);
     row[e.kind] = e;
     if (e.obs_age_min !== null && (row.age === null || e.obs_age_min < row.age)) row.age = e.obs_age_min;
@@ -477,7 +509,7 @@ function renderEvents(events) {
     const db = (b.high ? b.high.dead : 0) + (b.low ? b.low.dead : 0);
     if (db !== da) return db - da;
     if ((a.age === null) !== (b.age === null)) return a.age === null ? 1 : -1;
-    return a.city.localeCompare(b.city);
+    return a.city.localeCompare(b.city) || (a.tomorrow ? 1 : 0) - (b.tomorrow ? 1 : 0);
   });
   const total = rows.length;
   if (!SHOW_ALL_EVENTS) rows = rows.slice(0, 12);
@@ -488,14 +520,38 @@ function renderEvents(events) {
     span.appendChild(el("span", { class: "cell-sub" }, ` · ${e.dead}/${e.buckets} dood`));
     return span;
   };
+  const city = (r) => {
+    if (!r.tomorrow) return r.city;
+    const span = el("span"); span.appendChild(document.createTextNode(r.city + " "));
+    span.appendChild(el("span", { class: "tag", title: "De meting van 00:00 komt vaak een paar minuten eerder uit" }, "morgen"));
+    return span;
+  };
+  const when = (e) => {
+    const span = el("span");
+    const mins = (e.report_minutes || []).map((m) => ":" + String(m).padStart(2, "0"));
+    const list = mins.length > 1 ? mins.slice(0, -1).join(", ") + " en " + mins[mins.length - 1] : mins.join("");
+    span.appendChild(document.createTextNode(list ? "rond " + list : "–"));
+    span.appendChild(el("span", { class: "cell-sub" }, e.schedule === "learned" ? " · gemeten" : " · geschat"));
+    if (e.hot) {
+      span.appendChild(document.createTextNode(" "));
+      span.appendChild(el("span", { class: "chip good", title: "Deze meting komt eraan: de bot kijkt nu elke 2 seconden" }, "nu"));
+    }
+    return span;
+  };
+  const delay = (e) => {
+    if (e.delay_s === null || e.delay_s === undefined) return "–";
+    const d = Math.round(e.delay_s);
+    return d >= 0 ? `${d} s` : `${-d} s eerder`;
+  };
   fillTable($("events-table"),
-    [{ label: "Stad" }, { label: "Station" }, { label: "Lokale tijd" }, { label: "Max vandaag", num: true },
-     { label: "Min vandaag", num: true }, { label: "Laatste meting", num: true }],
+    [{ label: "Stad" }, { label: "Station" }, { label: "Lokale tijd" }, { label: "Max", num: true },
+     { label: "Min", num: true }, { label: "Laatste meting", num: true }, { label: "Nieuwe meting" },
+     { label: "Gezien na meettijd", num: true }],
     rows.map((r) => {
       const fresh = r.age === null ? "" : r.age <= 75 ? "good" : "warning";
       const age = el("span"); age.appendChild(el("span", { class: "dot " + fresh }));
       age.appendChild(document.createTextNode(" " + (r.age === null ? "–" : nf0.format(r.age) + " min")));
-      return [r.city, r.station, r.local_time, cell(r.high), cell(r.low), age];
+      return [city(r), r.station, r.local_time, cell(r.high), cell(r.low), age, when(r.ev), delay(r.ev)];
     }),
     "Nog geen markten geladen.");
   const more = $("events-more");

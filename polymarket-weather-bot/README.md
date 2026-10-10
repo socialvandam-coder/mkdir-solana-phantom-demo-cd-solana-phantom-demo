@@ -26,8 +26,11 @@ Je gegevens (instellingen, saldo, logboek) staan in `~/Library/Application Suppo
 - **Wat hij vandaag pakte**: elke afgesloten trade met inzet, resultaat, procent en hoe lang hij liep.
 - **Open posities**: per positie de aankoopprijs, het bod nu en een label: *verkoop staat op 0,99*,
   *bevestigd*, *ONBEVESTIGD* (rood: na 30 s nog niet verkocht) of *wacht op uitslag*.
-- **Markten nu** (per stad de gemeten max/min en hoeveel vakken al "dood" zijn), **Laatste signalen**.
-- **Gezondheid**: komt de weerdata binnen, zijn de markten geladen, wanneer was de laatste ronde.
+- **Markten nu** (per stad de gemeten max/min, hoeveel vakken al "dood" zijn, rond welke minuut de
+  volgende meting verschijnt en hoeveel seconden na de meettijd de bot hem zag), **Laatste signalen**.
+  Vanaf 23:30 plaatselijke tijd staat ook de markt van morgen erbij (label *morgen*).
+- **Gezondheid**: komt de weerdata binnen, welke stations hij nu elke 2 seconden bekijkt, loopt de klok
+  van je Mac gelijk, zit de Mac aan de lader, sliep de Mac, wanneer was de laatste ronde.
 - **Vergelijk met HighTempTation**: welke vakken hij kocht terwijl jouw bot draaide, en of jouw bot ze
   ook vond (eerder of later).
 - **Instellingen**: startbedrag, percentages, risico, live-account (private key gaat in je
@@ -80,12 +83,34 @@ De uitslag komt van één vliegveldstation (bijv. Parijs = Le Bourget, LFPB), vi
 |---------------------------------------------------|--------------------------------------------|
 | Koopt NO op vakken die al gepasseerd zijn          | `strategy.py` → `find_signals`             |
 | Reageert op nieuwe METAR-luchthavenmetingen        | `metar.py` (aviationweather.gov of NOAA)   |
+| Is er binnen een minuut na elke nieuwe meting      | per station snel kijken rond zijn eigen meetmomenten |
+| Koopt 23:53-23:59 al op de markt van morgen        | markt van morgen vanaf 23:30 plaatselijke tijd |
 | Veegt alle goedkope asks in één order op           | `orderbook.py` → `plan_sweep` + FAK-order  |
 | Verkoopt 4-6 s later voor 0,99                    | `SELL_DELAY_SECONDS=5`, `SELL_PRICE=0.99`  |
 | Inzet groeit met zijn kapitaal                     | `bankroll.py` (procent van saldo)          |
 
 **Niet gekopieerd:** zijn kansinzetten laat op de middag op YES voor een exact vak ("het maximum is
 binnen"); daar zit een eigen voorspelmodel achter. Zijn exacte databron en snelheid zijn onbekend.
+
+### Snelheid: elk station op zijn eigen minuut
+
+Elk vliegveld meldt op vaste minuten, en veel stations zetten hun melding een paar minuten **vóór** de
+tijd die erop staat online (Sao Paulo's melding van 12:00 staat er rond 11:55, Wellington's rond :28 en
+:58). De bot kijkt naar alle stations elke `POLL_SECONDS` (10 s), en naar één station **elke 2 seconden**
+van 3 minuten vóór tot 6 minuten na het moment dat zijn melding meestal verschijnt (via de NOAA-bestanden
+per station, alleen downloaden als het bestand veranderd is). Zodra de melding binnen is, gaat dat station
+weer terug naar 10 s. De startwaarden komen uit de koopmomenten van HighTempTation (`cities.py`); na 6
+eigen waarnemingen van een station gebruikt de bot de zelf gemeten minuut (ook na herstarten).
+SPECI-meldingen (extra metingen tussendoor) tellen gewoon mee. De Amerikaanse 5-minutendata wordt nooit
+gebruikt: die markten beslissen op de uurmeldingen.
+
+### De markt van morgen vanaf 23:30
+
+De melding van 00:00 plaatselijke tijd staat vaak al om 23:55 online. HighTempTation kocht 35 keer tussen
+23:53 en 23:59 op de markt van de volgende dag. De bot bekijkt de markt van morgen daarom vanaf 23:30
+plaatselijke tijd, en ververst rond middernacht (23:40-00:10) elke minuut de lijst met markten. Welke
+meting bij welke dag hoort, bepaalt de tijd op de melding zelf: een melding van 00:00 telt voor morgen,
+een van 23:59 voor vandaag.
 
 ## Oefenen, dan pas live
 
@@ -133,7 +158,7 @@ python tools/compare_hightemptation.py
 | `MIN_EDGE`        | 0.005     | minimale winst per share na geschatte fees                     |
 | `SAFETY_MARGIN`   | 0         | extra graden voorbij het vak (0 = zoals hij, 1 = veiliger)     |
 | `METAR_SOURCE`    | aviationweather | of `tgftp` (NOAA-bestanden per station)                  |
-| `POLL_SECONDS`    | 10        | hoe vaak hij nieuwe metingen ophaalt                           |
+| `POLL_SECONDS`    | 10        | hoe vaak hij alle stations bekijkt (rond het eigen meetmoment van een station: elke 2 s) |
 | `CITIES`          | (alles)   | bijv. `London,Paris,NYC`                                       |
 
 Polymarket's minimum is 5 shares per order (± $5); bij 5% per aankoop is dat een startbedrag van
@@ -147,8 +172,13 @@ minstens ± $110.
 - **°F-markten (VS):** de bot neemt alleen vakken die bij elke mogelijke afronding dood zijn.
 - **Fees:** weermarkten rekenen een taker-fee; de bot schat die mee.
 - **Hong Kong** wordt overgeslagen (beslist op de Hong Kong Observatory, niet op een METAR).
-- **Slaapstand:** de app houdt je Mac wakker zolang hij draait, maar met het deksel dicht slaapt de Mac
-  toch. Open posities worden na herstarten verder afgehandeld.
+- **Slaapstand:** de app houdt je Mac wakker zolang hij draait (`caffeinate -i -s -m`; `-s` werkt alleen
+  aan de lader). **Laat de Mac aan de stroom en de klep open** (klep dicht = bot stopt, tenzij er een
+  extern scherm aan hangt). Op batterij waarschuwt het dashboard. Na een slaapstand ziet de bot dat zelf:
+  hij schrijft "Mac sliep van 02:10 tot 04:24" in het logboek, haalt markten, metingen en orderboeken
+  opnieuw op, controleert de Polymarket-toegang, kijkt meteen naar alle open posities (live: een
+  verdwenen 0,99-order wordt opnieuw geplaatst), koopt die ronde niets en geeft een melding. Meldingen
+  die tijdens de slaap uitkwamen zijn dan te oud om nog op te kopen (`FRESH_SECONDS`).
 
 ## Tests
 

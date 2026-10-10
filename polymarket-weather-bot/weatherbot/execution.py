@@ -787,9 +787,14 @@ class LiveExecutor(Executor):
             if p.remaining < 0.01:
                 self._close(p, "sold", now)
                 return
-            if str(o.get("status") or "").upper().startswith("CANCEL"):
-                # our exit was cancelled (not by us): put the 0.99 ask back
-                log.warning("sell order %s was cancelled - posting it again", p.sell_order_id)
+            # the exchange did not know the order twice in a row (e.g. after the Mac slept): gone
+            p.extra["order_missing"] = 0 if o else p.extra.get("order_missing", 0) + 1
+            if p.extra["order_missing"] >= 2 or str(o.get("status") or "").upper().startswith("CANCEL"):
+                # our exit was cancelled (not by us) or is gone: put the 0.99 ask back
+                # (it can never sell more than the wallet holds)
+                log.warning("sell order %s is gone (%s) - posting it again", p.sell_order_id,
+                            o.get("status") or "not found")
+                p.extra["order_missing"] = 0
                 self._repost(p, now)
         else:
             self._repost(p, now)            # 'selling' without an order: post it (again)
