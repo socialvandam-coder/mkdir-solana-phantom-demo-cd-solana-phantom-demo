@@ -1,0 +1,5 @@
+requests>=2.31
+# timezone database (needed on Windows)
+tzdata
+# only needed for MODE=live
+py-clob-client==0.34.6
