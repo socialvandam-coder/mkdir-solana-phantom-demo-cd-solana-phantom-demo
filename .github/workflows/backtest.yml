@@ -1,0 +1,70 @@
+# Replays HighTempTation's real trades through the bot's strategy code, using the
+# archived airport reports (METAR/SPECI) from the Iowa Environmental Mesonet.
+name: backtest
+
+# Runs on demand, or when .github/requests/backtest.env changes in a push
+# (workflow_dispatch only works for workflows on the default branch).
+on:
+  push:
+    paths:
+      - '.github/requests/backtest.env'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Number of days to test"
+        default: "14"
+        required: false
+      end:
+        description: "Last UTC date (YYYY-MM-DD); empty = yesterday"
+        default: ""
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    strategy:
+      fail-fast: false
+      matrix:
+        reports: [metar, metar+5min]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: polymarket-weather-bot
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: python -m pip install -q requests tzdata
+
+      - name: Run backtest
+        env:
+          DAYS: ${{ inputs.days }}
+          END: ${{ inputs.end }}
+          REPORTS: ${{ matrix.reports }}
+        run: |
+          set -o pipefail
+          req=../.github/requests/backtest.env
+          if [ -z "$DAYS" ] && [ -f "$req" ]; then
+            DAYS=$(sed -n 's/^DAYS=\([0-9]*\)$/\1/p' "$req")
+            END=$(sed -n 's/^END=\([0-9-]*\)$/\1/p' "$req")
+          fi
+          args=(--days "${DAYS:-14}")
+          [ -n "$END" ] && args+=(--end "$END")
+          [ "$REPORTS" = "metar+5min" ] && args+=(--hf)
+          python tools/backtest_hightemptation.py "${args[@]}" 2>&1 | tee backtest-log.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backtest-${{ matrix.reports == 'metar' && 'metar' || 'metar-5min' }}
+          path: |
+            polymarket-weather-bot/backtest-report.json
+            polymarket-weather-bot/backtest-misses.csv
+            polymarket-weather-bot/backtest-log.txt
+          if-no-files-found: warn

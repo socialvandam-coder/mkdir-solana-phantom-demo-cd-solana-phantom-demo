@@ -197,3 +197,23 @@ class PollTests(unittest.TestCase):
         self.assertEqual(poll_interval(cfg, at(31)), cfg.fast_poll_seconds)
         self.assertEqual(poll_interval(cfg, at(12)), cfg.poll_seconds)
         self.assertEqual(poll_interval(cfg, at(42)), cfg.poll_seconds)
+
+
+class BacktestParsingTests(unittest.TestCase):
+    def test_iem_csv(self):
+        import importlib.util
+        from pathlib import Path
+        spec = importlib.util.spec_from_file_location(
+            "bt", Path(__file__).resolve().parents[1] / "tools" / "backtest_hightemptation.py")
+        bt = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bt)
+        text = ("station,valid,metar\n"
+                "LGA,2026-10-09 13:51,KLGA 091351Z 21008KT 10SM FEW250 18/09 A3012 RMK AO2 T01780089\n"
+                "LGA,2026-10-09 14:51,M\n"
+                "LGA,2026-10-09 15:51,KLGA 091551Z 22009KT 10SM FEW250 19/09 A3010 RMK AO2 T01940089\n")
+        obs = bt.parse_iem_csv(text, "KLGA")
+        self.assertEqual([o.station for o in obs], ["KLGA", "KLGA"])
+        self.assertEqual([o.temp_c_tenths for o in obs], [17.8, 19.4])
+        self.assertEqual(obs[0].time.hour, 13)
+        self.assertEqual(bt.iem_ids("KLGA"), ["LGA", "KLGA"])
+        self.assertEqual(bt.iem_ids("LFPB"), ["LFPB"])

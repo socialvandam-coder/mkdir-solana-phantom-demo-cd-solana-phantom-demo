@@ -114,7 +114,8 @@ def _tick(value) -> str:
     return "0.001"
 
 
-def parse_event(ev: dict) -> TempEvent | None:
+def parse_event(ev: dict, include_closed: bool = False) -> TempEvent | None:
+    """include_closed=True keeps resolved buckets (used by the backtest)."""
     m = _TITLE_RE.match(ev.get("title", "").strip())
     if not m:
         return None
@@ -148,7 +149,7 @@ def parse_event(ev: dict) -> TempEvent | None:
     markets: list[Market] = []
     unit = None
     for mk in markets_raw:
-        if mk.get("closed"):
+        if mk.get("closed") and not include_closed:
             continue
         bucket = parse_bucket(mk.get("groupItemTitle", ""))
         if not bucket:

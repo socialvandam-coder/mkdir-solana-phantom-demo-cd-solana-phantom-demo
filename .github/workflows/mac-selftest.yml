@@ -1,0 +1,89 @@
+# Tests Weerbot on real Macs: builds both app variants, opens them like a double-click
+# from a clean first-run state, and checks the dashboard gets live weather data.
+name: mac-selftest
+
+# Runs on demand, or when .github/requests/mac-selftest.env changes in a push
+# (workflow_dispatch only works for workflows on the default branch).
+on:
+  push:
+    paths:
+      - '.github/requests/mac-selftest.env'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  selftest:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+        working-directory: polymarket-weather-bot
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: System info
+        run: |
+          sw_vers; uname -m; /bin/bash --version | head -1
+          command -v python3; python3 --version
+
+      - name: Unit tests
+        run: |
+          python3 -m pip install -q -r requirements.txt
+          python3 -m unittest discover -s tests
+
+      - name: Build Weerbot.app (launcher variant)
+        run: bash mac/build_app.sh
+
+      - name: Inspect the bundle
+        run: |
+          plutil -lint dist/Weerbot.app/Contents/Info.plist
+          ls -la dist/Weerbot.app/Contents/MacOS dist/Weerbot.app/Contents/Resources
+          codesign --verify --deep --strict --verbose=2 dist/Weerbot.app
+          spctl --assess --type execute -vv dist/Weerbot.app || echo "Gatekeeper: not notarized (expected)"
+
+      - name: Simulate a download (unzip + quarantine flag)
+        run: |
+          rm -rf /tmp/dl && mkdir -p /tmp/dl
+          ditto -x -k dist/Weerbot-mac.zip /tmp/dl
+          xattr -w com.apple.quarantine "0081;$(printf %x "$(date +%s)");Safari;" /tmp/dl/Weerbot.app
+          spctl --assess --type execute -vv /tmp/dl/Weerbot.app || echo "Gatekeeper would ask the user to allow it (expected)"
+          xattr -dr com.apple.quarantine /tmp/dl/Weerbot.app
+          ls -la /tmp/dl/Weerbot.app/Contents/MacOS
+
+      - name: Open the launcher app like a double-click
+        run: bash mac/ci_launch_test.sh /tmp/dl/Weerbot.app launcher
+
+      - name: Build the standalone app (no Python needed)
+        run: bash mac/build_standalone.sh
+
+      - name: Open the standalone app like a double-click
+        run: bash mac/ci_launch_test.sh dist/standalone/Weerbot.app standalone
+
+      - name: Logs
+        if: always()
+        run: |
+          for f in "$HOME"/Library/Logs/Weerbot/*.log "$HOME/Library/Application Support/Weerbot/logs/weerbot.log"; do
+            [ -f "$f" ] && { echo "== $f"; tail -n 150 "$f"; }
+          done
+          true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weerbot-${{ matrix.os }}
+          path: |
+            polymarket-weather-bot/dist/Weerbot-mac.zip
+            polymarket-weather-bot/dist/Weerbot-standalone-mac.zip
+            polymarket-weather-bot/ci-*.json
+          if-no-files-found: warn
