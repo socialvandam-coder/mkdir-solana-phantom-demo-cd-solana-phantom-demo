@@ -61,4 +61,5 @@ jobs:
           name: Weerbot-standalone-mac
           path: polymarket-weather-bot/dist/Weerbot-standalone-mac.zip
           if-no-files-found: error
-          retention-days: 30
+          # Maximum zonder extra instellingen; daarna opnieuw bouwen (zie mac/README-mac.md).
+          retention-days: 90

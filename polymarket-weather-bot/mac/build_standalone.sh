@@ -169,7 +169,7 @@ if [ -d "$APP" ]; then
     info "  app: $APP"
     info "  zip: $ZIP"
     info "Pak de zip uit en sleep Weerbot.app naar de map Apps. Eerste keer openen:"
-    info "rechtermuisknop > Open, of Systeeminstellingen > Privacy en beveiliging > 'Toch openen'."
+    info "rechtermuisknop > Open, of Systeeminstellingen > Privacy en beveiliging > 'Open toch'."
 else
     info ""
     info "Klaar (testbuild, geen Mac): $OUT_DIR/Weerbot"
