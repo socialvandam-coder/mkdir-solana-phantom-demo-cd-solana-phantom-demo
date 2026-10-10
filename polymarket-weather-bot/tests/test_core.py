@@ -217,3 +217,30 @@ class BacktestParsingTests(unittest.TestCase):
         self.assertEqual(obs[0].time.hour, 13)
         self.assertEqual(bt.iem_ids("KLGA"), ["LGA", "KLGA"])
         self.assertEqual(bt.iem_ids("LFPB"), ["LFPB"])
+
+
+class FailoverTests(unittest.TestCase):
+    def test_backup_used_when_primary_fails(self):
+        import requests
+        from weatherbot.metar import FailoverSource
+
+        class Bad:
+            def fetch(self, stations):
+                raise requests.ConnectionError("down")
+
+        class Good:
+            def fetch(self, stations):
+                return ["obs"]
+
+        src = FailoverSource(Bad(), Good(), ("aviationweather", "tgftp"))
+        self.assertEqual(src.fetch(["LFPB"]), ["obs"])
+        self.assertEqual(src.last_used, "tgftp")
+        src2 = FailoverSource(Bad(), Bad(), ("a", "b"))
+        with self.assertRaises(requests.ConnectionError):
+            src2.fetch(["LFPB"])
+
+    def test_report_time_comes_from_the_report(self):
+        # a 00:00Z report must count for the new day even if fetched a bit earlier
+        from datetime import datetime, timezone
+        o = parse_metar("METAR EGLC 110000Z 24008KT 9999 12/09 Q1018", ref=datetime(2026, 10, 10, 23, 58, tzinfo=timezone.utc))
+        self.assertEqual(o.time, datetime(2026, 10, 11, 0, 0, tzinfo=timezone.utc))

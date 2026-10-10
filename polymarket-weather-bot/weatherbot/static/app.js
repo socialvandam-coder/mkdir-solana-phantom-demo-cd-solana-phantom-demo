@@ -298,7 +298,8 @@ function setStatus(state) {
   const msgs = [];
   if (state.error) msgs.push(["critical", state.error]);
   const h = state.health || {};
-  if (h.metar_ok === false) msgs.push(["warning", "Weerdata komt niet binnen: " + (h.metar_error || "onbekende fout")]);
+  // one missed round is normal on the internet; only warn when it keeps failing (~30 s+)
+  if (h.metar_ok === false && (h.metar_fail_streak || 0) >= 3) msgs.push(["warning", "Weerdata komt al " + h.metar_fail_streak + " rondes niet binnen (beide bronnen): " + (h.metar_error || "onbekende fout")]);
   if (h.markets_ok === false) msgs.push(["warning", "Polymarket-markten konden niet geladen worden: " + (h.markets_error || "")]);
   if (state.bank && state.bank.stopped_for_today) msgs.push(["warning", "Daglimiet voor verlies bereikt: de bot koopt vandaag niets meer."]);
   banner.replaceChildren();
@@ -356,7 +357,19 @@ function render(state) {
   const items = [];
   const metarAge = h.metar_at ? now - h.metar_at : null;
   items.push(["Bot", state.status === "running" ? "good" : state.status === "error" ? "critical" : "", state.status === "running" ? `draait sinds ${state.started_at ? clock(state.started_at) : "–"}` : (state.status === "error" ? "fout" : "gestopt")]);
-  items.push(["Weerdata", h.metar_ok ? "good" : h.metar_ok === false ? "critical" : "", h.metar_ok ? `ok · ${ago(metarAge)} geleden` : h.metar_ok === false ? "fout" : "nog niet opgehaald"]);
+  {
+    const streak = h.metar_fail_streak || 0, fails = h.metar_failures_1h || 0;
+    let cls = "", text = "nog niet opgehaald";
+    if (h.metar_ok) {
+      cls = "good";
+      text = `ok · ${ago(metarAge)} geleden` + (h.metar_source && h.metar_source !== "aviationweather" ? ` · via reservebron (${h.metar_source})` : "");
+    } else if (h.metar_ok === false) {
+      cls = streak >= 3 ? "critical" : "warning";
+      text = streak >= 3 ? `storing · ${streak} rondes mislukt` : "even geen antwoord · volgende ronde opnieuw";
+    }
+    if (fails) text += ` · ${fails}× korte storing afgelopen uur (vanzelf hersteld)`;
+    items.push(["Weerdata", cls, text]);
+  }
   items.push(["Markten", h.markets_ok ? "good" : h.markets_ok === false ? "critical" : "", h.markets_ok ? `${(state.events || []).length} actief` : h.markets_ok === false ? "fout" : "nog niet geladen"]);
   items.push(["Laatste ronde", h.last_step && now - h.last_step < 60 ? "good" : h.last_step ? "warning" : "", h.last_step ? `${ago(now - h.last_step)} geleden · ${h.step_ms} ms` : "–"]);
   if (h.geoblock) items.push(["Polymarket-toegang", h.geoblock.blocked ? "critical" : "good", h.geoblock.blocked ? `geblokkeerd (${h.geoblock.country || "?"})` : `toegestaan (${h.geoblock.country || "?"})`]);

@@ -145,14 +145,12 @@ class AviationWeatherSource:
             chunk = stations[chunk_start:chunk_start + 40]
             hours = 2 if all(s in self._primed for s in chunk) else 30
             r = self.session.get(self.URL, params={"ids": ",".join(chunk), "format": "json", "hours": hours},
-                                 timeout=20)
+                                 timeout=(5, 12))
             r.raise_for_status()
             for row in r.json() or []:
-                raw = row.get("rawOb") or ""
-                t = None
-                if isinstance(row.get("obsTime"), (int, float)):
-                    t = datetime.fromtimestamp(row["obsTime"], timezone.utc)
-                obs = parse_metar(raw, obs_time=t, ref=now)
+                # Use the report's own time group (DDHHMMZ), like the resolution page and the
+                # backtest do - not the API's obsTime, which can put a midnight report on the wrong day.
+                obs = parse_metar(row.get("rawOb") or "", ref=now)
                 if obs:
                     out.append(obs)
             self._primed.update(chunk)
@@ -173,24 +171,23 @@ class TgftpSource:
         self._primed: set[str] = set()
 
     def _one(self, station: str) -> Observation | None:
-        r = self.session.get(self.URL.format(station), timeout=10)
+        r = self.session.get(self.URL.format(station), timeout=(5, 8))
         if r.status_code != 200:
             return None
         lines = [ln.strip() for ln in r.text.splitlines() if ln.strip()]
         if len(lines) < 2:
             return None
-        try:
-            t = datetime.strptime(lines[0], "%Y/%m/%d %H:%M").replace(tzinfo=timezone.utc)
-        except ValueError:
-            t = None
-        return parse_metar(lines[1], obs_time=t)
+        return parse_metar(lines[1], ref=datetime.now(timezone.utc))
 
     def fetch(self, stations: list[str]) -> list[Observation]:
         out: list[Observation] = []
         new = [s for s in stations if s not in self._primed]
         if new:
-            out.extend(self._backfill.fetch(new))
-            self._primed.update(new)
+            try:
+                out.extend(self._backfill.fetch(new))      # earlier reports of today
+                self._primed.update(new)
+            except requests.RequestException:
+                pass                                       # fine: try the history again next time
         with ThreadPoolExecutor(max_workers=16) as pool:
             for obs in pool.map(self._one, stations):
                 if obs:
@@ -198,7 +195,31 @@ class TgftpSource:
         return out
 
 
+class FailoverSource:
+    """Primary source, with the other one as backup when the primary can't be reached.
+
+    Note: only METAR/SPECI. US 5-minute data must never be used - the US markets resolve on
+    the hourly reports, and the backtest showed 5-minute peaks would call winning buckets dead.
+    """
+
+    def __init__(self, primary, backup, names: tuple[str, str]) -> None:
+        self.primary, self.backup, self.names = primary, backup, names
+        self.last_used = names[0]
+
+    def fetch(self, stations: list[str]) -> list[Observation]:
+        try:
+            out = self.primary.fetch(stations)
+            self.last_used = self.names[0]
+            return out
+        except requests.RequestException as exc:
+            log.info("%s unreachable (%s), using %s", self.names[0], type(exc).__name__, self.names[1])
+            out = self.backup.fetch(stations)      # raises if the backup fails too
+            self.last_used = self.names[1]
+            return out
+
+
 def make_source(name: str, session: requests.Session):
+    aw, tg = AviationWeatherSource(session), TgftpSource(session)
     if name == "tgftp":
-        return TgftpSource(session)
-    return AviationWeatherSource(session)
+        return FailoverSource(tg, aw, ("tgftp", "aviationweather"))
+    return FailoverSource(aw, tg, ("aviationweather", "tgftp"))

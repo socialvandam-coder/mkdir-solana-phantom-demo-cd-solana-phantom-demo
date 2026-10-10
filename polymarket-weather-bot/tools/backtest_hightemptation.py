@@ -103,7 +103,11 @@ def load_event(slug: str) -> tuple[TempEvent | None, dict]:
     if not data:
         _event_cache[slug] = (None, {})
         return _event_cache[slug]
-    ev = data[0]
+    return cache_event(data[0])
+
+
+def cache_event(ev: dict) -> tuple[TempEvent | None, dict]:
+    slug = ev.get("slug", "")
     te = parse_event(ev, include_closed=True)
     winners = {}
     for mk in ev.get("markets") or []:
@@ -132,26 +136,66 @@ def iem_ids(icao: str) -> list[str]:
     return ids
 
 
+SPECI_TIMES: dict[str, set[datetime]] = collections.defaultdict(set)   # station -> times of SPECI reports
+
+
+def _iem(sid: str, d1: date, d2: date, report_types: tuple[int, ...]) -> str:
+    params = [("station", sid), ("data", "metar"), ("tz", "Etc/UTC"), ("format", "onlycomma"),
+              ("latlon", "no"), ("elev", "no"), ("missing", "M"), ("trace", "T"), ("direct", "no"),
+              ("year1", d1.year), ("month1", d1.month), ("day1", d1.day), ("hour1", 0), ("minute1", 0),
+              ("year2", d2.year), ("month2", d2.month), ("day2", d2.day), ("hour2", 23), ("minute2", 59)]
+    params += [("report_type", t) for t in report_types]
+    return get(IEM, params, timeout=120).text
+
+
+PERIOD: list[date] = []   # [first, last] UTC day of the whole backtest; set in main()
+
+
 def fetch_obs(icao: str, d1: date, d2: date, hf: bool) -> list[Observation]:
-    """All METAR/SPECI for a station between two UTC dates (inclusive)."""
+    """All METAR/SPECI (plus US 5-minute reports if hf) for a station.
+
+    Fetches the whole backtest period once per station (much faster than per day)."""
+    if PERIOD:
+        d1, d2 = PERIOD
     key = (icao, d1, d2, hf)
     if key in _obs_cache:
         return _obs_cache[key]
     obs: list[Observation] = []
     for sid in iem_ids(icao):
-        params = [("station", sid), ("data", "metar"), ("tz", "Etc/UTC"), ("format", "onlycomma"),
-                  ("latlon", "no"), ("elev", "no"), ("missing", "M"), ("trace", "T"), ("direct", "no"),
-                  ("year1", d1.year), ("month1", d1.month), ("day1", d1.day), ("hour1", 0), ("minute1", 0),
-                  ("year2", d2.year), ("month2", d2.month), ("day2", d2.day), ("hour2", 23), ("minute2", 59),
-                  ("report_type", 3), ("report_type", 4)]
-        if hf:
-            params.append(("report_type", 1))
-        obs = parse_iem_csv(get(IEM, params, timeout=120).text, icao)
-        if obs:
-            break
-        time.sleep(1)
+        routine = parse_iem_csv(_iem(sid, d1, d2, (3,)), icao)
+        if not routine:
+            time.sleep(1)
+            continue
+        specials = parse_iem_csv(_iem(sid, d1, d2, (4,)), icao)
+        SPECI_TIMES[icao].update(o.time for o in specials)
+        extra = parse_iem_csv(_iem(sid, d1, d2, (1,)), icao) if hf else []
+        merged = {o.time: o for o in extra}
+        merged.update({o.time: o for o in specials})
+        merged.update({o.time: o for o in routine})
+        obs = sorted(merged.values(), key=lambda o: o.time)
+        break
     _obs_cache[key] = obs
     return obs
+
+
+def list_all_events(d1: date, d2: date) -> list[str]:
+    """Slugs of every daily-temperature event whose day lies in [d1, d2] (also caches them)."""
+    slugs, offset = [], 0
+    lo = datetime(d1.year, d1.month, d1.day, tzinfo=timezone.utc) - timedelta(days=1)
+    hi = datetime(d2.year, d2.month, d2.day, tzinfo=timezone.utc) + timedelta(days=3)
+    while offset < 20000:
+        page = get(f"{GAMMA}/events", {"tag_id": 103040, "closed": "true", "limit": 100, "offset": offset,
+                                       "end_date_min": lo.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                                       "end_date_max": hi.strftime("%Y-%m-%dT%H:%M:%SZ")}).json()
+        for e in page:
+            if e.get("slug"):
+                slugs.append(e["slug"])
+                if e["slug"] not in _event_cache:
+                    cache_event(e)
+        if len(page) < 100:
+            break
+        offset += 100
+    return sorted(set(slugs))
 
 
 def parse_iem_csv(text: str, icao: str) -> list[Observation]:
@@ -190,6 +234,8 @@ def main() -> int:
     ap.add_argument("--days", type=int, default=14)
     ap.add_argument("--end", help="last UTC date (default: yesterday)")
     ap.add_argument("--hf", action="store_true", help="also use US 5-minute (HFMETAR) reports")
+    ap.add_argument("--all-events", action="store_true",
+                    help="run the safety check on every temperature event in the period, not only his")
     ap.add_argument("--out", default="backtest-report.json")
     ap.add_argument("--misses", default="backtest-misses.csv")
     args = ap.parse_args()
@@ -199,6 +245,10 @@ def main() -> int:
     start_ts = datetime(start_day.year, start_day.month, start_day.day, tzinfo=timezone.utc).timestamp()
     end_ts = datetime(end_day.year, end_day.month, end_day.day, tzinfo=timezone.utc).timestamp() + 86400
     print(f"Backtest {start_day} .. {end_day} (UTC){'  +HF 5-min reports' if args.hf else ''}")
+    PERIOD[:] = [start_day - timedelta(days=1), end_day + timedelta(days=1)]
+    all_slugs = list_all_events(start_day, end_day) if args.all_events else []
+    if all_slugs:
+        print(f"temperature events in the period: {len(all_slugs)}")
 
     buys = his_buys(start_ts, end_ts)
     print(f"HighTempTation buys on temperature markets: {len(buys)}")
@@ -265,21 +315,47 @@ def main() -> int:
         results.append(res)
 
     # -------- safety: buckets the bot would call dead/certain that resolved the other way
+    if all_slugs:
+        print(f"safety check over all {len(all_slugs)} temperature events in the period...")
+        for i, slug in enumerate(all_slugs, 1):
+            if slug in events_seen:
+                continue
+            if i % 200 == 0:
+                print(f"  {i}/{len(all_slugs)} events...")
+            try:
+                ev, winners = load_event(slug)
+            except requests.RequestException:
+                continue
+            if ev is not None and start_day <= ev.day <= end_day:
+                events_seen[slug] = ev
+                winners_all[slug] = winners
     false_signals = []
     checked_buckets = 0
+    speci_dependent = speci_dependent_wrong = 0
+    skipped_events = 0
     for slug, ev in events_seen.items():
         winners = winners_all.get(slug, {})
-        obs = fetch_obs(ev.station, ev.day - timedelta(days=1), ev.day + timedelta(days=1), args.hf)
+        try:
+            obs = fetch_obs(ev.station, ev.day - timedelta(days=1), ev.day + timedelta(days=1), args.hf)
+        except requests.RequestException:
+            skipped_events += 1
+            continue
         sigs = find_signals(ev, obs)
+        routine_only = [o for o in obs if o.time not in SPECI_TIMES[ev.station]]
+        routine_tokens = {s.token_id for s in find_signals(ev, routine_only)}
         for s in sigs:
             w = winners.get(s.market.condition_id)
             if w is None:
                 continue
             checked_buckets += 1
-            if (s.outcome == "NO" and w == "YES") or (s.outcome == "YES" and w == "NO"):
+            wrong = (s.outcome == "NO" and w == "YES") or (s.outcome == "YES" and w == "NO")
+            if s.token_id not in routine_tokens:
+                speci_dependent += 1
+                speci_dependent_wrong += wrong
+            if wrong:
                 false_signals.append({"event": slug, "bucket": s.market.bucket.label, "bot_says": s.outcome,
                                       "resolved": w, "observed": s.observed, "unit": ev.unit,
-                                      "station": ev.station})
+                                      "station": ev.station, "needs_speci": s.token_id not in routine_tokens})
 
     # -------- summary
     cats = collections.Counter(r["category"] for r in results)
@@ -298,7 +374,9 @@ def main() -> int:
         "later_by_s": {"p10": q(earl, .1), "median": q(earl, .5), "p90": q(earl, .9)} if earl else None,
         "by_kind": {k: {c: sum(1 for r in results if r.get("kind") == k and r["category"] == c)
                         for c in ("covered", "later", "never", "no_data")} for k in ("high", "low")},
+        "safety_events": len(events_seen), "safety_events_skipped": skipped_events,
         "safety_checked_signals": checked_buckets,
+        "safety_speci_dependent": speci_dependent, "safety_speci_dependent_wrong": speci_dependent_wrong,
         "safety_false_signals": false_signals,
     }
     Path(args.out).write_text(json.dumps({"summary": summary, "results": results}, indent=1, default=str))
@@ -321,8 +399,10 @@ def main() -> int:
     if earl:
         print(f"  'later' cases: the bot's first report came {q(earl, .5) / 60:.1f} min (median) after his trade")
     print(f"  by kind: {summary['by_kind']}")
-    print(f"SAFETY: {checked_buckets} bot signals checked against the official result, "
-          f"{len(false_signals)} would have LOST")
+    print(f"SAFETY: {len(events_seen)} events, {checked_buckets} bot signals checked against the official "
+          f"result, {len(false_signals)} would have LOST  (skipped events: {skipped_events})")
+    print(f"  signals that only exist thanks to a SPECI report: {speci_dependent} "
+          f"(wrong: {speci_dependent_wrong})")
     for fs in false_signals[:30]:
         print(f"   !! {fs}")
     misses = [r for r in results if r["category"] != "covered"]

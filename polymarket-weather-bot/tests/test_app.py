@@ -175,3 +175,18 @@ class DashboardTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AppArgsTests(unittest.TestCase):
+    def test_finder_psn_argument_is_ignored(self):
+        from weatherbot import app as app_mod
+        with mock.patch.object(app_mod, "_run", return_value=0) as run:
+            self.assertEqual(app_mod.main(["-psn_0_12345", "--no-browser"]), 0)
+            self.assertTrue(run.call_args[0][0].no_browser)
+
+    def test_startup_crash_shows_error_and_returns_1(self):
+        from weatherbot import app as app_mod
+        with mock.patch.object(app_mod, "_run", side_effect=RuntimeError("boom")), \
+                mock.patch.object(app_mod, "show_error") as show:
+            self.assertEqual(app_mod.main([]), 1)
+            self.assertIn("boom", show.call_args[0][0])

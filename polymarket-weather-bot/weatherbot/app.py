@@ -63,12 +63,42 @@ def _keep_awake() -> subprocess.Popen | None:
     return None
 
 
+def show_error(message: str) -> None:
+    """A visible error for people who started the app by double-clicking (no terminal)."""
+    log.error("%s", message)
+    if sys.platform == "darwin" and shutil.which("osascript"):
+        subprocess.run(["osascript", "-e", "on run argv", "-e",
+                        'display dialog (item 1 of argv) with title "Weerbot" buttons {"OK"} '
+                        'default button "OK" with icon stop', "-e", "end run", message],
+                       capture_output=True, timeout=600)
+    else:
+        print(message, file=sys.stderr)
+
+
+def _port_from_env() -> int:
+    try:
+        return int(os.environ.get("WEATHERBOT_PORT", "8765"))
+    except ValueError:
+        return 8765
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Weerbot dashboard")
-    ap.add_argument("--port", type=int, default=int(os.environ.get("WEATHERBOT_PORT", "8765")))
+    ap.add_argument("--port", type=int, default=_port_from_env())
     ap.add_argument("--no-browser", action="store_true")
     ap.add_argument("--home", help="data folder (default: WEATHERBOT_HOME or the per-OS default)")
-    args = ap.parse_args(argv)
+    # Finder sometimes adds "-psn_0_12345" on the first launch of a downloaded app; ignore extras.
+    args, _unknown = ap.parse_known_args(argv)
+    try:
+        return _run(args)
+    except Exception as exc:  # noqa: BLE001 - last resort: tell the user instead of vanishing
+        logging.getLogger("weatherbot").exception("Weerbot could not start")
+        show_error(f"Weerbot kon niet starten:\n{exc}\n\nDetails staan in het logboek in "
+                   f"{default_home() / 'logs' / 'weerbot.log'}")
+        return 1
+
+
+def _run(args: argparse.Namespace) -> int:
 
     home = Path(args.home).expanduser() if args.home else default_home()
     home.mkdir(parents=True, exist_ok=True)
@@ -95,7 +125,8 @@ def main(argv: list[str] | None = None) -> int:
         except OSError:
             log.info("port %d is in use, trying the next one", port)
     if server is None:
-        log.error("no free port between %d and %d", args.port, args.port + 9)
+        show_error(f"Weerbot kon niet starten: de poorten {args.port} t/m {args.port + 9} zijn allemaal "
+                   "bezet door andere programma's. Herstart je Mac en probeer het opnieuw.")
         return 1
 
     url = f"http://127.0.0.1:{server.port}/"

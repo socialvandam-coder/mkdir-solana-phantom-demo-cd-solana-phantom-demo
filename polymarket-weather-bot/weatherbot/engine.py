@@ -40,9 +40,10 @@ def short_error(exc: Exception) -> str:
     return str(exc)[:200]
 
 
-# Minutes past the hour when airport reports come out (routine METARs at :50-:00, many
-# stations also :20/:30). HighTempTation's buys cluster right after these.
-FAST_MINUTES = set(range(49, 60)) | set(range(0, 6)) | set(range(19, 26)) | set(range(29, 36))
+# Minutes past the hour when airport reports come out. Routine METARs are stamped :00/:30
+# (or :20/:50), but many stations publish them a few minutes *before* that time - the
+# backtest showed his buys at e.g. :28 for Wellington's :30 report and :55 for Sao Paulo's :00.
+FAST_MINUTES = set(range(45, 60)) | set(range(0, 6)) | set(range(15, 36))
 
 
 def poll_interval(cfg: Config, now: float | None = None) -> float:
@@ -51,8 +52,22 @@ def poll_interval(cfg: Config, now: float | None = None) -> float:
 
 
 def make_session() -> requests.Session:
+    """HTTP session with quick automatic retries for brief network hiccups.
+
+    Only used for reading data (weather, market lists, order books). Orders go through
+    py-clob-client's own connection and are never retried automatically.
+    """
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
+
     s = requests.Session()
     s.headers["User-Agent"] = "weatherbot/1.0"
+    retry = Retry(total=2, connect=2, read=1, backoff_factor=0.3,
+                  status_forcelist=(429, 500, 502, 503, 504), allowed_methods=frozenset({"GET", "POST"}),
+                  respect_retry_after_header=False)
+    adapter = HTTPAdapter(max_retries=retry, pool_maxsize=32)
+    s.mount("https://", adapter)
+    s.mount("http://", adapter)
     return s
 
 
@@ -67,7 +82,9 @@ class BotRunner:
         self.session = session or make_session()
         self.health = {"metar_ok": None, "metar_error": None, "metar_at": None, "markets_ok": None,
                        "markets_error": None, "markets_at": None, "last_step": None, "step_ms": None,
-                       "geoblock": None}
+                       "geoblock": None, "metar_fail_streak": 0, "metar_failures_1h": 0,
+                       "metar_source": None, "metar_last_ok": None}
+        self._metar_failures: collections.deque = collections.deque(maxlen=2000)
         if executor is not None:
             self.executor = executor
         elif cfg.live:
@@ -112,10 +129,17 @@ class BotRunner:
             try:
                 for obs in self.source.fetch(stations):
                     self.store.add(obs)
-                self.health.update(metar_ok=True, metar_error=None, metar_at=t0)
+                self.health.update(metar_ok=True, metar_error=None, metar_at=t0, metar_fail_streak=0,
+                                   metar_last_ok=t0, metar_source=getattr(self.source, "last_used", None))
             except requests.RequestException as exc:
-                self.health.update(metar_ok=False, metar_error=short_error(exc), metar_at=t0)
-                log.warning("weather data failed: %s", short_error(exc))
+                self._metar_failures.append(t0)
+                streak = self.health["metar_fail_streak"] + 1
+                self.health.update(metar_ok=False, metar_error=short_error(exc), metar_at=t0,
+                                   metar_fail_streak=streak)
+                log.warning("weather data failed (both sources, %dx in a row): %s", streak, short_error(exc))
+        while self._metar_failures and self._metar_failures[0] < t0 - 3600:
+            self._metar_failures.popleft()
+        self.health["metar_failures_1h"] = len(self._metar_failures)
         self.store.prune(now_dt)
 
         self.executor.refresh(time.time())

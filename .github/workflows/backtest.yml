@@ -29,7 +29,7 @@ jobs:
       matrix:
         reports: [metar, metar+5min]
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 180
     defaults:
       run:
         working-directory: polymarket-weather-bot
@@ -57,7 +57,12 @@ jobs:
           args=(--days "${DAYS:-14}")
           [ -n "$END" ] && args+=(--end "$END")
           [ "$REPORTS" = "metar+5min" ] && args+=(--hf)
-          python tools/backtest_hightemptation.py "${args[@]}" 2>&1 | tee backtest-log.txt
+          python tools/backtest_hightemptation.py --all-events "${args[@]}" 2>&1 | tee backtest-log.txt
+
+      - name: When do reports really appear? (receipt time vs. time in the report)
+        if: always() && matrix.reports == 'metar'
+        continue-on-error: true
+        run: python tools/probe_publication.py NZWN FACT SBGR MPMG LFPB EGLC EHAM LEMD KLGA KMIA KORD RJTT RKSI WSSS VILK ZBAA
 
       - uses: actions/upload-artifact@v4
         if: always()
