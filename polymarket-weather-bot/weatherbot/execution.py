@@ -214,6 +214,7 @@ class Executor:
         self.positions: list[Position] = []
         self.locked_events: dict[str, float] = {}      # event slug -> locked until (end of its local day)
         self.stale_events: set[str] = set()            # set by the runner: the station went quiet
+        self.hold_reason: str | None = None            # set by the runner for one loop (e.g. 'woke_up')
         # set by the runner: re-check the weather data for a position (True = still dead,
         # False = not dead after all -> sell now, None = could not check)
         self.recheck_hook: Callable[[Position], bool | None] | None = None
@@ -277,12 +278,21 @@ class Executor:
         """(True, '') or (False, skip reason). Checked before every buy, also right before the order."""
         halts = self.bank.halts
         if not halts:
-            return True, ""
+            return (False, self.hold_reason) if self.hold_reason else (True, "")
         if "geoblock" in halts:
             return False, "geoblock"
         if set(halts) == {"pauze"}:
             return False, "paused"
         return False, "halted"
+
+    def wake(self, now: float) -> None:
+        """After a sleep or a long stall: look at every open position (and its 0.99 order) and
+        every watched bucket again right away."""
+        for p in self.positions:
+            if p.status != "closed":
+                p.next_poll = min(p.next_poll, now)
+        for w in self.watch.values():
+            w.last_check = 0.0
 
     def _skip(self, s: Signal, reason: str, now: float, **extra) -> None:
         """Journal why a signal was not bought - once per token and reason."""

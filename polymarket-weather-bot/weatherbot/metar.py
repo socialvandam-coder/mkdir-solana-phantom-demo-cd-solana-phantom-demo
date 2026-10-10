@@ -8,11 +8,16 @@ from __future__ import annotations
 import logging
 import math
 import re
+import statistics
+import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 import requests
+
+from .cities import DEFAULT_MINUTES, seed_minutes
 
 log = logging.getLogger(__name__)
 
@@ -125,15 +130,74 @@ def default_cadence_min(station: str) -> float:
     return 60.0 if station[:1] in ("K", "C") else 30.0
 
 
+# --- when does a station's next report come out? -------------------------------------------
+LIVE_MAX_DELAY_S = 20 * 60     # first seen later than this after its own time = history, not a live sighting
+LEARN_MIN_REPORTS = 6          # own routine reports needed before the measured timing replaces the seed
+HOT_BEFORE_S = 3 * 60          # look fast from 3 min before the usual moment ...
+HOT_AFTER_S = 6 * 60           # ... until 6 min after it
+HOT_MAX_AFTER_S = 15 * 60      # a station that is often late gets a longer window, up to this
+
+
+def _merge_windows(windows: list[tuple[float, float]]) -> tuple[tuple[float, float], ...]:
+    """Merge overlapping (start, end) windows in seconds past the hour, also across the full hour."""
+    norm = sorted((s % 3600, s % 3600 + (e - s)) for s, e in windows)
+    out: list[list[float]] = []
+    for s, e in norm:
+        if out and s <= out[-1][1]:
+            out[-1][1] = max(out[-1][1], e)
+        else:
+            out.append([s, e])
+    if len(out) > 1 and out[-1][1] >= out[0][0] + 3600:     # the last one runs into the next hour's first
+        first = out.pop(0)
+        out[-1][1] = max(out[-1][1], first[1] + 3600)
+    return tuple((s, e) for s, e in out)
+
+
+@dataclass(frozen=True)
+class ReportSchedule:
+    """When a station's routine reports usually come in (seconds past the hour, UTC)."""
+    moments: tuple[float, ...]                    # usual moments the report becomes available
+    windows: tuple[tuple[float, float], ...]      # (start, end); end may run past the full hour
+    source: str                                   # learned / seed / reports / default
+    samples: int = 0                              # own routine reports behind a learned schedule
+    delay_s: float | None = None                  # learned: median seconds after the report's own time
+
+    @classmethod
+    def around(cls, moments, source: str, after_s: float = HOT_AFTER_S, **kw) -> "ReportSchedule":
+        moments = tuple(sorted({float(m) % 3600 for m in moments}))
+        return cls(moments, _merge_windows([(m - HOT_BEFORE_S, m + after_s) for m in moments]), source, **kw)
+
+    @property
+    def minutes(self) -> list[int]:
+        return sorted({int(m // 60) for m in self.moments})
+
+    def window_start(self, now: float) -> float | None:
+        """Unix time when the window that `now` falls in opened, or None when outside every window."""
+        base = now - now % 3600
+        for start, end in self.windows:
+            for k in (-3600.0, 0.0):
+                if base + k + start <= now <= base + k + end:
+                    return base + k + start
+        return None
+
+
 class ObservationStore:
-    """Keeps the last ~2 days of reports per station."""
+    """Keeps the last ~2 days of reports per station, and when each one was first seen."""
 
     def __init__(self) -> None:
         self._by_station: dict[str, dict[datetime, Observation]] = {}
         self.rejected = 0     # implausible reports thrown away
+        self.first_seen: dict[str, dict[datetime, float]] = {}   # station -> report time -> unix time first seen
+        # reports that came in while the bot was watching: report time -> seconds after its own time
+        self._live: dict[str, dict[datetime, float]] = {}
+        self._cache: dict[str, tuple[set[int], ReportSchedule]] = {}
 
-    def add(self, obs: Observation, now: datetime | None = None) -> bool:
-        """Returns True if this report is new. Implausible reports are rejected (False)."""
+    def add(self, obs: Observation, now: datetime | None = None, seen_at: float | None = None,
+            live: bool = False) -> bool:
+        """Returns True if this report is new. Implausible reports are rejected (False).
+
+        live=True: the station was already being watched, so the moment we first saw this report
+        says when the station publishes (history from a first fetch or after a sleep says nothing)."""
         if not plausible(obs, now):
             self.rejected += 1
             log.warning("ignored implausible report %s %s: %s", obs.station, obs.time.isoformat(), obs.raw[:80])
@@ -141,7 +205,81 @@ class ObservationStore:
         bucket = self._by_station.setdefault(obs.station, {})
         is_new = obs.time not in bucket
         bucket[obs.time] = obs  # a correction (COR) for the same time replaces the old one
+        if is_new:
+            seen = time.time() if seen_at is None else seen_at
+            self.first_seen.setdefault(obs.station, {}).setdefault(obs.time, seen)
+            if live:
+                self.note_seen(obs.station, obs.time, seen)
+            self._cache.pop(obs.station, None)
         return is_new
+
+    def note_seen(self, station: str, obs_time: datetime, first_seen: float) -> bool:
+        """Remember a live sighting (also used to reload them from the journal after a restart)."""
+        delay = first_seen - obs_time.timestamp()
+        if not -MAX_FUTURE.total_seconds() <= delay <= LIVE_MAX_DELAY_S:
+            return False
+        self._live.setdefault(station, {}).setdefault(obs_time, delay)
+        self._cache.pop(station, None)
+        return True
+
+    # -- timing ----------------------------------------------------------------
+    def _routine_and_schedule(self, station: str) -> tuple[set[int], ReportSchedule]:
+        hit = self._cache.get(station)
+        if hit:
+            return hit
+        times = set(self._by_station.get(station, {})) | set(self._live.get(station, {}))
+        counts = Counter(t.minute for t in times)
+        top = max(counts.values(), default=0)
+        # routine reports come at the same minutes every hour; a SPECI is a one-off
+        routine = {m for m, c in counts.items() if c >= max(3, 0.3 * top)}
+        delays = sorted(d for t, d in self._live.get(station, {}).items() if t.minute in routine)
+        if len(delays) >= LEARN_MIN_REPORTS:
+            med = statistics.median(delays)
+            late = delays[min(len(delays) - 1, int(0.9 * len(delays)))]
+            after = min(HOT_MAX_AFTER_S, max(HOT_AFTER_S, late - med + 120))
+            sched = ReportSchedule.around([m * 60 + med for m in routine], "learned", after,
+                                          samples=len(delays), delay_s=round(med, 1))
+        elif seed_minutes(station):
+            sched = ReportSchedule.around([m * 60 for m in seed_minutes(station)], "seed")
+        elif routine:
+            sched = ReportSchedule.around([m * 60 for m in routine], "reports")
+        else:
+            sched = ReportSchedule.around([m * 60 for m in DEFAULT_MINUTES], "default")
+        self._cache[station] = (routine, sched)
+        return routine, sched
+
+    def schedule(self, station: str) -> ReportSchedule:
+        """When the station's routine reports usually come in: measured once 6+ were seen live,
+        else the seed list, else the minutes printed on its recent reports, else :50/:20."""
+        return self._routine_and_schedule(station)[1]
+
+    def last_routine_seen(self, station: str) -> float:
+        """Unix time we first saw the station's newest routine report live (0 = none yet)."""
+        routine, _ = self._routine_and_schedule(station)
+        return max((t.timestamp() + d for t, d in self._live.get(station, {}).items() if t.minute in routine),
+                   default=0.0)
+
+    def is_hot(self, station: str, now: float) -> bool:
+        """Inside the station's usual report window and its report for this window is not in yet."""
+        start = self.schedule(station).window_start(now)
+        return start is not None and self.last_routine_seen(station) < start
+
+    def delays(self, station: str, since: float = 0.0) -> list[float]:
+        """Seconds between a report's own time and the moment we first saw it (live sightings)."""
+        return [d for t, d in self._live.get(station, {}).items() if t.timestamp() + d >= since]
+
+    def station_status(self, station: str, now: datetime) -> dict:
+        last = self.latest_time(station)
+        age = self.age_s(station, now)
+        cadence = self.cadence_min(station)
+        delays = self.delays(station, since=now.timestamp() - 86400)
+        sched = self.schedule(station)
+        return {"station": station, "last_obs_time": last.isoformat() if last else None,
+                "age_s": None if age is None else round(age), "cadence_min": cadence,
+                "publish_delay_s_p50": round(statistics.median(delays)) if delays else None,
+                "seen_live": len(delays), "stale": age is None or age > 1.5 * cadence * 60 + 300,
+                "report_minutes": sched.minutes, "schedule": sched.source,
+                "hot": self.is_hot(station, now.timestamp())}
 
     def get(self, station: str) -> list[Observation]:
         return sorted(self._by_station.get(station, {}).values(), key=lambda o: o.time)
@@ -170,9 +308,13 @@ class ObservationStore:
         return age is None or age > factor * self.cadence_min(station) * 60 + extra_s
 
     def prune(self, now: datetime, keep: timedelta = timedelta(hours=48)) -> None:
-        for st, obs in self._by_station.items():
-            for t in [t for t in obs if t < now - keep]:
-                del obs[t]
+        for per_station in (self._by_station, self.first_seen, self._live):
+            for st, obs in per_station.items():
+                old = [t for t in obs if t < now - keep]
+                for t in old:
+                    del obs[t]
+                if old:
+                    self._cache.pop(st, None)
 
 
 class AviationWeatherSource:
@@ -183,6 +325,10 @@ class AviationWeatherSource:
     def __init__(self, session: requests.Session) -> None:
         self.session = session
         self._primed: set[str] = set()
+
+    def reprime(self) -> None:
+        """Fetch the full history again next time (after a sleep the last 2 hours are not enough)."""
+        self._primed.clear()
 
     def fetch(self, stations: list[str]) -> list[Observation]:
         out: list[Observation] = []
@@ -215,15 +361,47 @@ class TgftpSource:
         self.session = session
         self._backfill = AviationWeatherSource(session)
         self._primed: set[str] = set()
+        self._modified: dict[str, str] = {}      # station -> Last-Modified of its file
 
-    def _one(self, station: str) -> Observation | None:
-        r = self.session.get(self.URL.format(station), timeout=(5, 8))
-        if r.status_code != 200:
+    def reprime(self) -> None:
+        self._primed.clear()
+        self._backfill.reprime()
+
+    def _one(self, station: str, conditional: bool = False) -> Observation | None:
+        kw = {}
+        if conditional and self._modified.get(station):
+            kw["headers"] = {"If-Modified-Since": self._modified[station]}
+        r = self.session.get(self.URL.format(station), timeout=(4, 6) if conditional else (5, 8), **kw)
+        if r.status_code != 200:            # 304 = unchanged since the last look
             return None
+        modified = (getattr(r, "headers", None) or {}).get("Last-Modified")
+        if modified:
+            self._modified[station] = modified
         lines = [ln.strip() for ln in r.text.splitlines() if ln.strip()]
         if len(lines) < 2:
             return None
         return parse_metar(lines[1], ref=datetime.now(timezone.utc))
+
+    def fetch_changed(self, stations: list[str]) -> list[Observation]:
+        """Quick look at a few stations: only files that changed since the last look are downloaded
+        (If-Modified-Since). Raises when no station could be reached at all."""
+        out: list[Observation] = []
+        errors: list[Exception] = []
+
+        def one(st: str) -> Observation | None:
+            try:
+                return self._one(st, conditional=True)
+            except requests.RequestException as exc:
+                errors.append(exc)
+                return None
+
+        if not stations:
+            return out
+        with ThreadPoolExecutor(max_workers=min(16, len(stations))) as pool:
+            out = [o for o in pool.map(one, stations) if o]
+        if errors and len(errors) == len(stations):
+            raise errors[0]
+        return out
 
     def fetch(self, stations: list[str]) -> list[Observation]:
         out: list[Observation] = []
@@ -251,6 +429,11 @@ class FailoverSource:
     def __init__(self, primary, backup, names: tuple[str, str]) -> None:
         self.primary, self.backup, self.names = primary, backup, names
         self.last_used = names[0]
+
+    def reprime(self) -> None:
+        for src in (self.primary, self.backup):
+            if hasattr(src, "reprime"):
+                src.reprime()
 
     def fetch(self, stations: list[str]) -> list[Observation]:
         try:

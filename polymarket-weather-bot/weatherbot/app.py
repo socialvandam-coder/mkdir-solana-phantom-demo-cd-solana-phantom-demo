@@ -56,11 +56,46 @@ def _setup_logging(home: Path) -> None:
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
+BUNDLE_ID = os.environ.get("WEATHERBOT_BUNDLE_ID", "local.weerbot.app")
+KEEP_AWAKE_TIP = "Laat de Mac aan de stroom en de klep open (klep dicht = bot stopt, tenzij extern scherm)."
+
+
+def caffeinate_cmd(pid: int) -> list[str]:
+    """-i: no idle sleep, -s: no system sleep (only works on mains power), -m: keep the disk awake.
+    -w: stop as soon as the app stops. Closing the lid still sleeps the Mac (unless an
+    external screen is connected)."""
+    return ["caffeinate", "-i", "-s", "-m", "-w", str(pid)]
+
+
 def _keep_awake() -> subprocess.Popen | None:
-    """On a Mac, stop idle sleep while the app runs (closing the lid still sleeps)."""
+    """On a Mac, keep it awake while the app runs."""
     if sys.platform == "darwin" and shutil.which("caffeinate"):
-        return subprocess.Popen(["caffeinate", "-i", "-w", str(os.getpid())])
+        log.info("Mac blijft wakker zolang Weerbot draait. %s", KEEP_AWAKE_TIP)
+        return subprocess.Popen(caffeinate_cmd(os.getpid()))
     return None
+
+
+def disable_app_nap(home: Path, run=subprocess.run, platform: str | None = None) -> bool:
+    """First launch on a Mac: tell macOS not to put Weerbot to 'App Nap' (it has no window, so
+    macOS would otherwise slow it down in the background). Done once per data folder."""
+    if (platform or sys.platform) != "darwin" or not shutil.which("defaults"):
+        return False
+    marker = home / ".app-nap-off"
+    if marker.exists():
+        return False
+    try:
+        r = run(["defaults", "write", BUNDLE_ID, "NSAppSleepDisabled", "-bool", "YES"],
+                capture_output=True, timeout=10)
+    except (OSError, subprocess.SubprocessError) as exc:
+        log.info("could not switch off App Nap: %s", exc)
+        return False
+    if getattr(r, "returncode", 1) != 0:
+        return False
+    try:
+        marker.write_text("NSAppSleepDisabled=YES\n")
+    except OSError:
+        pass
+    return True
 
 
 def show_error(message: str) -> None:
@@ -134,6 +169,7 @@ def _run(args: argparse.Namespace) -> int:
     if engine.cfg.autostart:
         engine.start()
     awake = _keep_awake()
+    threading.Thread(target=disable_app_nap, args=(home,), daemon=True).start()
     if not args.no_browser:
         threading.Timer(0.6, webbrowser.open, args=(url,)).start()
 

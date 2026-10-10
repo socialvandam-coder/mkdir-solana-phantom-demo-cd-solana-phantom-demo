@@ -29,7 +29,11 @@ class Journal:
 
 def read_journal(directory: str, since_ts: float = 0.0) -> list[dict]:
     rows = []
+    # files are per UTC day: a file from before since_ts's day only holds older rows
+    first_day = datetime.fromtimestamp(since_ts, timezone.utc).strftime("%Y-%m-%d") if since_ts > 0 else ""
     for path in sorted(Path(directory).glob("journal-*.jsonl")):
+        if first_day and path.stem[len("journal-"):] < first_day:
+            continue
         for line in path.read_text().splitlines():
             if not line.strip():
                 continue

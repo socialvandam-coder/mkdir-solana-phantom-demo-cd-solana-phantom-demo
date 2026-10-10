@@ -15,7 +15,7 @@ import time
 log = logging.getLogger(__name__)
 
 MIN_GAP_SECONDS = 15 * 60
-KINDS = ("halt", "unconfirmed", "loss", "gap", "geoblock")
+KINDS = ("halt", "unconfirmed", "loss", "gap", "geoblock", "power")
 
 _SCRIPT = ("on run argv\n"
            "display notification (item 2 of argv) with title \"Weerbot\" subtitle (item 1 of argv)\n"

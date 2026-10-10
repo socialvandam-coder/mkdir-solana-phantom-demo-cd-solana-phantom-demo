@@ -8,18 +8,22 @@ import os
 import threading
 import time
 from datetime import datetime, timezone
+from datetime import time as dtime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import requests
 
 from .bankroll import HALT_LABELS, USER_CLEARABLE, Bankroll, next_local_midnight
+from .cities import CITY_TZ
 from .config import Config, load_config
 from .execution import Executor, LiveExecutor, PaperExecutor, Position, position_row
 from .geoblock import check_geoblock
 from .journal import Journal, read_journal
 from .markets import TempEvent, fetch_events
-from .metar import FailoverSource, ObservationStore, make_source, plausible
+from .metar import FailoverSource, ObservationStore, TgftpSource, make_source, plausible
 from .notify import Notifier
+from .power import power_status
 from .strategy import find_signals, guaranteed_extreme
 
 log = logging.getLogger("weatherbot")
@@ -32,6 +36,7 @@ COUNTRY_NL = {"NL": "Nederland", "BE": "België", "DE": "Duitsland", "FR": "Fran
               "PL": "Polen", "CH": "Zwitserland", "AU": "Australië", "SG": "Singapore", "TH": "Thailand"}
 
 GAP_SECONDS = 60          # a longer pause between two loops = the bot was not looking (Mac asleep?)
+SLEEP_DRIFT_SECONDS = 20  # the wall clock ran this much further than the monotonic clock = the Mac slept
 GAP_NOTIFY_SECONDS = 120
 PAUSE_SECONDS = 30 * 60   # automatic pause after an unconfirmed alarm or a burst of order errors
 MAX_CLOCK_SKEW = 10.0
@@ -85,15 +90,33 @@ def short_error(exc: Exception) -> str:
     return str(exc)[:200]
 
 
-# Minutes past the hour when airport reports come out. Routine METARs are stamped :00/:30
-# (or :20/:50), but many stations publish them a few minutes *before* that time - the
-# backtest showed his buys at e.g. :28 for Wellington's :30 report and :55 for Sao Paulo's :00.
-FAST_MINUTES = set(range(45, 60)) | set(range(0, 6)) | set(range(15, 36))
+# Timing. Every station has its own report moments (cities.STATION_MINUTES, then measured):
+# around them the bot looks at that station every 2 s; all stations every POLL_SECONDS.
+HOT_POLL_SECONDS = 2.0          # quick look at the stations whose report is due now
+FAST_LOOP_SECONDS = 1.0         # loop pace in the first minute after a signal or a buy
+HOT_SOURCE_BACKOFF = 60.0       # the quick-look source failed: leave it alone this long
+MIDNIGHT_REFRESH_SECONDS = 60.0  # market list refresh around a watched city's midnight
+MIDNIGHT_FROM, MIDNIGHT_TO = dtime(23, 40), dtime(0, 10)
+MARKET_RETRY_SECONDS = 30.0     # the market list failed: try again after this
+POWER_EVERY_SECONDS = 300.0     # look whether the Mac runs on battery
 
 
-def poll_interval(cfg: Config, now: float | None = None) -> float:
-    minute = time.gmtime(now if now is not None else time.time()).tm_min
-    return min(cfg.poll_seconds, cfg.fast_poll_seconds) if minute in FAST_MINUTES else cfg.poll_seconds
+def near_local_midnight(now_utc: datetime, tzs) -> bool:
+    """True when it is between 23:40 and 00:10 in any of these time zones: a new day's
+    market starts there, so the market list is refreshed every minute."""
+    for tz in tzs:
+        try:
+            t = now_utc.astimezone(ZoneInfo(tz)).time()
+        except (KeyError, ValueError):
+            continue
+        if t >= MIDNIGHT_FROM or t < MIDNIGHT_TO:
+            return True
+    return False
+
+
+def make_hot_source(session: requests.Session):
+    """The quick look: NOAA's per-station files, asked 'changed since?' (If-Modified-Since)."""
+    return TgftpSource(session)
 
 
 def make_session() -> requests.Session:
@@ -132,7 +155,9 @@ class BotRunner:
                        "markets_error": None, "markets_at": None, "last_step": None, "step_ms": None,
                        "geoblock": initial_geo, "metar_fail_streak": 0, "metar_failures_1h": 0,
                        "metar_source": None, "metar_last_ok": None, "clock_skew_s": None,
-                       "stale_stations": [], "loop_gap_s": None}
+                       "stale_stations": [], "loop_gap_s": None, "hot_stations": [], "hot_ok": None,
+                       "hot_error": None, "hot_at": None, "power": None, "stations": [],
+                       "market_refresh_s": cfg.market_refresh_seconds, "last_wake": None}
         self._metar_failures: collections.deque = collections.deque(maxlen=2000)
         if executor is not None:
             self.executor = executor
@@ -144,9 +169,18 @@ class BotRunner:
             self.executor = PaperExecutor(cfg, self.session, journal, bankroll, self.notifier)
         self.executor.recheck_hook = self.recheck_position
         self.source = make_source(cfg.metar_source, self.session)
+        self.hot_source = make_hot_source(self.session)
+        self.power_check = power_status
         self.store = ObservationStore()
         self.events: list[TempEvent] = []
         self.last_refresh = 0.0
+        self._market_retry_at = 0.0
+        self.last_full = 0.0             # last fetch of all stations
+        self._last_hot = 0.0             # last quick look at the hot stations
+        self._hot_down_until = 0.0
+        self.hot: list[str] = []         # stations whose report is due right now
+        self._fetched_once: set[str] = set()   # stations fetched since the start (or the last wake-up)
+        self.last_power = 0.0
         self.last_geo = initial_geo["checked_at"] if initial_geo else 0.0
         self.last_clock = 0.0
         self._last_wall: float | None = None
@@ -155,6 +189,25 @@ class BotRunner:
         self._tripped: dict[str, float] = {
             "onbevestigd": max((p.unconfirmed_at or 0.0 for p in self.executor.unconfirmed()), default=0.0)}
         self.view: dict = {"events": [], "positions": []}
+        self._load_report_timing()
+
+    def _load_report_timing(self) -> None:
+        """Reload the measured report moments of the last 2 days, so a restart keeps them."""
+        try:
+            rows = read_journal(str(self.journal.dir), since_ts=time.time() - 48 * 3600)
+        except OSError:
+            return
+        n = 0
+        for row in rows:
+            if row.get("type") != "report_seen":
+                continue
+            try:
+                n += self.store.note_seen(str(row["station"]), datetime.fromisoformat(row["obs_time"]),
+                                          float(row["first_seen"]))
+            except (KeyError, TypeError, ValueError):
+                continue
+        if n:
+            log.info("reloaded %d measured report times", n)
 
     # -- Polymarket access (geoblock) --------------------------------------
     def check_access(self, now: float) -> dict:
@@ -196,57 +249,156 @@ class BotRunner:
     # -- wake-up / gap detection ----------------------------------------------
     def _detect_gap(self, now: float) -> float | None:
         mono = time.monotonic()
-        gap = None
+        gap, slept, prev = None, False, self._last_wall
         if self._last_wall is not None:
             wall_gap = now - self._last_wall
-            if wall_gap > GAP_SECONDS or wall_gap - (mono - self._last_mono) > 20:
-                gap = wall_gap
+            drift = wall_gap - (mono - self._last_mono)    # the monotonic clock stands still while the Mac sleeps
+            if wall_gap > GAP_SECONDS or drift > SLEEP_DRIFT_SECONDS:
+                gap, slept = wall_gap, drift > SLEEP_DRIFT_SECONDS
         self._last_wall, self._last_mono = now, mono
         if gap is None:
             return None
         self.health["loop_gap_s"] = round(gap)
-        self.journal.write("gap", **{"from": self._last_wall - gap, "to": now, "seconds": round(gap, 1)})
-        log.warning("the bot did not look for %.0f s (%s - %s); checking everything again", gap,
-                    time.strftime("%H:%M", time.localtime(now - gap)), time.strftime("%H:%M", time.localtime(now)))
+        self.health["last_wake"] = {"from": prev, "to": now, "seconds": round(gap), "slept": slept}
+        self.journal.write("gap", **{"from": prev, "to": now, "seconds": round(gap, 1), "slept": slept})
+        t_from, t_to = time.strftime("%H:%M", time.localtime(prev)), time.strftime("%H:%M", time.localtime(now))
+        if slept:
+            log.warning("Mac sliep van %s tot %s: alles wordt opnieuw opgehaald en deze ronde koopt de bot niets",
+                        t_from, t_to)
+        else:
+            log.warning("Bot keek %.0f s niet (van %s tot %s): alles wordt opnieuw opgehaald en deze ronde "
+                        "koopt de bot niets", gap, t_from, t_to)
         if gap > GAP_NOTIFY_SECONDS:
             self.notifier.notify("gap", "Bot stond stil",
                                  f"Weerbot heeft {round(gap / 60)} min niet gekeken (sliep de Mac?). "
                                  "Hij controleert nu alles opnieuw.")
         return gap
 
-    # -- the loop ------------------------------------------------------------
-    def step(self) -> None:
-        t0 = time.time()
-        now_dt = datetime.now(timezone.utc)
-        woke = self._detect_gap(t0) is not None
-        if woke or t0 - self.last_geo >= self.cfg.geoblock_every_seconds:
-            self.check_access(t0)
-        if woke or t0 - self.last_clock >= (600 if "klok" in self.bank.halts else 3600):
-            self._check_clock(t0)
-        if woke or t0 - self.last_refresh >= self.cfg.market_refresh_seconds or not self.events:
-            try:
-                self.events = fetch_events(self.session, now_dt, self.cfg.cities)
-                self.last_refresh = t0
-                self.health.update(markets_ok=True, markets_error=None, markets_at=t0)
-                log.info("watching %d markets on %d stations", len(self.events), len({e.station for e in self.events}))
-            except requests.RequestException as exc:
-                self.health.update(markets_ok=False, markets_error=short_error(exc), markets_at=t0)
-                log.warning("market list failed: %s", short_error(exc))
+    def _after_wake(self, now: float) -> None:
+        """After a sleep: fetch the full report history again, look at every position and its
+        0.99 order right away (live re-posts a missing one), and buy nothing this loop."""
+        if hasattr(self.source, "reprime"):
+            self.source.reprime()
+        self._fetched_once.clear()       # what comes in now was published while we slept
+        self.last_full = 0.0
+        self._hot_down_until = 0.0
+        self.executor.wake(now)
 
-        live_events = [e for e in self.events if e.is_live(now_dt)]
-        stations = sorted({e.station for e in live_events})
-        if stations:
+    def _check_power(self) -> None:
+        prev = self.health.get("power")
+        info = self.power_check()
+        self.health["power"] = info
+        if not info or (prev and prev.get("on_battery") == info.get("on_battery")):
+            return
+        self.journal.write("power", on_battery=info["on_battery"], percent=info.get("percent"))
+        if info["on_battery"]:
+            log.warning("Mac op batterij: sluit de lader aan, anders kan de Mac gaan slapen en stopt de bot")
+            self.notifier.notify("power", "Mac op batterij",
+                                 "Sluit de lader aan en laat de klep open, anders kan de Mac gaan slapen "
+                                 "en stopt de bot.")
+        elif prev:
+            log.info("Mac weer aan de stroom")
+
+    # -- markets -----------------------------------------------------------------
+    def _watched_tzs(self) -> set[str]:
+        return {e.tz for e in self.events} | {CITY_TZ[c] for c in self.cfg.cities if c in CITY_TZ}
+
+    def _refresh_markets(self, t0: float, now_dt: datetime, woke: bool) -> None:
+        every = self.cfg.market_refresh_seconds
+        if near_local_midnight(now_dt, self._watched_tzs()):
+            every = min(every, MIDNIGHT_REFRESH_SECONDS)     # a new day's market is about to start
+        self.health["market_refresh_s"] = every
+        due = woke or ((t0 - self.last_refresh >= every or not self.events) and t0 >= self._market_retry_at)
+        if not due:
+            return
+        try:
+            # also keep what becomes watchable before the next normal refresh (tomorrow from 23:30)
+            self.events = fetch_events(self.session, now_dt, self.cfg.cities,
+                                       ahead_s=self.cfg.market_refresh_seconds + 60)
+            self.last_refresh = t0
+            self.health.update(markets_ok=True, markets_error=None, markets_at=t0)
+            log.info("watching %d markets on %d stations", len(self.events), len({e.station for e in self.events}))
+        except requests.RequestException as exc:
+            self._market_retry_at = t0 + MARKET_RETRY_SECONDS
+            self.health.update(markets_ok=False, markets_error=short_error(exc), markets_at=t0)
+            log.warning("market list failed: %s", short_error(exc))
+
+    # -- weather -----------------------------------------------------------------
+    def _ingest(self, observations, source: str, fetched: list[str]) -> int:
+        """Store new reports. For stations we were already watching, the moment we first saw a
+        report is journaled ('report_seen'): that is how each station's timing is learned."""
+        new = 0
+        for obs in observations:
+            seen = time.time()
+            live = obs.station in self._fetched_once
+            if self.store.add(obs, seen_at=seen, live=live):
+                new += 1
+                if live:
+                    self.journal.write("report_seen", station=obs.station, obs_time=obs.time.isoformat(),
+                                       first_seen=round(seen, 2), delay_s=round(seen - obs.time.timestamp(), 1),
+                                       source=source)
+        self._fetched_once.update(fetched)
+        return new
+
+    def _fetch_weather(self, t0: float, stations: list[str]) -> None:
+        """All stations every POLL_SECONDS; the stations whose report is due now every 2 s."""
+        if not stations:
+            self.hot = []
+            self.health["hot_stations"] = []
+            return
+        full_via_tgftp = False
+        if t0 - self.last_full >= self.cfg.poll_seconds - 0.5:
+            self.last_full = t0
             try:
-                for obs in self.source.fetch(stations):
-                    self.store.add(obs)
+                observations = self.source.fetch(stations)
+                used = getattr(self.source, "last_used", None)
+                self._ingest(observations, used or "?", stations)
+                full_via_tgftp = used == "tgftp"
                 self.health.update(metar_ok=True, metar_error=None, metar_at=t0, metar_fail_streak=0,
-                                   metar_last_ok=t0, metar_source=getattr(self.source, "last_used", None))
+                                   metar_last_ok=t0, metar_source=used)
             except requests.RequestException as exc:
                 self._metar_failures.append(t0)
                 streak = self.health["metar_fail_streak"] + 1
                 self.health.update(metar_ok=False, metar_error=short_error(exc), metar_at=t0,
                                    metar_fail_streak=streak)
                 log.warning("weather data failed (both sources, %dx in a row): %s", streak, short_error(exc))
+        now = time.time()
+        self.hot = [st for st in stations if self.store.is_hot(st, now)]
+        self.health["hot_stations"] = list(self.hot)
+        if (not self.hot or full_via_tgftp or now < self._hot_down_until
+                or now - self._last_hot < HOT_POLL_SECONDS - 0.25):
+            return
+        self._last_hot = now
+        try:
+            self._ingest(self.hot_source.fetch_changed(self.hot), "tgftp", self.hot)
+            self.health.update(hot_ok=True, hot_error=None, hot_at=now)
+        except requests.RequestException as exc:
+            self._hot_down_until = now + HOT_SOURCE_BACKOFF
+            self.health.update(hot_ok=False, hot_error=short_error(exc), hot_at=now)
+            log.info("quick look failed (%s); every %.0f s via the normal source for now", short_error(exc),
+                     self.cfg.poll_seconds)
+
+    # -- the loop ------------------------------------------------------------
+    def step(self) -> None:
+        t0 = time.time()
+        now_dt = datetime.now(timezone.utc)
+        woke = self._detect_gap(t0) is not None
+        if woke:
+            self._after_wake(t0)
+        self.executor.hold_reason = "woke_up" if woke else None     # buy nothing in the loop right after a wake-up
+        if woke or t0 - self.last_geo >= self.cfg.geoblock_every_seconds:
+            self.check_access(t0)
+        if woke or t0 - self.last_clock >= (600 if "klok" in self.bank.halts else 3600):
+            self._check_clock(t0)
+        if woke or t0 - self.last_power >= POWER_EVERY_SECONDS:
+            self.last_power = t0
+            self._check_power()
+        self._refresh_markets(t0, now_dt, woke)
+
+        # today's markets, and tomorrow's from 23:30 local (strategy.day_observations keeps them apart)
+        live_events = [e for e in self.events if e.is_watchable(now_dt)]
+        stations = sorted({e.station for e in live_events})
+        self._fetch_weather(t0, stations)
         while self._metar_failures and self._metar_failures[0] < t0 - 3600:
             self._metar_failures.popleft()
         self.health["metar_failures_1h"] = len(self._metar_failures)
@@ -263,6 +415,7 @@ class BotRunner:
         self.tripwires(time.time(), live_events, now_dt)
 
         self.health.update(last_step=time.time(), step_ms=round((time.time() - t0) * 1000))
+        self.health["stations"] = self._station_rows(live_events, now_dt)
         self.view = self._build_view(live_events, now_dt)
 
     # -- data re-check for an unconfirmed position ---------------------------------
@@ -360,7 +513,7 @@ class BotRunner:
         else:
             self._resume("klok", "auto")
         # weather data: failing again and again, or most stations silent
-        events = live_events if live_events is not None else [e for e in self.events if e.is_live(now_dt)]
+        events = live_events if live_events is not None else [e for e in self.events if e.is_watchable(now_dt)]
         stations = sorted({e.station for e in events})
         stale = [st for st in stations if self.store.is_stale(st, now_dt, factor=1.5, extra_s=300)]
         self.health["stale_stations"] = stale
@@ -372,21 +525,38 @@ class BotRunner:
         else:
             self._resume("weerdata", "auto")
 
+    def _station_rows(self, live_events: list[TempEvent], now_dt: datetime) -> list[dict]:
+        """Per watched station: last report, cadence, when its reports come out, measured delay."""
+        cities: dict[str, set[str]] = {}
+        for e in live_events:
+            cities.setdefault(e.station, set()).add(e.city)
+        rows = []
+        for st in sorted(cities):
+            row = self.store.station_status(st, now_dt)
+            row["cities"] = sorted(cities[st])
+            rows.append(row)
+        return rows
+
     def _build_view(self, live_events: list[TempEvent], now_dt: datetime) -> dict:
+        stations = {r["station"]: r for r in self.health.get("stations") or []}
         events = []
-        for e in sorted(live_events, key=lambda e: (e.city, e.kind)):
+        for e in sorted(live_events, key=lambda e: (e.city, e.kind, e.day)):
             obs = self.store.get(e.station)
             ext = guaranteed_extreme(e, obs)
             sigs = find_signals(e, obs, self.cfg.safety_margin, self.cfg.enable_yes_bets)
             latest = obs[-1] if obs else None
+            st = stations.get(e.station) or {}
             events.append({
                 "city": e.city, "kind": e.kind, "station": e.station, "unit": e.unit,
+                "day": e.day.isoformat(), "tomorrow": e.is_tomorrow(now_dt),
                 "local_time": e.local_now(now_dt).strftime("%H:%M"),
                 "observed": ext[0] if ext else None,
                 "latest_temp_c": latest.temp_c if latest else None,
                 "obs_age_min": round((now_dt - latest.time).total_seconds() / 60, 1) if latest else None,
                 "dead": len(sigs), "buckets": len(e.markets), "slug": e.slug,
                 "locked": e.slug in self.executor.locked_events,
+                "report_minutes": st.get("report_minutes", []), "schedule": st.get("schedule"),
+                "delay_s": st.get("publish_delay_s_p50"), "hot": e.station in self.hot,
             })
         return {"events": events, "positions": self.executor.position_rows(time.time())}
 
@@ -400,10 +570,18 @@ class BotRunner:
             except Exception as exc:  # noqa: BLE001 - keep the loop alive, but record what happened
                 log.exception("unexpected error")
                 self.journal.write("error", error=repr(exc))
-            wait = poll_interval(self.cfg)
-            if self.executor.wants_fast_loop(time.time()):
-                wait = min(wait, self.cfg.fast_poll_seconds)   # first minute after a signal or buy
-            stop.wait(max(0.5, wait - (time.time() - t0)))
+            now = time.time()
+            stop.wait(max(0.5, self.next_wait(now) - (now - t0)))
+
+    def next_wait(self, now: float) -> float:
+        """Seconds between two loops: POLL_SECONDS, 2 s while a station's report is due,
+        1 s in the first minute after a signal or a buy."""
+        wait = self.cfg.poll_seconds
+        if self.hot and now >= self._hot_down_until:
+            wait = min(wait, HOT_POLL_SECONDS)
+        if self.executor.wants_fast_loop(now):
+            wait = min(wait, FAST_LOOP_SECONDS)
+        return wait
 
 
 class _FeedLogHandler(logging.Handler):
@@ -632,5 +810,5 @@ class Engine:
                          "event_pct": cfg.event_pct, "max_drawdown_pct": cfg.max_drawdown_pct,
                          "max_trade_usdc": cfg.max_trade_usdc, "max_event_usdc": cfg.max_event_usdc,
                          "max_buy_price": cfg.max_buy_price, "sell_price": cfg.sell_price,
-                         "confirm_seconds": cfg.confirm_seconds},
+                         "confirm_seconds": cfg.confirm_seconds, "hot_poll_seconds": HOT_POLL_SECONDS},
         }

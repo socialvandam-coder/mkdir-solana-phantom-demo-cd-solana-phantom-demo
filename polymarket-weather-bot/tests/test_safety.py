@@ -658,8 +658,7 @@ class GeoblockTests(unittest.TestCase):
     def test_run_loop_survives_a_flip(self):
         answers = [{"blocked": False, "country": "US"}, {"blocked": True, "country": "US"}]
         with tempfile.TemporaryDirectory() as d, mock.patch("weatherbot.engine.fetch_events", return_value=[]):
-            rig = runner_rig(d, "live", geo=answers, geoblock_every_seconds=0, poll_seconds=0.1,
-                             fast_poll_seconds=0.1)
+            rig = runner_rig(d, "live", geo=answers, geoblock_every_seconds=0, poll_seconds=0.1)
             open_position(rig, time.time())
             stop = threading.Event()
             t = threading.Thread(target=rig.runner.run, args=(stop,), daemon=True)

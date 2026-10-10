@@ -6,7 +6,8 @@ import logging
 import math
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from datetime import time as dtime
 from zoneinfo import ZoneInfo
 
 import requests
@@ -17,6 +18,9 @@ log = logging.getLogger(__name__)
 
 GAMMA = "https://gamma-api.polymarket.com"
 TAG_DAILY_TEMPERATURE = 103040  # gamma tag "daily-temperature"
+# Tomorrow's market is watched from 23:30 local time: the report stamped 00:00 of the new day is
+# often out a few minutes early (he bought 35 times between 23:53 and 23:59 on the next day's market).
+WATCH_TOMORROW_FROM = dtime(23, 30)
 
 MONTHS = {m: i for i, m in enumerate(
     ["january", "february", "march", "april", "may", "june", "july",
@@ -102,6 +106,20 @@ class TempEvent:
         """True while it is still (or already) the market's day at the station."""
         return self.local_now(now_utc).date() == self.day
 
+    def is_tomorrow(self, now_utc: datetime) -> bool:
+        """The market's day has not started yet at the station."""
+        return self.local_now(now_utc).date() < self.day
+
+    def is_watchable(self, now_utc: datetime) -> bool:
+        """The bot looks at this market: on its own day, and from 23:30 local the evening before.
+
+        Which reports count is decided by strategy.day_observations (the report's own local date),
+        so a report stamped 00:00 that is out at 23:55 counts for tomorrow and not for today."""
+        local = self.local_now(now_utc)
+        if local.date() == self.day:
+            return True
+        return self.day == local.date() + timedelta(days=1) and local.time() >= WATCH_TOMORROW_FROM
+
 
 def _tick(value) -> str:
     try:
@@ -179,8 +197,10 @@ def parse_event(ev: dict, include_closed: bool = False) -> TempEvent | None:
                      station=station, unit=unit or "C", day=day, tz=tz, markets=markets)
 
 
-def fetch_events(session: requests.Session, now_utc: datetime, cities: tuple[str, ...] = ()) -> list[TempEvent]:
-    """All open temperature events whose day is 'today' somewhere in the world right now."""
+def fetch_events(session: requests.Session, now_utc: datetime, cities: tuple[str, ...] = (),
+                 ahead_s: float = 0.0) -> list[TempEvent]:
+    """All open temperature events the bot should watch now (see TempEvent.is_watchable), plus
+    those that become watchable within `ahead_s` seconds (so they are there before the next refresh)."""
     raw: list[dict] = []
     offset = 0
     while True:
@@ -200,7 +220,7 @@ def fetch_events(session: requests.Session, now_utc: datetime, cities: tuple[str
             continue
         if cities and te.city not in cities:
             continue
-        if te.is_live(now_utc):
+        if te.is_watchable(now_utc) or (ahead_s > 0 and te.is_watchable(now_utc + timedelta(seconds=ahead_s))):
             events.append(te)
     return events
 

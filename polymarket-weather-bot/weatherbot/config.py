@@ -59,9 +59,8 @@ class Config:
     fee_rate: float = 0.05              # estimate: fee/share ~= fee_rate * min(p, 1-p)
 
     # --- timing ---
-    poll_seconds: float = 10.0
-    fast_poll_seconds: float = 3.0      # around METAR release minutes (:50-:05, :20-:35), when he trades
-    market_refresh_seconds: float = 600.0
+    poll_seconds: float = 10.0          # all stations; a station whose report is due now: every 2 s
+    market_refresh_seconds: float = 600.0   # every 60 s around a watched city's midnight
     fresh_seconds: float = 600.0        # only buy within this many seconds of the report's own time
     recheck_every_seconds: float = 30.0     # look at the book again this often (every 5 s in the first minute)
     rebuy_window_seconds: float = 60.0      # a rebuy right after the first fill must not be cheaper than first - 0.03
@@ -112,7 +111,6 @@ def load_config(env_file: str | os.PathLike = ".env") -> Config:
         max_event_usdc=_get("MAX_EVENT_USDC", 500.0, float),
         fee_rate=_get("FEE_RATE", 0.05, float),
         poll_seconds=_get("POLL_SECONDS", 10.0, float),
-        fast_poll_seconds=_get("FAST_POLL_SECONDS", 3.0, float),
         market_refresh_seconds=_get("MARKET_REFRESH_SECONDS", 600.0, float),
         fresh_seconds=_get("FRESH_SECONDS", 600.0, float),
         recheck_every_seconds=_get("RECHECK_EVERY_SECONDS", 30.0, float),
