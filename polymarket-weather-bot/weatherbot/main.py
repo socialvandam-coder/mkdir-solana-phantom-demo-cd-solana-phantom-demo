@@ -15,7 +15,7 @@ import requests
 
 from .bankroll import Bankroll
 from .config import Config, load_config
-from .engine import BotRunner, TradingNotAllowed, make_session
+from .engine import BotRunner, TradingNotAllowed, geo_info, make_session, require_live_allowed
 from .geoblock import check_geoblock
 from .journal import Journal
 from .markets import fetch_events
@@ -28,7 +28,10 @@ log = logging.getLogger("weatherbot")
 def run_check(cfg: Config, bankroll: Bankroll | None = None) -> dict:
     """Connection test; returns a dict (printed by the CLI, shown by the dashboard)."""
     session = make_session()
-    out: dict = {"geoblock": check_geoblock(session), "markets": None, "stations": [], "weather": None,
+    geo = check_geoblock(session)
+    geo.pop("ip", None)
+    geo["live_allowed"] = geo_info(geo, cfg, 0)["live_allowed"]
+    out: dict = {"geoblock": geo, "markets": None, "stations": [], "weather": None,
                  "events": [], "account": None}
     now = datetime.now(timezone.utc)
     try:
@@ -84,10 +87,13 @@ def print_check(res: dict) -> int:
 def run(cfg: Config) -> None:
     journal = Journal(cfg.journal_dir)
     bank = Bankroll(cfg, cfg.state_file)
-    try:
-        runner = BotRunner(cfg, journal, bank)
-    except TradingNotAllowed as exc:
-        raise SystemExit(f"{exc} Zet MODE=paper.") from None
+    geo = None
+    if cfg.live:
+        try:
+            geo = require_live_allowed(make_session(), cfg)
+        except TradingNotAllowed as exc:
+            raise SystemExit(f"{exc} Zet MODE=paper.") from None
+    runner = BotRunner(cfg, journal, bank, initial_geo=geo)
     log.info("%s mode - balance %.2f (start %.2f)", cfg.mode.upper(), bank.balance, bank.start_amount)
     journal.write("start", mode=cfg.mode)
     stop = threading.Event()
@@ -95,8 +101,6 @@ def run(cfg: Config) -> None:
         runner.run(stop)
     except KeyboardInterrupt:
         stop.set()
-    except TradingNotAllowed as exc:
-        raise SystemExit(str(exc)) from None
     finally:
         journal.write("stop")
 

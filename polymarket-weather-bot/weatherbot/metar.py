@@ -103,14 +103,41 @@ def displayed_bounds(obs: Observation, unit: str) -> tuple[int, int]:
     return math.ceil(f_lo - 0.5 - 1e-9), math.floor(f_hi + 0.5 + 1e-9)
 
 
+# A report outside these limits is a typo or a decoding error, never a reading to trade on.
+MIN_TEMP_C, MAX_TEMP_C = -60, 55
+MAX_FUTURE = timedelta(minutes=10)
+
+
+def plausible(obs: Observation, now: datetime | None = None) -> bool:
+    """False for reports timed more than 10 min in the future or outside -60..55 °C."""
+    now = now or datetime.now(timezone.utc)
+    if obs.time > now + MAX_FUTURE:
+        return False
+    if not MIN_TEMP_C <= obs.temp_c <= MAX_TEMP_C:
+        return False
+    if obs.temp_c_tenths is not None and not MIN_TEMP_C <= obs.temp_c_tenths <= MAX_TEMP_C:
+        return False
+    return True
+
+
+def default_cadence_min(station: str) -> float:
+    """US (K*) and Canadian (C*) stations report hourly; most others every 30 minutes."""
+    return 60.0 if station[:1] in ("K", "C") else 30.0
+
+
 class ObservationStore:
     """Keeps the last ~2 days of reports per station."""
 
     def __init__(self) -> None:
         self._by_station: dict[str, dict[datetime, Observation]] = {}
+        self.rejected = 0     # implausible reports thrown away
 
-    def add(self, obs: Observation) -> bool:
-        """Returns True if this report is new."""
+    def add(self, obs: Observation, now: datetime | None = None) -> bool:
+        """Returns True if this report is new. Implausible reports are rejected (False)."""
+        if not plausible(obs, now):
+            self.rejected += 1
+            log.warning("ignored implausible report %s %s: %s", obs.station, obs.time.isoformat(), obs.raw[:80])
+            return False
         bucket = self._by_station.setdefault(obs.station, {})
         is_new = obs.time not in bucket
         bucket[obs.time] = obs  # a correction (COR) for the same time replaces the old one
@@ -122,6 +149,25 @@ class ObservationStore:
     def latest_time(self, station: str) -> datetime | None:
         obs = self._by_station.get(station)
         return max(obs) if obs else None
+
+    def cadence_min(self, station: str) -> float:
+        """Usual minutes between reports: median gap of the last 6 reports (or the default)."""
+        times = sorted(self._by_station.get(station, {}))[-6:]
+        gaps = sorted((b - a).total_seconds() / 60 for a, b in zip(times, times[1:]) if b > a)
+        if not gaps:
+            return default_cadence_min(station)
+        mid = len(gaps) // 2
+        return gaps[mid] if len(gaps) % 2 else (gaps[mid - 1] + gaps[mid]) / 2
+
+    def age_s(self, station: str, now: datetime) -> float | None:
+        """Seconds since the station's newest report (None = no report yet)."""
+        last = self.latest_time(station)
+        return (now - last).total_seconds() if last else None
+
+    def is_stale(self, station: str, now: datetime, factor: float = 2.0, extra_s: float = 0.0) -> bool:
+        """The newest report is older than `factor` x the station's cadence (+ extra_s), or there is none."""
+        age = self.age_s(station, now)
+        return age is None or age > factor * self.cadence_min(station) * 60 + extra_s
 
     def prune(self, now: datetime, keep: timedelta = timedelta(hours=48)) -> None:
         for st, obs in self._by_station.items():

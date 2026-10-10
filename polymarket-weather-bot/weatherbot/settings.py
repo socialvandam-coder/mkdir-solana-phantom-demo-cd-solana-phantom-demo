@@ -30,11 +30,22 @@ class Field:
 
 FIELDS: tuple[Field, ...] = (
     Field("MODE", "mode", "choice", "Modus", "paper = oefenen zonder geld, live = echt geld", choices=("paper", "live")),
-    Field("TRADE_PCT", "trade_pct", "float", "Max per aankoop (% van saldo)", "Groeit mee met je saldo", 1, 50),
-    Field("MARKET_PCT", "market_pct", "float", "Max per vak per dag (% van saldo)", "", 1, 100),
+    Field("TRADE_PCT", "trade_pct", "float", "Max per aankoop (% van saldo)",
+          "Groeit mee met je saldo. Een foute meting kost bijna de hele aankoop, daarom 5%.", 1, 50),
+    Field("MARKET_PCT", "market_pct", "float", "Max per vak per dag (% van saldo)",
+          "Ruimte voor één aankoop plus één snelle bijkoop", 1, 100),
+    Field("EVENT_PCT", "event_pct", "float", "Max per markt tegelijk (% van saldo)",
+          "Eén foute meting raakt vaak 2-3 vakken van dezelfde markt; telt alleen nog niet verkochte posities", 1, 50),
     Field("OPEN_PCT", "open_pct", "float", "Max tegelijk in posities (% van saldo)", "", 5, 100),
-    Field("DAILY_LOSS_PCT", "daily_loss_pct", "float", "Stop na verlies op een dag (%)", "Daarna koopt hij die dag niets meer", 1, 50),
-    Field("MAX_BUY_PRICE", "max_buy_price", "float", "Hoogste aankoopprijs", "HighTempTation: tot ~0,98", 0.5, 0.989),
+    Field("DAILY_LOSS_PCT", "daily_loss_pct", "float", "Stop na verlies op een dag (%)",
+          "Daarna koopt hij die dag niets meer (open posities tellen mee)", 1, 50),
+    Field("MAX_DRAWDOWN_PCT", "max_drawdown_pct", "float", "Noodrem: daling vanaf je hoogste stand (%)",
+          "Daarna koopt hij niets meer tot jij op Hervat drukt", 5, 50),
+    Field("MAX_TRADE_USDC", "max_trade_usdc", "float", "Max per aankoop ($)",
+          "Pas verhogen na 2 weken live zonder problemen", 5, 100000),
+    Field("MAX_EVENT_USDC", "max_event_usdc", "float", "Max per markt tegelijk ($)", "", 5, 100000),
+    Field("MAX_BUY_PRICE", "max_buy_price", "float", "Hoogste aankoopprijs",
+          "Tussen 0,975 en 0,98 verdiende HighTempTation maar 1,4% per trade; 0,98 is het maximum", 0.5, 0.98),
     Field("SELL_PRICE", "sell_price", "float", "Verkoopprijs", "HighTempTation: 0,99", 0.9, 0.999),
     Field("MIN_EDGE", "min_edge", "float", "Minimale winst per share", "Na geschatte fees", 0.0, 0.2),
     Field("SAFETY_MARGIN", "safety_margin", "int", "Veiligheidsmarge (graden)", "0 = zoals hij, 1 = veiliger maar minder trades", 0, 3),
@@ -116,14 +127,21 @@ def _fmt(value) -> str:
     return str(value)
 
 
-def current(cfg) -> dict:
+def current(cfg, geo: dict | None = None) -> dict:
+    """geo = the last Polymarket access check (engine.live_access()); live is offered only when allowed."""
+    from .engine import live_allowed, live_block_text   # late import: engine imports this module's users
+
     vals = {f.key: _fmt(getattr(cfg, f.attr)) for f in FIELDS}
+    allowed = live_allowed(geo, cfg)
     return {
         "values": vals,
         "fields": [{"key": f.key, "kind": f.kind, "label": f.label, "help": f.help, "lo": f.lo, "hi": f.hi,
                     "choices": list(f.choices)} for f in FIELDS],
         "private_key_set": bool(cfg.private_key),
         "keychain": _use_keychain(),
+        "live_allowed": allowed,
+        "live_block_text": "" if allowed else live_block_text(geo),
+        "country": (geo or {}).get("country"),
     }
 
 

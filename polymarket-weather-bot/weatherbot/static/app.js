@@ -12,6 +12,7 @@ let pollTimer = null;
 // ---------- formatting ----------
 const nf2 = new Intl.NumberFormat("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const nf0 = new Intl.NumberFormat("nl-NL", { maximumFractionDigits: 0 });
+const nf3 = new Intl.NumberFormat("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 3 });
 function money(v, signed = false) {
   if (v === null || v === undefined || isNaN(v)) return "–";
   const s = "$" + nf2.format(Math.abs(v));
@@ -38,7 +39,7 @@ function ago(sec) {
 function dirClass(v) { return v > 0 ? "up" : v < 0 ? "down" : ""; }
 function arrow(v) { return v > 0 ? "▲ " : v < 0 ? "▼ " : ""; }
 const KIND = { high: "Max", low: "Min" };
-const HOW = { sold: "verkocht", resolved_win: "uitslag (gewonnen)", resolved_loss: "uitslag (verloren)" };
+const HOW = { sold: "verkocht", resolved_win: "uitslag (gewonnen)", resolved_loss: "uitslag (verloren)", exit: "verkocht na controle" };
 
 // ---------- DOM helpers ----------
 function el(tag, attrs = {}, text) {
@@ -291,8 +292,7 @@ function setStatus(state) {
   const [cls, text] = map[state.status] || ["", state.status];
   st.replaceChildren(el("span", { class: "dot " + cls }), el("span", {}, text));
   $("mode").textContent = state.mode === "live" ? "LIVE · echt geld" : "Oefenen · nepgeld";
-  $("btn-start").disabled = state.status === "running";
-  $("btn-stop").disabled = state.status !== "running";
+  setControls(state);
 
   const banner = $("banner");
   const msgs = [];
@@ -310,6 +310,75 @@ function setStatus(state) {
     });
     banner.hidden = false;
   } else banner.hidden = true;
+}
+
+// One toggle: 'Start' (loop off, or buying paused) / 'Pauzeer kopen' (buying). Selling never stops.
+function setControls(state) {
+  const running = state.status === "running";
+  const halt = state.halt || { on: false };
+  const buying = running && !halt.on;
+  const btn = $("btn-start");
+  btn.textContent = buying ? "Pauzeer kopen" : "Start";
+  btn.dataset.action = !running ? "start" : buying ? "pause" : "resume";
+  // only reasons that lift themselves left (weather data, access, daily loss): nothing to press
+  btn.disabled = running && halt.on && !halt.can_resume;
+  btn.title = btn.disabled ? "Gaat vanzelf verder zodra het probleem weg is" : "";
+  $("btn-halt").disabled = (halt.reasons || []).some((r) => r.reason === "noodstop");
+
+  const line = $("halt-line");
+  if (halt.on) {
+    const labels = (halt.reasons || []).map((r) => r.label);
+    let text = `Gepauzeerd sinds ${clock(halt.since)} - ${labels.join(", ")}`;
+    if (halt.can_resume) text += ". Druk op Start om weer te kopen.";
+    else if (halt.auto_resume_at) text += `. Gaat vanzelf verder om ${clock(halt.auto_resume_at)}.`;
+    else text += ". Gaat vanzelf verder als het probleem weg is.";
+    line.replaceChildren(el("span", { class: "dot " + (halt.by === "user" ? "warning" : "critical") }),
+      document.createTextNode(" " + text));
+    if (state.loop_alive) line.appendChild(el("span", { class: "hide-phone" }, " Open posities worden gewoon verkocht."));
+    line.hidden = false;
+  } else line.hidden = true;
+
+  const open = (state.positions || []).length;
+  const stall = $("stall-banner");
+  if (!state.loop_alive && open > 0) {
+    stall.textContent = open === 1
+      ? "Bot staat stil: 1 open positie wordt nu niet verkocht of gecontroleerd. Druk op Start."
+      : `Bot staat stil: ${open} open posities worden nu niet verkocht of gecontroleerd. Druk op Start.`;
+    stall.hidden = false;
+  } else stall.hidden = true;
+}
+
+// ---------- open positions ----------
+let SHOW_ALL_POS = false;
+const POS_STATE = {
+  selling: ["", (p) => `verkoop staat op ${nf2.format(p.sell_price)}`],
+  confirmed: ["good", () => "bevestigd"],
+  unconfirmed: ["critical", (p) => `ONBEVESTIGD ${ago(p.age_s)}`],
+  waiting: ["warning", () => "wacht op uitslag"],
+  exiting: ["critical", () => "verkoopt nu (meting klopte niet)"],
+};
+function renderPositions(state) {
+  const ps = (state.positions || []).slice().sort((a, b) =>
+    (a.state === "unconfirmed" || a.state === "exiting" ? 0 : 1) - (b.state === "unconfirmed" || b.state === "exiting" ? 0 : 1) || a.age_s - b.age_s);
+  const cost = ps.reduce((sum, p) => sum + (p.cost || 0), 0);
+  $("pos-head").textContent = `Open: ${ps.length}` + (ps.length ? ` · ${money(cost)} vast` : "");
+  const phone = window.matchMedia("(max-width: 520px)").matches;
+  const shown = SHOW_ALL_POS || !phone ? ps : ps.slice(0, 3);
+  const ul = $("pos-list"); ul.replaceChildren();
+  if (!ps.length) ul.appendChild(el("li", { class: "pos-empty" }, "Geen open posities."));
+  shown.forEach((p) => {
+    const li = el("li", { class: "pos-row" });
+    const what = `${p.city} ${(KIND[p.kind] || "").toLowerCase()} ${p.bucket} · ${p.outcome}`;
+    const bid = p.bid === null || p.bid === undefined ? "geen bod" : "bod nu " + nf3.format(p.bid);
+    li.appendChild(el("span", { class: "pos-what" }, what));
+    li.appendChild(el("span", { class: "pos-nums" }, `gekocht ${nf3.format(p.avg)} · ${bid} · ${ago(p.age_s)}`));
+    const [cls, txt] = POS_STATE[p.state] || ["", () => p.state];
+    li.appendChild(el("span", { class: "chip " + cls }, txt(p)));
+    ul.appendChild(li);
+  });
+  const more = $("pos-more");
+  more.hidden = !phone || ps.length <= 3;
+  more.textContent = SHOW_ALL_POS ? "minder" : `meer (${ps.length - 3})`;
 }
 
 function render(state) {
@@ -345,11 +414,7 @@ function render(state) {
       ago(r.held_s), HOW[r.how] || r.how]),
     "Vandaag nog niets afgesloten. Zodra een meting een vak onmogelijk maakt en er goedkope orders liggen, koopt de bot.");
 
-  fillTable($("pos-table"),
-    [{ label: "Stad" }, { label: "Vak" }, { label: "Kant" }, { label: "Shares", num: true }, { label: "Inzet", num: true }, { label: "Sinds", num: true }],
-    (state.positions || []).map((p) => [p.city + " " + (KIND[p.kind] || ""), p.bucket, el("span", { class: "tag" }, p.outcome),
-      nf2.format(p.shares), money(p.cost), ago(p.age_s)]),
-    "Geen open posities.");
+  renderPositions(state);
 
   // health
   const h = state.health || {};
@@ -372,7 +437,12 @@ function render(state) {
   }
   items.push(["Markten", h.markets_ok ? "good" : h.markets_ok === false ? "critical" : "", h.markets_ok ? `${(state.events || []).length} actief` : h.markets_ok === false ? "fout" : "nog niet geladen"]);
   items.push(["Laatste ronde", h.last_step && now - h.last_step < 60 ? "good" : h.last_step ? "warning" : "", h.last_step ? `${ago(now - h.last_step)} geleden · ${h.step_ms} ms` : "–"]);
-  if (h.geoblock) items.push(["Polymarket-toegang", h.geoblock.blocked ? "critical" : "good", h.geoblock.blocked ? `geblokkeerd (${h.geoblock.country || "?"})` : `toegestaan (${h.geoblock.country || "?"})`]);
+  if (h.geoblock) {
+    const g = h.geoblock, where = g.country || "?";
+    // grey in paper mode (nothing at stake), red when live trading is not possible in live mode
+    const cls = g.live_allowed ? "good" : state.mode === "live" ? "critical" : "";
+    items.push(["Live", cls, g.live_allowed ? `toegestaan (${where})` : `niet toegestaan (${where})` + (state.mode === "live" ? " · kopen gepauzeerd" : " · alleen oefenmodus")]);
+  }
   const ul = $("health"); ul.replaceChildren();
   items.forEach(([what, cls, text]) => {
     const li = el("li"); li.appendChild(el("span", { class: "dot " + cls })); li.appendChild(el("span", { class: "what" }, what)); li.appendChild(el("span", {}, text));
@@ -448,17 +518,30 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) poll
 
 // ---------- controls ----------
 $("btn-start").addEventListener("click", async () => {
-  $("btn-start").disabled = true;
-  try { const r = await api("/api/start", {}); if (!r.ok && r.error) alert(r.error); } catch (e) { alert(e.message); }
+  const btn = $("btn-start");
+  const action = btn.dataset.action || "start";
+  btn.disabled = true;
+  try {
+    if (action === "pause") await api("/api/pause", { on: true });
+    else {
+      const r = await api(action === "resume" ? "/api/resume" : "/api/start", {});
+      if (!r.ok && r.error) alert(r.error);
+    }
+  } catch (e) { alert(e.message); }
   poll();
 });
-$("btn-stop").addEventListener("click", async () => {
-  $("btn-stop").disabled = true;
-  try { await api("/api/stop", {}); } catch (e) { alert(e.message); }
+$("btn-halt").addEventListener("click", async () => {
+  if (!confirm("Noodstop: de bot koopt niets meer tot je op Start drukt.\n\nOpen posities blijven te koop staan voor 0,99 en worden gewoon verder verkocht. Doorgaan?")) return;
+  try { await api("/api/halt", {}); } catch (e) { alert(e.message); }
   poll();
 });
+$("pos-more").addEventListener("click", () => { SHOW_ALL_POS = !SHOW_ALL_POS; if (STATE) renderPositions(STATE); });
 $("btn-quit").addEventListener("click", async () => {
-  if (!confirm("Weerbot afsluiten? De bot stopt dan met handelen.")) return;
+  const open = STATE ? (STATE.positions || []).length : 0;
+  const question = open > 0
+    ? `Er ${open === 1 ? "staat 1 positie" : `staan ${open} posities`} open; die worden pas verkocht als de app weer draait. Toch afsluiten?`
+    : "Weerbot afsluiten? De bot stopt dan met handelen.";
+  if (!confirm(question)) return;
   try { await api("/api/shutdown", {}); } catch (e) { /* already gone */ }
   clearTimeout(pollTimer);
   document.body.replaceChildren(el("main", {}, "Weerbot is afgesloten. Je kunt dit venster sluiten."));
@@ -509,6 +592,9 @@ function buildFields(s) {
   s.fields.filter((f) => f.key === "FUNDER" || f.key === "SIGNATURE_TYPE").forEach((f) => {
     const row = fieldRow(f, s.values[f.key]); row.classList.add("dyn"); live.appendChild(row);
   });
+  const blocked = $("live-blocked");
+  blocked.hidden = !!s.live_allowed;
+  blocked.textContent = s.live_allowed ? "" : (s.live_block_text || "Live handelen is vanaf hier niet toegestaan. Alleen oefenmodus.");
   $("pk-help").textContent = s.private_key_set
     ? "Opgeslagen" + (s.keychain ? " in je Mac-sleutelhanger" : "") + ". Laat leeg om zo te houden."
     : "Alleen nodig voor live. Wordt " + (s.keychain ? "in je Mac-sleutelhanger" : "lokaal") + " bewaard en nooit meer getoond.";
@@ -521,7 +607,11 @@ function fieldRow(f, value) {
   let input;
   if (f.kind === "choice") {
     input = el("select", { id });
-    f.choices.forEach((c) => { const o = el("option", { value: c }, c === "paper" ? "paper (oefenen)" : c === "live" ? "live (echt geld)" : c); input.appendChild(o); });
+    f.choices.forEach((c) => {
+      const o = el("option", { value: c }, c === "paper" ? "paper (oefenen)" : c === "live" ? "live (echt geld)" : c);
+      if (f.key === "MODE" && c === "live" && SETTINGS && !SETTINGS.live_allowed && value !== "live") o.disabled = true;
+      input.appendChild(o);
+    });
     input.value = value;
   } else if (f.kind === "bool") {
     input = el("input", { id, type: "checkbox" }); input.checked = value === "true";
@@ -532,7 +622,8 @@ function fieldRow(f, value) {
   }
   input.dataset.key = f.key; input.dataset.kind = f.kind;
   row.appendChild(input);
-  if (f.help) row.appendChild(el("div", { class: "help" }, f.help));
+  const help = f.key === "MODE" && SETTINGS && !SETTINGS.live_allowed ? (SETTINGS.live_block_text || f.help) : f.help;
+  if (help) row.appendChild(el("div", { class: "help" }, help));
   return row;
 }
 $("btn-settings").addEventListener("click", async () => {
@@ -580,7 +671,7 @@ $("btn-check").addEventListener("click", async () => {
   try {
     const { result: r } = await api("/api/check", {});
     const lines = [];
-    lines.push(`Polymarket-toegang: ${r.geoblock.blocked ? "GEBLOKKEERD" : "toegestaan"} (${r.geoblock.country || r.geoblock.error || "?"})`);
+    lines.push(`Live handelen: ${r.geoblock.live_allowed ? "toegestaan" : "niet toegestaan, alleen oefenmodus"} (${r.geoblock.country || r.geoblock.error || "?"})`);
     lines.push(`Markten: ${r.markets && r.markets.ok ? r.markets.count + " actief" : "fout: " + (r.markets && r.markets.error)}`);
     lines.push(`Weerdata (${r.weather ? r.weather.source : "?"}): ${r.weather && r.weather.ok ? "ok, " + r.weather.reports + " metingen" : "fout: " + (r.weather && r.weather.error)}`);
     if (r.account) lines.push(`Live account: ${r.account.ok ? "ok, saldo $" + r.account.usdc : "fout: " + r.account.error}`);

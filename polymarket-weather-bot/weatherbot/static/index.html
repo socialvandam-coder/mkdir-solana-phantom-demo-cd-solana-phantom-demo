@@ -15,9 +15,11 @@
     <span id="status" class="pill"><span class="dot"></span><span>laden…</span></span>
     <div class="spacer"></div>
     <button id="btn-start" class="primary" type="button">Start</button>
-    <button id="btn-stop" type="button">Stop</button>
+    <button id="btn-halt" class="danger textbtn" type="button" title="Koopt niets meer; open posities worden gewoon verkocht">Noodstop</button>
     <button id="btn-settings" type="button">Instellingen</button>
     <button id="btn-quit" class="danger" type="button">Afsluiten</button>
+    <div id="stall-banner" class="topbar-alert critical" role="alert" hidden></div>
+    <div id="halt-line" class="topbar-line" role="status" hidden></div>
   </header>
 
   <div id="banner" class="banner" role="status" hidden></div>
@@ -80,9 +82,11 @@
     </section>
 
     <div class="grid2">
-      <section class="card">
-        <h2>Open posities</h2>
-        <div class="table-wrap"><table id="pos-table"></table></div>
+      <section class="card" id="pos-card">
+        <div class="card-head"><h2>Open posities</h2><span class="sub" id="pos-head">Open: 0</span></div>
+        <ul class="pos-list" id="pos-list"></ul>
+        <button type="button" id="pos-more" class="more" hidden>meer</button>
+        <div class="note" id="pos-note">Normaal is een aankoop binnen enkele seconden doorverkocht voor 0,99. Lukt dat na 30 seconden niet, dan slaat de bot alarm, koopt hij niets meer in die markt en controleert hij de meting opnieuw.</div>
       </section>
       <section class="card">
         <h2>Gezondheid</h2>
@@ -133,7 +137,8 @@
         <fieldset id="fields"><legend>Strategie en risico</legend></fieldset>
         <fieldset id="live-fieldset">
           <legend>Live account</legend>
-          <div class="warn-box">Live = echt geld. Alleen mogelijk waar Polymarket handelen toestaat; de bot controleert dit zelf en weigert anders.</div>
+          <div class="warn-box">Live = echt geld. Alleen mogelijk waar Polymarket handelen toestaat; de bot controleert dit zelf en weigert anders. De blokkade omzeilen (bijvoorbeeld met een VPN) is tegen de regels van Polymarket: je kunt je account en je geld kwijtraken.</div>
+          <div class="warn-box" id="live-blocked" hidden></div>
           <div class="field">
             <label for="private-key">Private key</label>
             <input id="private-key" type="password" autocomplete="off" spellcheck="false">

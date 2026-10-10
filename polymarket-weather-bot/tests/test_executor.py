@@ -70,8 +70,10 @@ class PaperCycleTest(unittest.TestCase):
             self.assertEqual(p.status, "closed")
             self.assertGreater(p.proceeds - p.cost, 0)
 
-            types = [r["type"] for r in read_journal(d)]
-            self.assertEqual(types, ["signal", "opportunity", "buy", "sell", "close"])
+            rows = read_journal(d)
+            self.assertEqual([r["type"] for r in rows], ["signal", "opportunity", "buy", "skip", "sell", "close"])
+            self.assertEqual(rows[3]["reason"], "already_holding")
+            self.assertEqual(rows[-1]["confirmed_after_s"], 6.0)    # sold at 0.99 = confirmed
 
 
 if __name__ == "__main__":

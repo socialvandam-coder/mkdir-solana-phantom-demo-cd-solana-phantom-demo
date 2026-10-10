@@ -27,7 +27,8 @@ class BankrollTests(unittest.TestCase):
         self.assertAlmostEqual(b.total_pct, 20.0)
 
     def test_limits(self):
-        cfg = dataclasses.replace(Config(), start_amount=100, trade_pct=50, market_pct=20, open_pct=30)
+        cfg = dataclasses.replace(Config(), start_amount=100, trade_pct=50, market_pct=20, open_pct=30,
+                                  event_pct=100)
         b = Bankroll(cfg)
         self.assertAlmostEqual(b.budget("t"), 20.0)      # per-market cap beats per-trade
         b.on_buy("t", 20.0)
@@ -170,7 +171,20 @@ class DashboardTests(unittest.TestCase):
         with mock.patch("weatherbot.engine.make_source"):
             self.assertEqual(json.loads(self.req("/api/start", {}, tok)[1])["status"], "running")
         time.sleep(0.2)
-        self.assertEqual(json.loads(self.req("/api/stop", {}, tok)[1])["status"], "stopped")
+        # 'Stop' only pauses buying: the loop keeps selling and settling open positions
+        d = json.loads(self.req("/api/stop", {}, tok)[1])
+        self.assertEqual(d["status"], "running")
+        self.assertEqual((d["halt"]["on"], d["halt"]["reason"], d["halt"]["by"]), (True, "pauze", "user"))
+        d = json.loads(self.req("/api/pause", {"on": False}, tok)[1])
+        self.assertFalse(d["halt"]["on"])
+        d = json.loads(self.req("/api/halt", {}, tok)[1])
+        self.assertEqual((d["status"], d["halt"]["reason"]), ("running", "noodstop"))
+        self.assertEqual(json.loads(self.req("/api/state")[1])["halt"]["reason"], "noodstop")
+        d = json.loads(self.req("/api/resume", {}, tok)[1])
+        self.assertFalse(d["halt"]["on"])
+        self.assertEqual(self.req("/api/pause", {"on": "ja"}, tok)[0], 400)
+        self.engine.stop()
+        self.assertEqual(self.engine.status, "stopped")
 
 
 if __name__ == "__main__":

@@ -6,10 +6,10 @@ import requests
 GEOBLOCK_URL = "https://polymarket.com/api/geoblock"
 
 
-def check_geoblock(session: requests.Session) -> dict:
+def check_geoblock(session: requests.Session, timeout: float = 10) -> dict:
     """Returns e.g. {"blocked": false, "country": "..."}; treats errors as blocked."""
     try:
-        r = session.get(GEOBLOCK_URL, timeout=15)
+        r = session.get(GEOBLOCK_URL, timeout=timeout)
         r.raise_for_status()
         data = r.json()
         data["blocked"] = bool(data.get("blocked", True))

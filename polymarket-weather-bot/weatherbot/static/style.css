@@ -219,3 +219,37 @@ legend { font-weight: 600; padding: 0 6px; }
 
 .more { margin-top: 8px; }
 .cell-sub { color: var(--ink-2); font-size: 12px; }
+
+/* ---------- buying pause / emergency stop ---------- */
+button.textbtn { background: transparent; border-color: transparent; font-weight: 600; padding: 7px 8px; }
+button.textbtn:hover:not(:disabled) { background: var(--surface-2); }
+.topbar-line, .topbar-alert {
+  flex-basis: 100%; display: block; font-size: 13px; overflow-wrap: anywhere; min-width: 0;
+}
+.topbar-line { color: var(--ink-2); }
+.topbar-alert {
+  padding: 8px 12px; border-radius: 8px; font-weight: 600;
+  background: color-mix(in srgb, var(--critical) 14%, var(--surface)); color: var(--bad-text);
+  border: 1px solid color-mix(in srgb, var(--critical) 45%, transparent);
+}
+.topbar-line[hidden], .topbar-alert[hidden], .banner[hidden] { display: none; }
+@media (max-width: 520px) { .hide-phone { display: none; } }
+
+/* ---------- open positions ---------- */
+.pos-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.pos-row {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--grid); min-width: 0;
+}
+.pos-row:last-child { border-bottom: 0; }
+.pos-what { font-weight: 600; overflow-wrap: anywhere; }
+.pos-nums { color: var(--ink-2); font-size: 13px; font-variant-numeric: tabular-nums; flex: 1 1 auto; overflow-wrap: anywhere; }
+.pos-empty { color: var(--ink-2); padding: 12px 0; text-align: center; }
+.chip {
+  display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--ink-2); white-space: nowrap;
+}
+.chip.good { color: var(--good-text); border-color: color-mix(in srgb, var(--good) 45%, transparent); }
+.chip.warning { color: var(--ink); background: color-mix(in srgb, var(--warning) 22%, var(--surface)); border-color: color-mix(in srgb, var(--warning) 55%, transparent); }
+.chip.critical { color: var(--bad-text); background: color-mix(in srgb, var(--critical) 14%, var(--surface)); border-color: color-mix(in srgb, var(--critical) 50%, transparent); }
+#pos-note { margin-top: 10px; }

@@ -16,7 +16,7 @@ from pathlib import Path
 
 from . import settings as settings_mod
 from .compare import compare
-from .engine import Engine, make_session
+from .engine import Engine, live_allowed, live_block_text, make_session
 from .journal import read_journal
 from .main import run_check
 
@@ -112,7 +112,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/state":
             return self._json(engine.snapshot())
         if path == "/api/settings":
-            return self._json(settings_mod.current(engine.cfg))
+            return self._json(settings_mod.current(engine.cfg, engine.live_access(refresh=True)))
         return self._error(HTTPStatus.NOT_FOUND, "niet gevonden")
 
     # -- POST ------------------------------------------------------------------
@@ -125,19 +125,41 @@ class Handler(BaseHTTPRequestHandler):
             body = self._body()
             if path == "/api/start":
                 engine.start()
-                return self._json({"ok": engine.status == "running", "status": engine.status, "error": engine.error})
-            if path == "/api/stop":
-                engine.stop()
-                return self._json({"ok": True, "status": engine.status})
+                if engine.status == "running":
+                    engine.pause(False)          # Start = buying on again (a Noodstop needs Hervat)
+                return self._json({"ok": engine.status == "running", "status": engine.status, "error": engine.error,
+                                   "halt": engine.bank.halt_info()})
+            if path in ("/api/stop", "/api/pause"):
+                # stopping buying never stops selling: the loop keeps managing open positions
+                on = True if path == "/api/stop" else body.get("on", True)
+                if not isinstance(on, bool):
+                    raise ValueError("on moet true of false zijn")
+                engine.pause(on)
+                return self._json({"ok": True, "status": engine.status, "halt": engine.bank.halt_info()})
+            if path == "/api/halt":
+                engine.emergency_stop()
+                return self._json({"ok": True, "status": engine.status, "halt": engine.bank.halt_info()})
+            if path == "/api/resume":
+                left = engine.resume()
+                if engine.status != "running":
+                    engine.start()
+                return self._json({"ok": True, "status": engine.status, "error": engine.error, "remaining": left,
+                                   "halt": engine.bank.halt_info()})
             if path == "/api/settings":
                 values = body.get("values") or {}
                 pk = body.get("private_key")
+                if not isinstance(values, dict):
+                    raise ValueError("ongeldige instellingen")
+                if str(values.get("MODE", "")).strip() == "live":
+                    geo = engine.live_access(refresh=True)
+                    if not live_allowed(geo, engine.cfg):
+                        raise ValueError(live_block_text(geo))
                 settings_mod.save(engine.home, values, pk if isinstance(pk, str) else None)
                 engine.cfg = engine.load_config()
                 engine.bank.cfg = engine.cfg
                 if engine.status == "running":
                     engine.restart()
-                return self._json({"ok": True, **settings_mod.current(engine.cfg)})
+                return self._json({"ok": True, **settings_mod.current(engine.cfg, engine.live_access())})
             if path == "/api/bankroll":
                 amount = float(str(body.get("start_amount", "")).replace(",", "."))
                 if not 1 <= amount <= 1_000_000:
