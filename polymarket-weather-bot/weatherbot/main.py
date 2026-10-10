@@ -1,4 +1,4 @@
-"""Run the bot.
+"""Run the bot from a terminal (the Mac app uses weatherbot.app instead).
 
     python -m weatherbot.main            # paper mode (default): simulate, no money
     python -m weatherbot.main --check    # test connections and show what it would watch
@@ -8,14 +8,14 @@ from __future__ import annotations
 
 import argparse
 import logging
-import sys
-import time
+import threading
 from datetime import datetime, timezone
 
 import requests
 
-from .config import load_config
-from .execution import LiveExecutor, PaperExecutor
+from .bankroll import Bankroll
+from .config import Config, load_config
+from .engine import BotRunner, TradingNotAllowed, make_session
 from .geoblock import check_geoblock
 from .journal import Journal
 from .markets import fetch_events
@@ -25,110 +25,80 @@ from .strategy import find_signals, guaranteed_extreme
 log = logging.getLogger("weatherbot")
 
 
-def _session() -> requests.Session:
-    s = requests.Session()
-    s.headers["User-Agent"] = "weatherbot/1.0 (+https://github.com/)"
-    return s
-
-
-def _require_trading_allowed(session: requests.Session) -> None:
-    geo = check_geoblock(session)
-    if geo.get("blocked"):
-        raise SystemExit(
-            f"Polymarket does not allow trading from this connection ({geo}). "
-            "Live mode is off; run in paper mode (MODE=paper) instead.")
-
-
-def check(cfg) -> int:
-    session = _session()
-    ok = True
-    geo = check_geoblock(session)
-    print(f"geoblock: {geo}")
+def run_check(cfg: Config, bankroll: Bankroll | None = None) -> dict:
+    """Connection test; returns a dict (printed by the CLI, shown by the dashboard)."""
+    session = make_session()
+    out: dict = {"geoblock": check_geoblock(session), "markets": None, "stations": [], "weather": None,
+                 "events": [], "account": None}
     now = datetime.now(timezone.utc)
     try:
         events = fetch_events(session, now, cfg.cities)
-        print(f"gamma: {len(events)} temperature events live right now")
+        out["markets"] = {"ok": True, "count": len(events)}
     except requests.RequestException as exc:
-        print(f"gamma: FAILED {exc}")
-        return 1
+        out["markets"] = {"ok": False, "error": str(exc)}
+        return out
     stations = sorted({e.station for e in events})
-    print(f"stations ({len(stations)}): {', '.join(stations)}")
+    out["stations"] = stations
     store = ObservationStore()
     try:
         for o in make_source(cfg.metar_source, session).fetch(stations):
             store.add(o)
-        print(f"metar ({cfg.metar_source}): OK")
+        out["weather"] = {"ok": True, "source": cfg.metar_source, "reports": sum(len(store.get(s)) for s in stations)}
     except requests.RequestException as exc:
-        print(f"metar ({cfg.metar_source}): FAILED {exc}")
-        ok = False
-    for e in sorted(events, key=lambda e: (e.city, e.kind))[:60]:
+        out["weather"] = {"ok": False, "source": cfg.metar_source, "error": str(exc)}
+    for e in sorted(events, key=lambda e: (e.city, e.kind)):
         ext = guaranteed_extreme(e, store.get(e.station))
         sigs = find_signals(e, store.get(e.station), cfg.safety_margin, cfg.enable_yes_bets)
-        local = e.local_now(now).strftime("%H:%M")
-        print(f"  {e.city:16s} {e.kind:4s} {e.station}  local {local}  "
-              f"{'observed ' + str(ext[0]) + '°' + e.unit if ext else 'no obs yet':18s} "
-              f"dead/certain buckets: {len(sigs)}/{len(e.markets)}")
+        out["events"].append({"city": e.city, "kind": e.kind, "station": e.station,
+                              "local_time": e.local_now(now).strftime("%H:%M"),
+                              "observed": ext[0] if ext else None, "unit": e.unit,
+                              "dead": len(sigs), "buckets": len(e.markets)})
     if cfg.live:
         try:
-            ex = LiveExecutor(cfg, session, Journal(cfg.journal_dir))
-            print(f"live account: USDC balance {ex.usdc_balance():.2f}")
-        except SystemExit as exc:
-            print(f"live account: {exc}")
-            ok = False
+            from .execution import LiveExecutor
+            ex = LiveExecutor(cfg, session, Journal(cfg.journal_dir), bankroll)
+            out["account"] = {"ok": True, "usdc": round(ex.usdc_balance(), 2)}
+        except Exception as exc:  # noqa: BLE001 - report any account problem
+            out["account"] = {"ok": False, "error": str(exc)}
+    return out
+
+
+def print_check(res: dict) -> int:
+    print(f"geoblock: {res['geoblock']}")
+    m = res["markets"]
+    print(f"markets: {m}")
+    if not m or not m.get("ok"):
+        return 1
+    print(f"stations ({len(res['stations'])}): {', '.join(res['stations'])}")
+    print(f"weather: {res['weather']}")
+    for e in res["events"][:80]:
+        obs = f"observed {e['observed']}°{e['unit']}" if e["observed"] is not None else "no obs yet"
+        print(f"  {e['city']:16s} {e['kind']:4s} {e['station']}  local {e['local_time']}  {obs:18s} "
+              f"dead/certain buckets: {e['dead']}/{e['buckets']}")
+    if res["account"]:
+        print(f"live account: {res['account']}")
+    ok = res["weather"] and res["weather"].get("ok") and (not res["account"] or res["account"].get("ok"))
     return 0 if ok else 1
 
 
-def run(cfg) -> None:
-    session = _session()
+def run(cfg: Config) -> None:
     journal = Journal(cfg.journal_dir)
-    if cfg.live:
-        _require_trading_allowed(session)
-        executor = LiveExecutor(cfg, session, journal)
-        log.info("LIVE mode - USDC balance %.2f", executor.usdc_balance())
-    else:
-        executor = PaperExecutor(cfg, session, journal)
-        log.info("PAPER mode - no real orders")
-    journal.write("start", mode=cfg.mode, config={k: v for k, v in vars(cfg).items() if k != "private_key"})
-
-    source = make_source(cfg.metar_source, session)
-    store = ObservationStore()
-    events = []
-    last_refresh = last_geo = 0.0
-    while True:
-        loop_start = time.time()
-        now_dt = datetime.now(timezone.utc)
-        try:
-            if loop_start - last_refresh >= cfg.market_refresh_seconds:
-                events = fetch_events(session, now_dt, cfg.cities)
-                last_refresh = loop_start
-                log.info("watching %d events on %d stations", len(events), len({e.station for e in events}))
-            if cfg.live and loop_start - last_geo >= 3600:
-                _require_trading_allowed(session)
-                last_geo = loop_start
-
-            live_events = [e for e in events if e.is_live(now_dt)]
-            stations = sorted({e.station for e in live_events})
-            new = 0
-            for obs in source.fetch(stations):
-                if store.add(obs):
-                    new += 1
-            if new:
-                log.debug("%d new reports", new)
-            store.prune(now_dt)
-
-            signals = []
-            for e in live_events:
-                signals.extend(find_signals(e, store.get(e.station), cfg.safety_margin, cfg.enable_yes_bets))
-            executor.on_signals(signals, time.time())
-            executor.tick(time.time())
-        except requests.RequestException as exc:
-            log.warning("network error: %s", exc)
-        except SystemExit:
-            raise
-        except Exception:  # noqa: BLE001 - keep the loop alive, but record what happened
-            log.exception("unexpected error")
-            journal.write("error", error=repr(sys.exc_info()[1]))
-        time.sleep(max(0.5, cfg.poll_seconds - (time.time() - loop_start)))
+    bank = Bankroll(cfg, cfg.state_file)
+    try:
+        runner = BotRunner(cfg, journal, bank)
+    except TradingNotAllowed as exc:
+        raise SystemExit(f"{exc} Zet MODE=paper.") from None
+    log.info("%s mode - balance %.2f (start %.2f)", cfg.mode.upper(), bank.balance, bank.start_amount)
+    journal.write("start", mode=cfg.mode)
+    stop = threading.Event()
+    try:
+        runner.run(stop)
+    except KeyboardInterrupt:
+        stop.set()
+    except TradingNotAllowed as exc:
+        raise SystemExit(str(exc)) from None
+    finally:
+        journal.write("stop")
 
 
 def main() -> None:
@@ -141,7 +111,7 @@ def main() -> None:
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     cfg = load_config()
     if args.check:
-        raise SystemExit(check(cfg))
+        raise SystemExit(print_check(run_check(cfg)))
     run(cfg)
 
 

@@ -3,14 +3,15 @@ from __future__ import annotations
 
 import logging
 import math
-import time
 from dataclasses import dataclass, field
+from datetime import datetime
 
 import requests
 
+from .bankroll import Bankroll
 from .config import Config
 from .journal import Journal
-from .markets import fetch_resolution
+from .markets import Market, fetch_resolution, parse_bucket
 from .orderbook import Book, SweepPlan, fetch_books, fillable_at, plan_sweep, taker_fee_per_share
 from .strategy import Signal
 
@@ -49,38 +50,40 @@ class Position:
     def remaining(self) -> float:
         return round(self.shares - self.sold_shares, 4)
 
+    def to_dict(self) -> dict:
+        s, m = self.signal, self.signal.market
+        return {
+            "signal": {"event_slug": s.event_slug, "city": s.city, "kind": s.kind, "outcome": s.outcome,
+                       "token_id": s.token_id, "observed": s.observed, "obs_time": s.obs_time.isoformat(),
+                       "reason": s.reason},
+            "market": {"question": m.question, "condition_id": m.condition_id, "yes_token": m.yes_token,
+                       "no_token": m.no_token, "bucket": m.bucket.label, "tick_size": m.tick_size,
+                       "min_size": m.min_size, "neg_risk": m.neg_risk},
+            "shares": self.shares, "cost": self.cost, "opened_at": self.opened_at, "sell_after": self.sell_after,
+            "sold_shares": self.sold_shares, "proceeds": self.proceeds, "status": self.status,
+            "sell_order_id": self.sell_order_id, "sell_attempts": self.sell_attempts,
+        }
 
-class Risk:
-    """Small-scale limits: per trade, per market, total open, daily loss."""
-
-    def __init__(self, cfg: Config) -> None:
-        self.cfg = cfg
-        self.spent: dict[str, float] = {}
-        self.open_usdc = 0.0
-        self.realized = 0.0
-        self.day = time.strftime("%Y-%m-%d", time.gmtime())
-
-    def _roll_day(self) -> None:
-        today = time.strftime("%Y-%m-%d", time.gmtime())
-        if today != self.day:
-            self.day, self.realized = today, 0.0
-
-    def budget(self, token_id: str) -> float:
-        self._roll_day()
-        if self.realized <= -self.cfg.daily_loss_limit:
-            return 0.0
-        return max(0.0, min(self.cfg.max_usdc_per_trade,
-                            self.cfg.max_usdc_per_market - self.spent.get(token_id, 0.0),
-                            self.cfg.max_open_usdc - self.open_usdc))
-
-    def on_buy(self, token_id: str, cost: float) -> None:
-        self.spent[token_id] = self.spent.get(token_id, 0.0) + cost
-        self.open_usdc += cost
-
-    def on_close(self, cost: float, proceeds: float) -> None:
-        self._roll_day()
-        self.open_usdc = max(0.0, self.open_usdc - cost)
-        self.realized += proceeds - cost
+    @classmethod
+    def from_dict(cls, d: dict) -> "Position | None":
+        try:
+            m, s = d["market"], d["signal"]
+            bucket = parse_bucket(m["bucket"])
+            if bucket is None:
+                return None
+            market = Market(question=m["question"], condition_id=m["condition_id"], yes_token=m["yes_token"],
+                            no_token=m["no_token"], bucket=bucket, tick_size=m.get("tick_size", "0.001"),
+                            min_size=float(m.get("min_size", 5)), neg_risk=bool(m.get("neg_risk", True)))
+            signal = Signal(event_slug=s["event_slug"], city=s["city"], kind=s["kind"], market=market,
+                            outcome=s["outcome"], token_id=s["token_id"], observed=s["observed"],
+                            obs_time=datetime.fromisoformat(s["obs_time"]), reason=s.get("reason", ""))
+            return cls(signal=signal, shares=float(d["shares"]), cost=float(d["cost"]),
+                       opened_at=float(d["opened_at"]), sell_after=float(d["sell_after"]),
+                       sold_shares=float(d.get("sold_shares", 0)), proceeds=float(d.get("proceeds", 0)),
+                       status=d.get("status", "open"), sell_order_id=d.get("sell_order_id"),
+                       sell_attempts=int(d.get("sell_attempts", 0)))
+        except (KeyError, TypeError, ValueError):
+            return None
 
 
 class Executor:
@@ -90,13 +93,28 @@ class Executor:
     # would count the same stale orders twice. Live re-buys are real new asks (he did up to 3).
     allow_rebuy = True
 
-    def __init__(self, cfg: Config, session: requests.Session, journal: Journal) -> None:
+    def __init__(self, cfg: Config, session: requests.Session, journal: Journal,
+                 bankroll: Bankroll | None = None) -> None:
         self.cfg = cfg
         self.session = session
         self.journal = journal
-        self.risk = Risk(cfg)
+        self.bank = bankroll or Bankroll(cfg)
         self.watch: dict[str, Watch] = {}
         self.positions: list[Position] = []
+        # pick up positions that were still open when the app last stopped
+        for d in self.bank.state.get("positions", []):
+            p = Position.from_dict(d)
+            if p and p.status != "closed":
+                self.positions.append(p)
+                self.bank.open_cost += p.cost
+        if self.positions:
+            log.info("resumed %d open position(s) from the last run", len(self.positions))
+
+    def _persist(self) -> None:
+        self.bank.set_positions([p.to_dict() for p in self.positions if p.status != "closed"])
+
+    def refresh(self, now: float) -> None:
+        """Called every loop; live mode uses it to keep the real wallet balance in view."""
 
     # -- signals -> buys -------------------------------------------------
     def on_signals(self, signals: list[Signal], now: float) -> None:
@@ -117,7 +135,7 @@ class Executor:
                 continue
             if w.last_check and now - w.last_check < self.cfg.recheck_every_seconds:
                 continue
-            if self.risk.budget(s.token_id) < 1.0:
+            if self.bank.budget(s.token_id) < 1.0:
                 continue
             if not self.allow_rebuy and any(p.token_id == s.token_id for p in self.positions):
                 continue
@@ -135,7 +153,7 @@ class Executor:
             if not book:
                 continue
             plan = plan_sweep(book, max_price=self.cfg.max_buy_price, sell_price=self.cfg.sell_price,
-                              budget_usdc=self.risk.budget(s.token_id), min_size=s.market.min_size,
+                              budget_usdc=self.bank.budget(s.token_id), min_size=s.market.min_size,
                               min_edge=self.cfg.min_edge, fee_rate=self.cfg.fee_rate)
             if plan is None:
                 continue
@@ -158,15 +176,21 @@ class Executor:
                 if p.errors >= 10 and p.status != "closed":
                     p.status, p.sell_order_id = "selling", None   # stop trying to sell; wait for resolution
         # keep closed positions a day so paper mode still knows what it already bought
+        before = [(p.status, p.sold_shares) for p in self.positions]
         self.positions = [p for p in self.positions if p.status != "closed" or now - p.opened_at < 86400]
+        if before != [(p.status, p.sold_shares) for p in self.positions]:
+            self._persist()
 
     def _close(self, p: Position, how: str, now: float) -> None:
         p.status = "closed"
-        self.risk.on_close(p.cost, p.proceeds)
-        self.journal.write("close", how=how, city=p.signal.city, bucket=p.signal.market.bucket.label,
-                           outcome=p.signal.outcome, token_id=p.token_id, shares=p.shares,
-                           cost=round(p.cost, 4), proceeds=round(p.proceeds, 4),
-                           pnl=round(p.proceeds - p.cost, 4), held_s=round(now - p.opened_at, 1))
+        self.bank.on_close(p.cost, p.proceeds)
+        pnl = p.proceeds - p.cost
+        self.journal.write("close", how=how, city=p.signal.city, kind=p.signal.kind,
+                           bucket=p.signal.market.bucket.label, outcome=p.signal.outcome, token_id=p.token_id,
+                           shares=p.shares, cost=round(p.cost, 4), proceeds=round(p.proceeds, 4),
+                           pnl=round(pnl, 4), pct=round(pnl / p.cost * 100, 3) if p.cost else 0.0,
+                           held_s=round(now - p.opened_at, 1), balance=round(self.bank.balance, 4))
+        self._persist()
         log.info("CLOSE %s %s %s pnl=%.4f (%s)", p.signal.city, p.signal.market.bucket.label,
                  p.signal.outcome, p.proceeds - p.cost, how)
 
@@ -202,10 +226,11 @@ class PaperExecutor(Executor):
         p = Position(signal=s, shares=plan.shares, cost=cost, opened_at=now,
                      sell_after=now + self.cfg.sell_delay_seconds)
         self.positions.append(p)
-        self.risk.on_buy(s.token_id, cost)
-        self.journal.write("buy", mode="paper", city=s.city, bucket=s.market.bucket.label, outcome=s.outcome,
-                           token_id=s.token_id, shares=plan.shares, cost=round(cost, 4),
+        self.bank.on_buy(s.token_id, cost)
+        self.journal.write("buy", mode="paper", city=s.city, kind=s.kind, bucket=s.market.bucket.label,
+                           outcome=s.outcome, token_id=s.token_id, shares=plan.shares, cost=round(cost, 4),
                            avg_price=round(plan.avg_price, 4))
+        self._persist()
         log.info("PAPER BUY %s %s %s %.2f sh @ %.3f", s.city, s.market.bucket.label, s.outcome,
                  plan.shares, plan.avg_price)
 
@@ -231,8 +256,9 @@ class PaperExecutor(Executor):
 class LiveExecutor(Executor):
     """Real orders through Polymarket's official py-clob-client."""
 
-    def __init__(self, cfg: Config, session: requests.Session, journal: Journal) -> None:
-        super().__init__(cfg, session, journal)
+    def __init__(self, cfg: Config, session: requests.Session, journal: Journal,
+                 bankroll: Bankroll | None = None) -> None:
+        super().__init__(cfg, session, journal, bankroll)
         from py_clob_client.client import ClobClient  # imported here so paper mode doesn't need it
         from py_clob_client import clob_types
         from py_clob_client.order_builder.constants import BUY, SELL
@@ -244,6 +270,15 @@ class LiveExecutor(Executor):
         self.client = ClobClient(cfg.clob_host, chain_id=137, key=cfg.private_key,
                                  signature_type=cfg.signature_type, funder=cfg.funder)
         self.client.set_api_creds(self.client.create_or_derive_api_creds())
+        self._last_wallet = 0.0
+
+    def refresh(self, now: float) -> None:
+        if now - self._last_wallet >= 60:
+            self._last_wallet = now
+            try:
+                self.bank.wallet_usdc = self.usdc_balance()
+            except Exception as exc:  # noqa: BLE001
+                log.warning("could not read USDC balance: %s", exc)
 
     def _opts(self, s: Signal):
         return self.t.PartialCreateOrderOptions(tick_size=s.market.tick_size, neg_risk=s.market.neg_risk)
@@ -273,14 +308,16 @@ class LiveExecutor(Executor):
             return
         spent = float(resp.get("makingAmount") or 0)
         shares = float(resp.get("takingAmount") or 0)
-        self.journal.write("buy", mode="live", city=s.city, bucket=s.market.bucket.label, outcome=s.outcome,
-                           token_id=s.token_id, shares=shares, cost=spent, response=resp)
+        self.journal.write("buy", mode="live", city=s.city, kind=s.kind, bucket=s.market.bucket.label,
+                           outcome=s.outcome, token_id=s.token_id, shares=shares, cost=spent,
+                           avg_price=round(spent / shares, 4) if shares else None, response=resp)
         if not resp.get("success") or shares <= 0:
             log.info("LIVE BUY not filled: %s", resp)
             return
         self.positions.append(Position(signal=s, shares=shares, cost=spent, opened_at=now,
                                        sell_after=now + self.cfg.sell_delay_seconds))
-        self.risk.on_buy(s.token_id, spent)
+        self.bank.on_buy(s.token_id, spent)
+        self._persist()
         log.info("LIVE BUY %s %s %s %.2f sh for %.2f USDC", s.city, s.market.bucket.label, s.outcome, shares, spent)
 
     def manage(self, p: Position, now: float) -> None:
@@ -301,6 +338,7 @@ class LiveExecutor(Executor):
             resp = self.client.post_order(order, self.t.OrderType.GTC)
             p.sell_order_id = resp.get("orderID")
             p.status = "selling"
+            self._persist()
             self.journal.write("sell_order", mode="live", token_id=p.token_id, size=size,
                                price=self.cfg.sell_price, response=resp, after_s=round(now - p.opened_at, 1))
             return

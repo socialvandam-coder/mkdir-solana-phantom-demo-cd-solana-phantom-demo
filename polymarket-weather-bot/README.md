@@ -1,21 +1,56 @@
-# Polymarket weerbot (HighTempTation-strategie)
+# Weerbot - Polymarket-weerbot (HighTempTation-strategie)
 
 Deze bot kopieert de strategie van [HighTempTation](https://polymarket.com/@hightemptation) op de
-dagelijkse temperatuurmarkten van Polymarket, op kleine schaal.
+dagelijkse temperatuurmarkten van Polymarket. Hij draait als **Mac-programma** met een dashboard in je
+browser, of vanuit de terminal.
 
-## Hoe de strategie werkt
+## Snel starten op de Mac
 
-Elke markt "Highest/Lowest temperature in [stad] on [datum]" is opgedeeld in vakken (bijv. 16°C, 17°C,
-18°C). De uitslag komt van één vliegveldstation (bijv. Parijs = Le Bourget, LFPB), via NOAA.
+Zie [`mac/README-mac.md`](mac/README-mac.md) voor alle details. Kort:
 
-- Het **dagmaximum** kan alleen stijgen. Zodra een meting boven een vak uitkomt, kan dat vak niet meer
-  winnen → **koop NO**.
-- Het **dagminimum** kan alleen dalen. Zodra een meting onder een vak uitkomt → **koop NO**.
-- Is het "X or higher"-vak al bereikt (of "X or below" bij minimum) → **koop YES**.
-- De bot koopt alleen de goedkope verkooporders die nog niet zijn bijgewerkt (NO tussen ~0,60 en 0,98) en
-  verkoopt een paar seconden later voor **0,99**.
+1. Pak de map uit en dubbelklik **`mac/Start Weerbot.command`**
+   (eerste keer: rechtermuisknop → *Open*). Of bouw een echte app met `mac/build_app.sh` → `Weerbot.app`.
+2. De eerste keer installeert hij zichzelf (± een minuut). Daarna opent het dashboard in je browser op
+   `http://127.0.0.1:8765`.
+3. Kies onder **Instellingen** je **startbedrag**. De bot begint in **oefenmodus** (nepgeld).
 
-Er wordt dus niets voorspeld: een vak wordt alleen gekocht als de gemeten temperatuur het al uitsluit.
+Je gegevens (instellingen, saldo, logboek) staan in `~/Library/Application Support/Weerbot`.
+
+## Het dashboard
+
+- **Vandaag**: hoeveel procent de bot vandaag heeft gepakt, en hoeveel dollar.
+- **Saldo** en **sinds start**: je bedrag nu en de groei sinds je startbedrag.
+- **Volgende inzet**: hoe groot de volgende aankoop maximaal is. Die groeit mee met je saldo.
+- **Saldo-verloop**: grafiek van je saldo (vandaag / 7 dagen / alles), met je startbedrag als lijn.
+- **Winst per dag**: staafgrafiek van de laatste 14 dagen.
+- **Wat hij vandaag pakte**: elke afgesloten trade met inzet, resultaat, procent en hoe lang hij liep.
+- **Open posities**, **Markten nu** (per stad de gemeten max/min en hoeveel vakken al "dood" zijn),
+  **Laatste signalen**.
+- **Gezondheid**: komt de weerdata binnen, zijn de markten geladen, wanneer was de laatste ronde.
+- **Vergelijk met HighTempTation**: welke vakken hij kocht terwijl jouw bot draaide, en of jouw bot ze
+  ook vond (eerder of later).
+- **Instellingen**: startbedrag, percentages, risico, live-account (private key gaat in je
+  Mac-sleutelhanger).
+
+## Hoe hij groeit (zoals HighTempTation)
+
+Elke aankoop is een **percentage van je huidige saldo** (standaard max 10% per aankoop). Wint de bot,
+dan wordt het saldo groter en dus ook de volgende inzet. Verlies maakt de inzet weer kleiner. Het saldo
+wordt bewaard, dus na herstarten gaat hij verder waar hij was.
+
+Beveiligingen: max per vak per dag (`MARKET_PCT`), max totaal tegelijk in posities (`OPEN_PCT`) en een
+daglimiet voor verlies (`DAILY_LOSS_PCT`). Daarna koopt hij die dag niets meer.
+
+## De strategie
+
+Elke markt "Highest/Lowest temperature in [stad] on [datum]" is opgedeeld in vakken (bijv. 16°C, 17°C).
+De uitslag komt van één vliegveldstation (bijv. Parijs = Le Bourget, LFPB), via NOAA.
+
+- Het **dagmaximum** kan alleen stijgen: zodra een meting boven een vak uitkomt, kan dat vak niet meer
+  winnen → **koop NO**. Het **dagminimum** kan alleen dalen → zelfde in spiegelbeeld.
+- Is "X or higher" (of "X or below") al bereikt → **koop YES**.
+- Hij koopt alleen de goedkope, nog niet bijgewerkte verkooporders (NO tot ~0,98) en verkoopt een paar
+  seconden later voor **0,99**.
 
 | Wat HighTempTation doet (uit zijn data)           | In de bot                                  |
 |---------------------------------------------------|--------------------------------------------|
@@ -23,102 +58,62 @@ Er wordt dus niets voorspeld: een vak wordt alleen gekocht als de gemeten temper
 | Reageert op nieuwe METAR-luchthavenmetingen        | `metar.py` (aviationweather.gov of NOAA)   |
 | Veegt alle goedkope asks in één order op           | `orderbook.py` → `plan_sweep` + FAK-order  |
 | Verkoopt 4-6 s later voor 0,99                    | `SELL_DELAY_SECONDS=5`, `SELL_PRICE=0.99`  |
-| YES op "X or higher/below" als dat zeker is        | `ENABLE_YES_BETS=true`                     |
-| Max ~0,98 betalen                                  | `MAX_BUY_PRICE=0.98`                       |
+| Inzet groeit met zijn kapitaal                     | `bankroll.py` (procent van saldo)          |
 
 **Niet gekopieerd:** zijn kansinzetten laat op de middag op YES voor een exact vak ("het maximum is
-binnen"). Daar zit een eigen voorspelmodel achter dat niet uit zijn data te halen is. Zijn exacte databron
-en snelheid zijn ook onbekend; de bot gebruikt de openbare METAR-feeds.
+binnen"); daar zit een eigen voorspelmodel achter. Zijn exacte databron en snelheid zijn onbekend.
 
-## Installeren
+## Oefenen, dan pas live
 
-Nodig: Python 3.10 of nieuer, op een computer die blijft aanstaan (eigen pc of een VPS).
+- **Oefenen (paper)** is de standaard: alles behalve echte orders. Gerekend met het echte orderboek op
+  het moment van het signaal. Oefenwinst is een **bovengrens**: snellere bots kunnen je in het echt voor zijn.
+- **Live** kan alleen waar Polymarket handelen toestaat. De bot controleert dit zelf (bij starten en elk
+  uur) en weigert anders. **In Nederland is Polymarket sinds februari 2026 verboden**
+  (Kansspelautoriteit), net als o.a. in België, Duitsland, Frankrijk, Italië en het VK.
+
+## Terminal (zonder app)
 
 ```bash
 cd polymarket-weather-bot
-python -m venv .venv
-# Windows: .venv\Scripts\activate     Mac/Linux: source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env        # Windows: copy .env.example .env
-```
-
-## Stap 1 - verbindingen testen
-
-```bash
-python -m weatherbot.main --check
-```
-
-Je ziet of Polymarket handelen toestaat vanaf jouw verbinding, hoeveel markten er nu lopen, welke
-stations, en per stad hoeveel vakken al dood zijn.
-
-## Stap 2 - nep-handelen (paper)
-
-```bash
-python -m weatherbot.main
-```
-
-Standaard staat `MODE=paper`: de bot doet alles behalve echte orders plaatsen. Hij rekent met het echte
-orderboek op het moment van het signaal. Alles wordt gelogd in `logs/journal-*.jsonl`.
-
-Paper-winst is een **bovengrens**: in het echt kunnen snellere bots de goedkope orders eerder wegkapen.
-
-## Stap 3 - resultaat bekijken en vergelijken met HighTempTation
-
-```bash
-python tools/report.py
+cp .env.example .env
+python -m weatherbot.main --check     # verbindingen testen
+python -m weatherbot.app              # dashboard (opent de browser)
+python -m weatherbot.main             # of: alleen de bot in de terminal
+python tools/report.py                # samenvatting uit het logboek
 python tools/compare_hightemptation.py
 ```
 
-`compare_hightemptation.py` haalt zijn echte trades op over dezelfde periode en laat zien:
-- welk deel van zijn vakken de bot ook vond;
-- of de bot eerder of later was dan hij (in seconden);
-- welke vakken de bot miste (dan klopt meestal station, afronding of tijdzone niet).
+## Instellingen
 
-Draai minstens een paar dagen paper voordat je aan live denkt.
+| Instelling        | Standaard | Betekenis                                                      |
+|-------------------|-----------|----------------------------------------------------------------|
+| `START_AMOUNT`    | 100       | startbedrag (alleen de eerste keer; daarna telt het opgeslagen saldo) |
+| `TRADE_PCT`       | 10        | max per aankoop, % van saldo                                   |
+| `MARKET_PCT`      | 20        | max per vak per dag, % van saldo                               |
+| `OPEN_PCT`        | 80        | max tegelijk in posities, % van saldo                          |
+| `DAILY_LOSS_PCT`  | 10        | stopt met kopen na dit verlies op een dag                      |
+| `MAX_BUY_PRICE`   | 0.98      | hoogste aankoopprijs                                           |
+| `SELL_PRICE`      | 0.99      | doorverkoopprijs                                               |
+| `MIN_EDGE`        | 0.005     | minimale winst per share na geschatte fees                     |
+| `SAFETY_MARGIN`   | 0         | extra graden voorbij het vak (0 = zoals hij, 1 = veiliger)     |
+| `METAR_SOURCE`    | aviationweather | of `tgftp` (NOAA-bestanden per station)                  |
+| `POLL_SECONDS`    | 10        | hoe vaak hij nieuwe metingen ophaalt                           |
+| `CITIES`          | (alles)   | bijv. `London,Paris,NYC`                                       |
 
-## Stap 4 - echt handelen (live)
-
-Alleen mogelijk waar Polymarket handelen toestaat. De bot controleert dit zelf bij het starten en elk uur
-via Polymarket's eigen geoblock-check, en weigert live te draaien als handelen niet is toegestaan.
-**In Nederland is Polymarket sinds februari 2026 verboden** (Kansspelautoriteit), net als o.a. in België,
-Duitsland, Frankrijk, Italië en het VK.
-
-Waar het wel mag:
-1. Maak een Polymarket-account en zet er een klein bedrag USDC op.
-2. Vul in `.env`: `PRIVATE_KEY` (Settings → Export private key), `FUNDER` (je 0x-adres van je profiel),
-   `SIGNATURE_TYPE` (1 = e-mail-login, 2 = MetaMask e.d.).
-3. Zet `MODE=live` en draai eerst `--check`; die laat je USDC-saldo zien.
-
-Gekochte shares die niet voor 0,99 verkocht raken, lopen door tot de uitslag. Winnende shares moet je
-daarna zelf claimen in de Polymarket-app.
-
-## Instellingen (`.env`)
-
-| Instelling            | Standaard | Betekenis                                                          |
-|-----------------------|-----------|--------------------------------------------------------------------|
-| `MAX_BUY_PRICE`       | 0.98      | hoogste prijs die de bot betaalt                                   |
-| `SELL_PRICE`          | 0.99      | doorverkoopprijs                                                   |
-| `MIN_EDGE`            | 0.005     | minimale winst per share na geschatte fees                         |
-| `SAFETY_MARGIN`       | 0         | extra graden voorbij het vak. 0 = zoals hij, 1 = veiliger          |
-| `MAX_USDC_PER_TRADE`  | 10        | max per aankoop                                                    |
-| `MAX_USDC_PER_MARKET` | 20        | max per vak                                                        |
-| `MAX_OPEN_USDC`       | 50        | max totaal tegelijk in posities                                    |
-| `DAILY_LOSS_LIMIT`    | 20        | stopt met kopen na dit verlies op een dag                          |
-| `METAR_SOURCE`        | aviationweather | of `tgftp` (NOAA-bestanden per station, vaak iets sneller)   |
-| `CITIES`              | (alles)   | bijv. `London,Paris,NYC`                                           |
+Polymarket's minimum is 5 shares per order (± $5), dus begin met minstens ± $50.
 
 ## Risico's
 
-- **Snelheid:** andere bots (o.a. fastestclick) slaan in dezelfde seconde toe. Een bot op een gewone pc
-  is waarschijnlijk trager dan HighTempTation.
-- **Data wijkt af van de uitslag:** zijn grootste verliezen (−$1.900 Panama City, −$1.500 Toronto en
-  Kuala Lumpur) kwamen doordat de live meting anders was dan wat NOAA officieel registreerde.
-  `SAFETY_MARGIN=1` verkleint dat risico ten koste van minder trades.
-- **°F-markten (VS):** NOAA rekent om van °C naar °F. De bot neemt alleen vakken die bij elke mogelijke
-  afronding dood zijn.
-- **Fees:** weermarkten rekenen een taker-fee. De bot schat die mee (`FEE_RATE`), de echte fee wordt door
-  Polymarket's bibliotheek automatisch toegepast.
-- **Hong Kong** wordt overgeslagen: die markt beslist op de Hong Kong Observatory, niet op een METAR.
+- **Snelheid:** andere bots slaan in dezelfde seconde toe.
+- **Data wijkt af van de uitslag:** zijn grootste verliezen kwamen doordat de live meting anders was dan
+  wat NOAA officieel registreerde. `SAFETY_MARGIN=1` verkleint dat risico.
+- **°F-markten (VS):** de bot neemt alleen vakken die bij elke mogelijke afronding dood zijn.
+- **Fees:** weermarkten rekenen een taker-fee; de bot schat die mee.
+- **Hong Kong** wordt overgeslagen (beslist op de Hong Kong Observatory, niet op een METAR).
+- **Slaapstand:** de app houdt je Mac wakker zolang hij draait, maar met het deksel dicht slaapt de Mac
+  toch. Open posities worden na herstarten verder afgehandeld.
 
 ## Tests
 

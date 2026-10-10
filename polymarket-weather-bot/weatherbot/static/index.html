@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="weerbot-token" content="{{TOKEN}}">
+  <title>Weerbot</title>
+  <link rel="icon" href="/icon.svg">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img src="/icon.svg" alt="" width="26" height="26"><span>Weerbot</span></div>
+    <span id="mode" class="badge">–</span>
+    <span id="status" class="pill"><span class="dot"></span><span>laden…</span></span>
+    <div class="spacer"></div>
+    <button id="btn-start" class="primary" type="button">Start</button>
+    <button id="btn-stop" type="button">Stop</button>
+    <button id="btn-settings" type="button">Instellingen</button>
+    <button id="btn-quit" class="danger" type="button">Afsluiten</button>
+  </header>
+
+  <div id="banner" class="banner" role="status" hidden></div>
+
+  <main>
+    <div class="top">
+      <section class="card hero" aria-live="polite">
+        <div class="hero-label">Vandaag</div>
+        <div class="hero-value" id="today-pct">–</div>
+        <div class="sub" id="today-sub">&nbsp;</div>
+      </section>
+      <div class="tiles">
+        <section class="card tile">
+          <div class="label">Saldo</div>
+          <div class="value" id="bal">–</div>
+          <div class="sub" id="bal-sub">&nbsp;</div>
+        </section>
+        <section class="card tile">
+          <div class="label">Sinds start</div>
+          <div class="value" id="total">–</div>
+          <div class="sub" id="total-sub">&nbsp;</div>
+        </section>
+        <section class="card tile">
+          <div class="label">Volgende inzet (max)</div>
+          <div class="value" id="next">–</div>
+          <div class="sub" id="next-sub">&nbsp;</div>
+        </section>
+        <section class="card tile">
+          <div class="label">Trades vandaag</div>
+          <div class="value" id="trades-n">–</div>
+          <div class="sub" id="trades-sub">&nbsp;</div>
+        </section>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Saldo-verloop</h2>
+        <div class="seg" id="range" role="group" aria-label="Periode">
+          <button type="button" data-range="today" aria-pressed="false">Vandaag</button>
+          <button type="button" data-range="7d" aria-pressed="false">7 dagen</button>
+          <button type="button" data-range="all" aria-pressed="true">Alles</button>
+        </div>
+      </div>
+      <div id="chart-balance" class="chart" aria-label="Grafiek van het saldo over tijd"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Winst per dag</h2><span class="sub">laatste 14 dagen</span></div>
+      <div id="chart-daily" class="chart short" aria-label="Staafgrafiek van de winst per dag"></div>
+      <details>
+        <summary>Toon als tabel</summary>
+        <div class="table-wrap"><table id="daily-table"></table></div>
+      </details>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Wat hij vandaag pakte</h2><span class="sub" id="trades-hint"></span></div>
+      <div class="table-wrap"><table id="trades-table"></table></div>
+    </section>
+
+    <div class="grid2">
+      <section class="card">
+        <h2>Open posities</h2>
+        <div class="table-wrap"><table id="pos-table"></table></div>
+      </section>
+      <section class="card">
+        <h2>Gezondheid</h2>
+        <ul class="health" id="health"></ul>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="card-head"><h2>Markten nu</h2><span class="sub">steden waar het nu de marktdag is</span></div>
+      <div class="table-wrap"><table id="events-table"></table></div>
+      <button type="button" id="events-more" class="more" hidden>Toon alle</button>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Laatste signalen</h2><span class="sub">vakken die net onmogelijk werden</span></div>
+      <div class="table-wrap"><table id="signals-table"></table></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Vergelijk met HighTempTation</h2>
+        <button id="btn-compare" type="button">Vergelijk nu</button>
+      </div>
+      <div id="compare-out" class="muted">Kijkt welke vakken HighTempTation kocht terwijl jouw bot draaide, en of jouw bot ze ook vond (en sneller of trager was).</div>
+    </section>
+
+    <section class="card">
+      <details>
+        <summary>Logboek</summary>
+        <pre id="logs"></pre>
+      </details>
+    </section>
+  </main>
+
+  <dialog id="settings-dialog" aria-labelledby="settings-title">
+    <form method="dialog" id="settings-form">
+      <div class="dlg-head"><h2 id="settings-title">Instellingen</h2><button type="button" id="btn-close-settings">Sluiten</button></div>
+      <div class="dlg-body">
+        <fieldset>
+          <legend>Startbedrag</legend>
+          <div class="field">
+            <label for="start-amount">Beginnen met ($)</label>
+            <input id="start-amount" type="number" min="1" step="1" inputmode="decimal">
+            <div class="help">Opnieuw beginnen wist de grafiek en zet het saldo op dit bedrag. Bij live handelen gebruikt de bot nooit meer dan dit bedrag plus zijn eigen winst.</div>
+          </div>
+          <div><button type="button" id="btn-reset-bank">Opnieuw beginnen met dit bedrag</button> <span id="bank-msg" class="msg"></span></div>
+        </fieldset>
+        <fieldset id="fields"><legend>Strategie en risico</legend></fieldset>
+        <fieldset id="live-fieldset">
+          <legend>Live account</legend>
+          <div class="warn-box">Live = echt geld. Alleen mogelijk waar Polymarket handelen toestaat; de bot controleert dit zelf en weigert anders.</div>
+          <div class="field">
+            <label for="private-key">Private key</label>
+            <input id="private-key" type="password" autocomplete="off" spellcheck="false">
+            <div class="help" id="pk-help"></div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Verbindingen</legend>
+          <div><button type="button" id="btn-check">Test verbindingen</button></div>
+          <div id="check-out" class="note"></div>
+        </fieldset>
+      </div>
+      <div class="dlg-foot">
+        <span id="settings-msg" class="msg"></span>
+        <button type="button" id="btn-save" class="primary">Opslaan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+  <script src="/app.js"></script>
+</body>
+</html>

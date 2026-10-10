@@ -63,15 +63,15 @@ def find_signals(event: TempEvent, observations: list[Observation],
         if event.kind == "high":
             if not b.open_high and b.hi < g - safety_margin:
                 out.append(Signal(event.slug, event.city, event.kind, mk, "NO", mk.no_token, g, t,
-                                  f"max already {g}°{event.unit} > bucket {b.label}"))
+                                  f"max al {g}°{event.unit}, dus {b.label} kan niet meer"))
             elif enable_yes and b.open_high and g >= b.lo + safety_margin:
                 out.append(Signal(event.slug, event.city, event.kind, mk, "YES", mk.yes_token, g, t,
-                                  f"max already {g}°{event.unit} >= {b.label}"))
+                                  f"max al {g}°{event.unit}, dus {b.label} is zeker"))
         else:
             if not b.open_low and b.lo > g + safety_margin:
                 out.append(Signal(event.slug, event.city, event.kind, mk, "NO", mk.no_token, g, t,
-                                  f"min already {g}°{event.unit} < bucket {b.label}"))
+                                  f"min al {g}°{event.unit}, dus {b.label} kan niet meer"))
             elif enable_yes and b.open_low and g <= b.hi - safety_margin:
                 out.append(Signal(event.slug, event.city, event.kind, mk, "YES", mk.yes_token, g, t,
-                                  f"min already {g}°{event.unit} <= {b.label}"))
+                                  f"min al {g}°{event.unit}, dus {b.label} is zeker"))
     return out

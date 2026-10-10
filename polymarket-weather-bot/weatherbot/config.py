@@ -44,17 +44,19 @@ class Config:
     enable_yes_bets: bool = True        # "X or higher"/"X or below" YES once it is certain
     sell_delay_seconds: float = 5.0     # he sold 4-6 s after buying
 
-    # --- small-scale risk limits ---
-    max_usdc_per_trade: float = 10.0
-    max_usdc_per_market: float = 20.0
-    max_open_usdc: float = 50.0
-    daily_loss_limit: float = 20.0
+    # --- money: start amount + sizes as % of the current balance (so it compounds) ---
+    start_amount: float = 100.0         # only used the first time; after that the saved balance counts
+    trade_pct: float = 10.0             # max per buy, % of balance
+    market_pct: float = 20.0            # max per bucket per day, % of balance
+    open_pct: float = 80.0              # max in open positions at once, % of balance
+    daily_loss_pct: float = 10.0        # stop buying for the rest of the day after losing this % of the day's start
 
     # --- fees (weather markets charge takers) ---
     fee_rate: float = 0.05              # estimate: fee/share ~= fee_rate * min(p, 1-p)
 
     # --- timing ---
     poll_seconds: float = 10.0
+    fast_poll_seconds: float = 3.0      # around METAR release minutes (:50-:05, :20-:35), when he trades
     market_refresh_seconds: float = 600.0
     recheck_window_seconds: float = 600.0   # keep looking for stale asks this long after a bucket dies
     recheck_every_seconds: float = 30.0
@@ -63,6 +65,8 @@ class Config:
     metar_source: str = "aviationweather"   # or "tgftp" (NOAA per-station files, often a bit faster)
     cities: tuple[str, ...] = ()            # empty = all cities
     journal_dir: str = "logs"
+    state_file: str = "state.json"          # saved balance, history and open positions
+    autostart: bool = True                  # dashboard app: start the bot right away
 
     # --- live trading (only used in mode=live) ---
     private_key: str = ""
@@ -75,8 +79,8 @@ class Config:
         return self.mode == "live"
 
 
-def load_config() -> Config:
-    load_dotenv()
+def load_config(env_file: str | os.PathLike = ".env") -> Config:
+    load_dotenv(env_file)
     cities = tuple(c.strip() for c in _get("CITIES", "").split(",") if c.strip())
     return Config(
         mode=_get("MODE", "paper").lower(),
@@ -86,18 +90,22 @@ def load_config() -> Config:
         safety_margin=_get("SAFETY_MARGIN", 0, int),
         enable_yes_bets=_get("ENABLE_YES_BETS", True, bool),
         sell_delay_seconds=_get("SELL_DELAY_SECONDS", 5.0, float),
-        max_usdc_per_trade=_get("MAX_USDC_PER_TRADE", 10.0, float),
-        max_usdc_per_market=_get("MAX_USDC_PER_MARKET", 20.0, float),
-        max_open_usdc=_get("MAX_OPEN_USDC", 50.0, float),
-        daily_loss_limit=_get("DAILY_LOSS_LIMIT", 20.0, float),
+        start_amount=_get("START_AMOUNT", 100.0, float),
+        trade_pct=_get("TRADE_PCT", 10.0, float),
+        market_pct=_get("MARKET_PCT", 20.0, float),
+        open_pct=_get("OPEN_PCT", 80.0, float),
+        daily_loss_pct=_get("DAILY_LOSS_PCT", 10.0, float),
         fee_rate=_get("FEE_RATE", 0.05, float),
         poll_seconds=_get("POLL_SECONDS", 10.0, float),
+        fast_poll_seconds=_get("FAST_POLL_SECONDS", 3.0, float),
         market_refresh_seconds=_get("MARKET_REFRESH_SECONDS", 600.0, float),
         recheck_window_seconds=_get("RECHECK_WINDOW_SECONDS", 600.0, float),
         recheck_every_seconds=_get("RECHECK_EVERY_SECONDS", 30.0, float),
         metar_source=_get("METAR_SOURCE", "aviationweather").lower(),
         cities=cities,
         journal_dir=_get("JOURNAL_DIR", "logs"),
+        state_file=_get("STATE_FILE", "state.json"),
+        autostart=_get("AUTOSTART", True, bool),
         private_key=_get("PRIVATE_KEY", ""),
         funder=_get("FUNDER", ""),
         signature_type=_get("SIGNATURE_TYPE", 1, int),

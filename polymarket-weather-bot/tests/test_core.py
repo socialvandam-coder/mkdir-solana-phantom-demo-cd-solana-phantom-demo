@@ -183,3 +183,17 @@ class OrderbookTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PollTests(unittest.TestCase):
+    def test_fast_around_metar_minutes(self):
+        import calendar
+        from weatherbot.config import Config
+        from weatherbot.engine import poll_interval
+        cfg = Config()
+        at = lambda m: calendar.timegm((2026, 10, 10, 12, m, 0))
+        self.assertEqual(poll_interval(cfg, at(52)), cfg.fast_poll_seconds)
+        self.assertEqual(poll_interval(cfg, at(2)), cfg.fast_poll_seconds)
+        self.assertEqual(poll_interval(cfg, at(31)), cfg.fast_poll_seconds)
+        self.assertEqual(poll_interval(cfg, at(12)), cfg.poll_seconds)
+        self.assertEqual(poll_interval(cfg, at(42)), cfg.poll_seconds)

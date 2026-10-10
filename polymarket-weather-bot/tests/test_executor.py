@@ -56,7 +56,7 @@ class PaperCycleTest(unittest.TestCase):
             ex.on_signals(signals, 1000.0)
             self.assertEqual(len(ex.positions), 1)
             p = ex.positions[0]
-            self.assertLessEqual(p.cost, cfg.max_usdc_per_trade + 0.1)
+            self.assertLessEqual(p.cost, cfg.start_amount * cfg.trade_pct / 100 + 0.1)
 
             # same stale asks still in the book 60 s later: paper must not buy them again
             ex.on_signals(signals, 1060.0)
