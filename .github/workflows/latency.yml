@@ -1,4 +1,5 @@
 # Races the free METAR sources against each other to find the fastest one.
+# Race length: RACE_MINUTES=<n> in .github/requests/latency.env (default 300 = 5 h, at most 330).
 name: latency-race
 
 on:
@@ -13,7 +14,7 @@ permissions:
 jobs:
   race:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 340
     defaults:
       run:
         working-directory: polymarket-weather-bot
@@ -23,5 +24,24 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install -q requests tzdata
+      # AMQP (MSC Canada) and MQTT (WMO WIS2) clients; without them the race skips those sources
+      - run: python -m pip install -q pika paho-mqtt || echo "::warning::pika/paho-mqtt not installed, MSC and WIS2 sources will be skipped"
       - name: Race
-        run: python tools/latency_race.py --minutes 40
+        env:
+          RACE_CONTACT: https://github.com/${{ github.repository }}
+        run: |
+          req=../.github/requests/latency.env
+          minutes=""
+          if [ -f "$req" ]; then
+            minutes=$(sed -n 's/^[[:space:]]*RACE_MINUTES[[:space:]]*=[[:space:]]*"\{0,1\}\([0-9][0-9]*\(\.[0-9]*\)\{0,1\}\)"\{0,1\}[[:space:]]*$/\1/p' "$req" | tail -n 1)
+            if [ -z "$minutes" ] && grep -q '^[[:space:]]*RACE_MINUTES' "$req"; then
+              echo "::warning::could not read the RACE_MINUTES value in latency.env (expected e.g. RACE_MINUTES=120), using 300"
+            fi
+          fi
+          minutes=${minutes:-300}
+          # leave room for setup and the final report inside the 340-minute job limit
+          if awk -v m="$minutes" 'BEGIN { exit !(m > 330) }'; then
+            echo "::warning::RACE_MINUTES=$minutes is longer than the job allows, using 330"
+            minutes=330
+          fi
+          python tools/latency_race.py --minutes "$minutes"

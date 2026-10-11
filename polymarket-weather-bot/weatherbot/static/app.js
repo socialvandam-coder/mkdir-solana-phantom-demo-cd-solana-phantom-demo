@@ -36,6 +36,24 @@ function ago(sec) {
   if (sec < 3600) return Math.round(sec / 60) + " min";
   return nf0.format(sec / 3600) + " u";
 }
+function moneyShort(v) {
+  // $100 instead of $100,00 for round amounts
+  if (v === null || v === undefined || isNaN(v)) return "–";
+  return Math.abs(v - Math.round(v)) < 0.005 ? (v < 0 ? "−" : "") + "$" + nf0.format(Math.abs(v)) : money(v);
+}
+function hm(sec) {
+  const m = Math.round(sec / 60);
+  return `${Math.floor(m / 60)}u${String(m % 60).padStart(2, "0")}`;
+}
+function deltaShort(d) {
+  const a = Math.abs(d);
+  const t = a < 60 ? `${Math.round(a)} s` : a < 3600 ? `${Math.round(a / 60)} min` : `${nf0.format(a / 3600)} u`;
+  return d > 0 ? "+" + t : d < 0 ? "−" + t : "0 s";
+}
+function deltaText(d) {
+  if (d === null || d === undefined) return "";
+  return d > 0 ? `${deltaShort(d)} later` : d < 0 ? `${deltaShort(d).slice(1)} eerder` : "tegelijk";
+}
 function dirClass(v) { return v > 0 ? "up" : v < 0 ? "down" : ""; }
 function arrow(v) { return v > 0 ? "▲ " : v < 0 ? "▼ " : ""; }
 const KIND = { high: "Max", low: "Min" };
@@ -147,7 +165,8 @@ function balanceSeries(state) {
   const before = hist.filter((p) => p[0] < from);
   const startVal = before.length ? before[before.length - 1][1] : (hist.length ? hist[0][1] : state.bank.balance);
   if (isFinite(from)) pts.unshift([from, startVal]);
-  pts.push([now, state.bank.balance]);
+  // 'now' = the current value, open positions included (the same number as 'Saldo' in Vandaag)
+  pts.push([now, state.bank.equity !== undefined ? state.bank.equity : state.bank.balance]);
   return pts;
 }
 
@@ -263,7 +282,8 @@ function drawDaily(state) {
   data.forEach((d, i) => {
     const cx = m.l + band * i + band / 2;
     const label = new Date(d.day + "T12:00:00").toLocaleDateString("nl-NL", { weekday: "short", day: "numeric" });
-    if (i % (band < 44 ? 2 : 1) === 0 || i === data.length - 1) {
+    const every = band < 44 ? 2 : 1;
+    if ((i % every === 0 && !(every > 1 && i === data.length - 2)) || i === data.length - 1) {
       const t = svg("text", { x: cx, y: H - 6, "text-anchor": "middle" });
       t.textContent = i === data.length - 1 ? "vandaag" : label; axis.appendChild(t);
     }
@@ -285,13 +305,112 @@ function drawDaily(state) {
     data.slice().reverse().map((d) => [d.day, { text: money(d.pnl, true), cls: dirClass(d.pnl) }]), "Geen gegevens");
 }
 
-// ---------- render ----------
+// ---------- status bar 'Werkt alles?' ----------
+const LEVEL = { critical: 3, warning: 2, good: 1, "": 0 };
+const UP_REASON = { slept: " (Mac sliep)", closed: " (bot stond uit)", stalled: " (bot keek niet)" };
+function statusChips(state) {
+  const h = state.health || {};
+  const src = h.sources || {};
+  const chips = [];
+  {
+    // the bot loop: red when it did nothing for 3 rounds
+    let lvl, long, short;
+    if (state.status === "error") { lvl = "critical"; long = "Bot: fout"; short = "Bot fout"; }
+    else if (!state.loop_alive) { lvl = "critical"; long = "Bot: staat stil"; short = "Bot uit"; }
+    else if (!h.last_step) { lvl = "warning"; long = "Bot: start op…"; short = "Bot start"; }
+    else {
+      const age = Math.max(0, state.now - h.last_step);
+      const limit = 3 * ((state.settings && state.settings.poll_seconds) || 10);
+      lvl = age > limit ? "critical" : "good";
+      long = age > limit ? `Bot: hangt (${ago(age)} niets gedaan)` : `Bot: draait (${ago(age)} geleden)`;
+      short = `Bot ${ago(age)}`;
+    }
+    chips.push({ lvl, long, short });
+  }
+  {
+    // weather: share of watched stations with a fresh report
+    const st = h.stations || [];
+    const fails = (src.weer && src.weer.consecutive_fail) || 0;
+    let lvl = "", long = "Weerdata: laden…", short = "Weer …";
+    if (st.length && (h.metar_last_ok || fails)) {
+      const fresh = st.filter((x) => !x.stale).length, ratio = fresh / st.length;
+      lvl = ratio < 0.5 || fails >= 3 ? "critical" : ratio < 0.9 ? "warning" : "good";
+      long = fails >= 3 ? `Weerdata: storing (${fresh}/${st.length} vers)` : `Weerdata: ${fresh}/${st.length} stations vers`;
+      short = `Weer ${fresh}/${st.length}`;
+    } else if (fails >= 3) { lvl = "critical"; long = "Weerdata: storing"; short = "Weer ✗"; }
+    else if (h.markets_ok && h.last_step && !st.length) { long = "Weerdata: nu geen markten"; short = "Weer –"; }
+    chips.push({ lvl, long, short });
+  }
+  {
+    // Polymarket: the market list and the order books
+    const m = src.markten || {}, b = src.orderboek || {};
+    const worst = Math.max(m.consecutive_fail || 0, b.consecutive_fail || 0);
+    let lvl = "", long = "Polymarket: laden…";
+    if (worst >= 3) { lvl = "critical"; long = "Polymarket: storing"; }
+    else if (worst >= 1) { lvl = "warning"; long = "Polymarket: hapert"; }
+    else if (m.last_ok_ts) { lvl = "good"; long = "Polymarket: OK"; }
+    chips.push({ lvl, long, short: "Polymarket" });
+  }
+  {
+    // live trading: grey in paper mode (nothing at stake), red in live mode when not allowed
+    const g = h.geoblock, live = state.mode === "live";
+    let lvl = "", long = "Live: nog niet gecontroleerd", short = "Live ?";
+    if (g) {
+      const where = g.country ? ` (${g.country})` : "";
+      if (g.live_allowed) { lvl = live ? "good" : ""; long = `Live: toegestaan${where}`; short = "Live ja"; }
+      else { lvl = live ? "critical" : ""; long = `Live: niet toegestaan${where}`; short = "Live nee"; }
+    }
+    chips.push({ lvl, long, short });
+  }
+  return chips;
+}
+
+function renderStatusBar(state) {
+  const chips = statusChips(state);
+  const box = $("sb-chips");
+  // update the chips in place: a tap that spans a refresh must still land on the same button
+  if (box.children.length !== chips.length) {
+    box.replaceChildren();
+    chips.forEach(() => {
+      const b = el("button", { type: "button", class: "schip" });
+      b.appendChild(el("span", { class: "dot" }));
+      b.appendChild(el("span", { class: "long" }));
+      b.appendChild(el("span", { class: "short", "aria-hidden": "true" }));
+      b.addEventListener("click", openHealth);
+      box.appendChild(b);
+    });
+  }
+  let worst = "";
+  chips.forEach((c, i) => {
+    if (LEVEL[c.lvl] > LEVEL[worst]) worst = c.lvl;
+    const b = box.children[i];
+    b.className = "schip " + c.lvl;
+    b.title = c.long + " · tik voor details";
+    b.children[0].className = "dot " + c.lvl;
+    b.children[1].textContent = c.long;
+    b.children[2].textContent = c.short;
+  });
+  const dot = $("sb-dot");
+  dot.className = "bigdot " + worst;
+  dot.setAttribute("aria-label", worst === "critical" ? "Werkt alles? Nee, er is een storing"
+    : worst === "warning" ? "Werkt alles? Bijna, iets hapert" : worst === "good" ? "Werkt alles? Ja" : "Werkt alles? Nog onbekend");
+  const up = (state.health || {}).uptime;
+  const line = $("sb-uptime");
+  if (up && up.pct !== null && up.pct !== undefined) {
+    const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+    const from = up.since * 1000 > midnight.getTime() + 60000 ? `Sinds ${clock(up.since)}` : "Vandaag";
+    const pctTxt = up.missed_s < 60 ? "100" : nf0.format(Math.min(99, Math.floor(up.pct)));
+    let text = `${from} ${pctTxt}% actief`;
+    if (up.missed_s >= 60) text += ` · ${hm(up.missed_s)} gemist` + (UP_REASON[up.reason] || "");
+    line.textContent = text;
+    line.className = "sb-uptime" + (up.missed_s >= 60 && up.pct < 90 ? " warn" : "");
+    line.hidden = false;
+  } else line.hidden = true;
+}
+
 function setStatus(state) {
-  const st = $("status");
-  const map = { running: ["good", "Draait"], stopped: ["", "Gestopt"], error: ["critical", "Fout"] };
-  const [cls, text] = map[state.status] || ["", state.status];
-  st.replaceChildren(el("span", { class: "dot " + cls }), el("span", {}, text));
   $("mode").textContent = state.mode === "live" ? "LIVE · echt geld" : "Oefenen · nepgeld";
+  renderStatusBar(state);
   setControls(state);
 
   const banner = $("banner");
@@ -301,7 +420,6 @@ function setStatus(state) {
   // one missed round is normal on the internet; only warn when it keeps failing (~30 s+)
   if (h.metar_ok === false && (h.metar_fail_streak || 0) >= 3) msgs.push(["warning", "Weerdata komt al " + h.metar_fail_streak + " rondes niet binnen (beide bronnen): " + (h.metar_error || "onbekende fout")]);
   if (h.markets_ok === false) msgs.push(["warning", "Polymarket-markten konden niet geladen worden: " + (h.markets_error || "")]);
-  if (state.bank && state.bank.stopped_for_today) msgs.push(["warning", "Daglimiet voor verlies bereikt: de bot koopt vandaag niets meer."]);
   if (h.power && h.power.on_battery) msgs.push(["warning", "Mac op batterij: sluit de lader aan, anders kan de Mac gaan slapen en stopt de bot."]);
   banner.replaceChildren();
   if (msgs.length) {
@@ -382,23 +500,119 @@ function renderPositions(state) {
   more.textContent = SHOW_ALL_POS ? "minder" : `meer (${ps.length - 3})`;
 }
 
+// ---------- 'Vandaag': equity incl. open positions ----------
+function renderToday(state) {
+  const b = state.bank, t = state.today || {};
+  const live = state.mode === "live";
+  const tp = $("today-pct");
+  const rounded = Math.round((b.today_pct || 0) * 10) / 10;
+  tp.textContent = pct(b.today_pct, 1) + " vandaag";
+  tp.className = "hero-value " + dirClass(rounded);
+  const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+  const since = b.started_at * 1000 > midnight.getTime() ? clock(b.started_at) : "00:00";
+  $("today-since").textContent = "sinds " + since + " · open posities tellen mee";
+  const n = b.today_trades || 0;
+  $("today-line2").textContent = [money(b.today_equity_pnl, true), `${n} ${n === 1 ? "trade" : "trades"}`,
+    `${b.today_wins || 0} gewonnen`, `${b.today_losses || 0} verloren`, `kosten ${money(b.fees_today || 0)}`].join(" · ");
+  const parts = [`Saldo ${money(b.equity)} (start ${moneyShort(b.start_amount)} · ${pct(b.total_equity_pct, 1)} totaal)`];
+  if (b.open_cost > 0.005) parts.push(`In posities ${money(b.open_cost)} (nu ${money(b.open_value)} waard)`);
+  parts.push(`Volgende aankoop max ${money(b.next_trade_size)}`);
+  const box = $("today-line3"); box.replaceChildren();
+  // the dot sticks to the part before it (no-break space), so a wrapped line never starts with '·'
+  parts.forEach((x, i) => {
+    const span = el("span", {}, x);
+    if (i < parts.length - 1) span.appendChild(el("span", { class: "sep", "aria-hidden": "true" }, "\u00a0·"));
+    box.appendChild(span);
+  });
+  const badge = $("money-badge");
+  badge.textContent = live ? "ECHT GELD" : "OEFENGELD - bovengrens";
+  badge.className = "badge " + (live ? "live" : "paper");
+  badge.title = live ? "De bot handelt met echt geld" : "Oefenen vult elke order tegen het echte orderboek; in het echt is een snellere bot je soms voor";
+  const stop = $("today-stop");
+  stop.hidden = !b.stopped_for_today;
+  stop.textContent = b.stopped_for_today ? "Dagverlies-stop actief: de bot koopt vandaag niets meer. Open posities worden gewoon verkocht." : "";
+  const norm = $("today-normal");
+  if (t.normal_range) {
+    norm.textContent = `normaal voor jouw bot: ${pct(t.normal_range[0], 1)} tot ${pct(t.normal_range[1], 1)} per dag`;
+    norm.hidden = false;
+  } else norm.hidden = true;
+  $("today-note").textContent = live ? ""
+    : "Oefengeld is een bovengrens: in het echt pakt een snellere bot soms eerst de goedkope orders.";
+}
+
+// ---------- 'Vandaag gezien': from dead bucket to sold, and why not ----------
+function renderFunnel(state) {
+  const f = (state.today && state.today.funnel) || { signalen: 0, met_goedkope_orders: 0, gekocht: 0, verkocht: 0, skips: {} };
+  const steps = [[f.signalen, "vakken dood"], [f.met_goedkope_orders, "met goedkope orders"], [f.gekocht, "gekocht"], [f.verkocht, "verkocht"]];
+  const ol = $("funnel"); ol.replaceChildren();
+  ol.setAttribute("aria-label", steps.map(([v, l]) => `${v} ${l}`).join(", "));
+  steps.forEach(([v, l]) => {
+    const li = el("li");
+    li.appendChild(el("strong", {}, nf0.format(v || 0)));
+    li.appendChild(el("span", {}, l));
+    ol.appendChild(li);
+  });
+  const labels = state.skip_labels || {};
+  const entries = Object.entries(f.skips || {}).sort((a, b) => b[1] - a[1]);
+  const ul = $("skips"); ul.replaceChildren();
+  if (!entries.length) ul.appendChild(el("li", { class: "muted" }, f.signalen ? "Nog niets overgeslagen." : "Nog geen dode vakken vandaag."));
+  entries.slice(0, 3).forEach(([reason, count]) => {
+    const li = el("li");
+    li.appendChild(el("span", {}, labels[reason] || reason));
+    li.appendChild(el("span", { class: "count" }, nf0.format(count)));
+    ul.appendChild(li);
+  });
+  if (entries.length > 3) {
+    const rest = entries.slice(3).reduce((a, e) => a + e[1], 0);
+    ul.appendChild(el("li", { class: "muted" }, `en ${rest} om ${entries.length - 3 === 1 ? "één andere reden" : (entries.length - 3) + " andere redenen"}`));
+  }
+}
+
+// ---------- 'HighTempTation vandaag' ----------
+const HTT_ICON = {
+  gekocht: ["good", () => "✓", () => "ook gekocht"],
+  gezien_te_laat: ["warning", (r) => "⏱ " + (r.delta_s === null ? "" : deltaShort(r.delta_s)), () => "gezien, maar goedkope orders al weg"],
+  gezien_overgeslagen: ["", (r) => r.delta_s === null ? "–" : deltaShort(r.delta_s), (r, labels) => r.reason ? "gezien, niet gekocht: " + (labels[r.reason] || r.reason).toLowerCase() : "gezien, (nog) niet gekocht"],
+  niet_gezien: ["critical", () => "✗", () => "niet gezien (station, afronding of tijdzone?)"],
+};
+function renderHtt(state) {
+  const r = state.htt;
+  const sum = $("htt-summary"), list = $("htt-list"), missed = $("htt-missed"), upd = $("htt-updated");
+  list.replaceChildren();
+  missed.hidden = true;
+  upd.textContent = "";
+  if (!r) { sum.textContent = "Wordt opgehaald…"; return; }
+  if (!r.ok) {
+    sum.textContent = "Kon zijn trades niet ophalen (" + (r.error || "onbekende fout") + "). Over 2 minuten opnieuw.";
+    return;
+  }
+  const updated = r.error_at && r.error_at > (r.updated_at || 0) ? " · laatste poging mislukt" : "";
+  upd.textContent = "Bijgewerkt " + ago(Math.max(0, state.now - r.updated_at)) + " geleden" + updated;
+  if (!r.his_n) { sum.textContent = "HighTempTation heeft vandaag nog niets gekocht."; return; }
+  const parts = [`${r.his_n} ${r.his_n === 1 ? "vak" : "vakken"}`, `jouw bot zag ${r.seen_n}`, `eerder dan hij ${r.first_n}×`, `gekocht ${r.bought_n}`];
+  if (r.median_delta_s !== null && r.median_delta_s !== undefined) parts.push("mediaan " + deltaText(r.median_delta_s));
+  sum.textContent = parts.join(" · ");
+  missed.textContent = `Geschat gemist: ${money(r.missed_est)}`;
+  missed.hidden = false;
+  const labels = state.skip_labels || {};
+  (r.rows || []).slice(0, 5).forEach((row) => {
+    const [cls, icon, why] = HTT_ICON[row.status] || ["", () => "?", () => row.status];
+    const li = el("li");
+    li.appendChild(el("span", { class: "htt-icon " + cls }, icon(row)));
+    const body = el("span", { class: "htt-body" });
+    body.appendChild(el("span", { class: "htt-what" }, row.label || row.title));
+    body.appendChild(el("span", { class: "htt-sub" }, `hij ${clock(row.his_ts)} · ${nf3.format(row.his_price)} · ${money(row.his_usdc)} · ${why(row, labels)}`));
+    li.appendChild(body);
+    list.appendChild(li);
+  });
+}
+
 function render(state) {
   STATE = state;
   setStatus(state);
-  const b = state.bank;
-  const tp = $("today-pct");
-  tp.textContent = arrow(b.today_pct) + pct(b.today_pct);
-  tp.className = "hero-value " + dirClass(b.today_pct);
-  $("today-sub").textContent = money(b.today_pnl, true) + " vandaag" + (state.mode === "live" ? "" : " (oefengeld)");
-  $("bal").textContent = money(b.balance);
-  $("bal-sub").textContent = "start " + money(b.start_amount) + (b.open_cost > 0 ? " · " + money(b.open_cost) + " in posities" : "");
-  const tot = $("total"); tot.textContent = arrow(b.total_pct) + pct(b.total_pct); tot.className = "value " + dirClass(b.total_pct);
-  $("total-sub").textContent = money(b.total_pnl, true) + " · " + b.trades + " trades";
-  $("next").textContent = money(b.next_trade_size);
-  $("next-sub").textContent = state.settings.trade_pct + "% van saldo · groeit mee";
-  const t = state.today;
-  $("trades-n").textContent = String(t.closes);
-  $("trades-sub").textContent = t.closes ? `${t.wins} gewonnen (${nf0.format(t.wins / t.closes * 100)}%) · ${t.signals} signalen` : `${t.signals} signalen · ${t.buys} aankopen`;
+  renderToday(state);
+  renderFunnel(state);
+  renderHtt(state);
 
   drawBalance(state);
   drawDaily(state);
@@ -428,7 +642,7 @@ function render(state) {
     let cls = "", text = "nog niet opgehaald";
     if (h.metar_ok) {
       cls = "good";
-      text = `ok · ${ago(metarAge)} geleden` + (h.metar_source && h.metar_source !== "aviationweather" ? ` · via reservebron (${h.metar_source})` : "");
+      text = `ok · ${ago(metarAge)} geleden` + (h.metar_source && h.metar_primary && h.metar_source !== h.metar_primary ? ` · via reservebron (${h.metar_source})` : "");
     } else if (h.metar_ok === false) {
       cls = streak >= 3 ? "critical" : "warning";
       text = streak >= 3 ? `storing · ${streak} rondes mislukt` : "even geen antwoord · volgende ronde opnieuw";
@@ -437,6 +651,22 @@ function render(state) {
     items.push(["Weerdata", cls, text]);
   }
   items.push(["Markten", h.markets_ok ? "good" : h.markets_ok === false ? "critical" : "", h.markets_ok ? `${(state.events || []).length} actief` : h.markets_ok === false ? "fout" : "nog niet geladen"]);
+  {
+    const b = (h.sources || {}).orderboek || {};
+    const fails = b.consecutive_fail || 0;
+    let cls = "", text = "nog niet nodig gehad";
+    if (fails) { cls = fails >= 3 ? "critical" : "warning"; text = `${fails}× achter elkaar mislukt` + (b.last_error ? ` · ${b.last_error}` : ""); }
+    else if (b.last_ok_ts) { cls = "good"; text = `ok · ${ago(now - b.last_ok_ts)} geleden`; }
+    items.push(["Orderboek", cls, text]);
+  }
+  if (h.uptime && h.uptime.pct !== null && h.uptime.pct !== undefined) {
+    const u = h.uptime;
+    const parts = [`${hm(u.active_s)} actief`];
+    if (u.missed_s >= 60) parts.push(`${hm(u.missed_s)} gemist`);
+    if (u.slept_s >= 60) parts.push(`Mac sliep ${hm(u.slept_s)}`);
+    if (u.closed_s >= 60) parts.push(`bot stond ${hm(u.closed_s)} uit`);
+    items.push(["Vandaag", u.missed_s < 60 ? "good" : u.pct >= 90 ? "warning" : "critical", parts.join(" · ")]);
+  }
   items.push(["Laatste ronde", h.last_step && now - h.last_step < 60 ? "good" : h.last_step ? "warning" : "", h.last_step ? `${ago(now - h.last_step)} geleden · ${h.step_ms} ms` : "–"]);
   {
     // every station has its own report moments; around them the bot looks every 2 s
@@ -479,15 +709,60 @@ function render(state) {
     const li = el("li"); li.appendChild(el("span", { class: "dot " + cls })); li.appendChild(el("span", { class: "what" }, what)); li.appendChild(el("span", {}, text));
     ul.appendChild(li);
   });
+  renderStations(h);
 
   renderEvents(state.events || []);
 
+  const result = (s) => {
+    if (s.result === "bought") return el("span", { class: "chip good" }, "gekocht");
+    if (s.result_label) return el("span", { class: "muted" }, s.result_label);
+    return el("span", { class: "muted" }, "–");
+  };
   fillTable($("signals-table"),
-    [{ label: "Tijd" }, { label: "Stad" }, { label: "Vak" }, { label: "Kant" }, { label: "Waarom" }, { label: "Vertraging", num: true }],
-    (state.signals || []).slice(0, 25).map((s) => [clock(s.ts), `${s.city} ${KIND[s.kind] || ""}`, s.bucket, el("span", { class: "tag" }, s.outcome), s.reason, ago(s.lag_s)]),
+    [{ label: "Tijd" }, { label: "Stad" }, { label: "Vak" }, { label: "Kant" }, { label: "Resultaat" }, { label: "Waarom dood" }, { label: "Vertraging", num: true }],
+    (state.signals || []).slice(0, 25).map((s) => [clock(s.ts), `${s.city} ${KIND[s.kind] || ""}`, s.bucket, el("span", { class: "tag" }, s.outcome), result(s), s.reason, ago(s.lag_s)]),
     "Nog geen signalen.");
 
   $("logs").textContent = (state.logs || []).map((l) => `${clock(l.ts)} ${l.level === "INFO" ? "" : l.level + " "}${l.msg}`).join("\n");
+}
+
+// ---------- details sheet: per station, last errors ----------
+const ERR_WHAT = { weer: "Weerdata", markten: "Markten", orderboek: "Orderboek", "snel kijken": "Snel kijken", bot: "Bot", buy: "Kopen", cancel: "Annuleren" };
+function renderStations(h) {
+  const rows = (h.stations || []).slice().sort((a, b) => (b.stale ? 1 : 0) - (a.stale ? 1 : 0) || a.station.localeCompare(b.station));
+  const kinds = (k) => (k || []).map((x) => (KIND[x] || x).toLowerCase()).join("/");
+  fillTable($("stations-table"),
+    [{ label: "Station" }, { label: "Stad" }, { label: "Laatste meting", num: true }, { label: "Leeftijd", num: true },
+     { label: "Ritme", num: true }, { label: "Gezien na meettijd", num: true }],
+    rows.map((r) => {
+      // the freshness dot sits next to the station code, so it shows without scrolling on a phone
+      const st = el("span", { title: r.stale ? "geen verse meting" : "vers" });
+      st.appendChild(el("span", { class: "dot " + (r.stale ? "warning" : "good") }));
+      st.appendChild(document.createTextNode(" " + r.station));
+      return [st, `${(r.cities || []).join(", ")} ${kinds(r.kinds)}`.trim(),
+        r.last_temp_c === null || r.last_temp_c === undefined ? "–" : `${r.last_temp_c}°C`,
+        r.age_s === null ? "–" : ago(r.age_s),
+        `${nf0.format(r.cadence_min)} min`, r.publish_delay_s_p50 === null ? "–" : `${r.publish_delay_s_p50} s`];
+    }),
+    "Nog geen stations: de bot laadt eerst de markten.");
+  const d = h.seen_delay_s_p50;
+  $("seen-delay").textContent = d === null || d === undefined
+    ? "Nog geen nieuwe meting live gezien (dat gebeurt rond het eigen meetmoment van elk station). HighTempTation koopt gemiddeld ~80 s na de meettijd."
+    : `Jouw bot ziet een nieuwe meting meestal ${d} s na de meettijd (HighTempTation koopt gemiddeld ~80 s na de meettijd).`;
+  const ul = $("errors-list"); ul.replaceChildren();
+  const errs = h.errors || [];
+  if (!errs.length) ul.appendChild(el("li", { class: "muted" }, "Geen fouten."));
+  errs.slice(0, 5).forEach((e) => {
+    const li = el("li");
+    li.appendChild(el("span", { class: "when" }, clock(e.ts)));
+    li.appendChild(el("span", { class: "what" }, ERR_WHAT[e.what] || e.what));
+    li.appendChild(el("span", { class: "text" }, e.text));
+    ul.appendChild(li);
+  });
+}
+function openHealth() {
+  const d = $("health-dialog");
+  if (!d.open) d.showModal();
 }
 
 let SHOW_ALL_EVENTS = false;
@@ -592,6 +867,8 @@ $("btn-halt").addEventListener("click", async () => {
   poll();
 });
 $("pos-more").addEventListener("click", () => { SHOW_ALL_POS = !SHOW_ALL_POS; if (STATE) renderPositions(STATE); });
+$("sb-uptime").addEventListener("click", openHealth);
+$("btn-close-health").addEventListener("click", () => $("health-dialog").close());
 $("btn-quit").addEventListener("click", async () => {
   const open = STATE ? (STATE.positions || []).length : 0;
   const question = open > 0
@@ -655,6 +932,44 @@ function buildFields(s) {
     ? "Opgeslagen" + (s.keychain ? " in je Mac-sleutelhanger" : "") + ". Laat leeg om zo te houden."
     : "Alleen nodig voor live. Wordt " + (s.keychain ? "in je Mac-sleutelhanger" : "lokaal") + " bewaard en nooit meer getoond.";
   $("private-key").value = "";
+  applyChecks(s.checks || {});
+  if (s.min_start_amount) {
+    $("start-amount").min = String(s.min_start_amount);
+    $("min-start").textContent = `Minimaal ${moneyShort(s.min_start_amount)} bij ${nf2.format(Number(s.values.TRADE_PCT)).replace(/,00$/, "")}% per aankoop: Polymarket verkoopt minstens 5 shares per order.`;
+  }
+}
+
+// green = advised, amber = allowed but risky, red = not allowed; plus what it means in $ right now
+function applyChecks(checks) {
+  Object.entries(checks).forEach(([key, c]) => {
+    const input = document.querySelector(`#settings-form [data-key="${key}"]`);
+    const line = $("c-" + key);
+    if (!input || !line) return;
+    input.classList.remove("lvl-good", "lvl-warn", "lvl-bad");
+    if (c.level) input.classList.add("lvl-" + c.level);
+    line.className = "conseq" + (c.level ? " " + c.level : "");
+    let text = c.error || c.text || "";
+    if (!c.error && c.level === "warn" && c.safe) text += (text ? " · " : "") + c.safe;
+    line.textContent = text;
+    line.hidden = !text;
+  });
+}
+function currentValues() {
+  const values = {};
+  document.querySelectorAll("#settings-form [data-key]").forEach((i) => {
+    values[i.dataset.key] = i.dataset.kind === "bool" ? (i.checked ? "true" : "false") : i.value;
+  });
+  return values;
+}
+let checkTimer = null;
+function scheduleCheck() {
+  clearTimeout(checkTimer);
+  checkTimer = setTimeout(async () => {
+    try {
+      const r = await api("/api/settings/check", { values: currentValues() });
+      applyChecks(r.checks || {});
+    } catch (e) { /* the save button reports problems */ }
+  }, 250);
 }
 function fieldRow(f, value) {
   const row = el("div", { class: "field" });
@@ -678,6 +993,10 @@ function fieldRow(f, value) {
   }
   input.dataset.key = f.key; input.dataset.kind = f.kind;
   row.appendChild(input);
+  if (f.kind === "float" || f.kind === "int") {
+    input.addEventListener("input", scheduleCheck);
+    row.appendChild(el("div", { class: "conseq", id: "c-" + f.key, "aria-live": "polite", hidden: "" }));
+  }
   const help = f.key === "MODE" && SETTINGS && !SETTINGS.live_allowed ? (SETTINGS.live_block_text || f.help) : f.help;
   if (help) row.appendChild(el("div", { class: "help" }, help));
   return row;
@@ -694,10 +1013,7 @@ $("btn-settings").addEventListener("click", async () => {
 $("btn-close-settings").addEventListener("click", () => $("settings-dialog").close());
 $("btn-save").addEventListener("click", async () => {
   const msg = $("settings-msg");
-  const values = {};
-  document.querySelectorAll("#settings-form [data-key]").forEach((i) => {
-    values[i.dataset.key] = i.dataset.kind === "bool" ? (i.checked ? "true" : "false") : i.value;
-  });
+  const values = currentValues();
   if (values.MODE === "live" && SETTINGS && SETTINGS.values.MODE !== "live" &&
       !confirm("Live = echt geld. De bot handelt alleen als Polymarket dat vanaf jouw locatie toestaat. Doorgaan?")) return;
   const body = { values };

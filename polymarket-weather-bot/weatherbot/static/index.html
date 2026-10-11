@@ -12,47 +12,69 @@
   <header class="topbar">
     <div class="brand"><img src="/icon.svg" alt="" width="26" height="26"><span>Weerbot</span></div>
     <span id="mode" class="badge">–</span>
-    <span id="status" class="pill"><span class="dot"></span><span>laden…</span></span>
     <div class="spacer"></div>
     <button id="btn-start" class="primary" type="button">Start</button>
     <button id="btn-halt" class="danger textbtn" type="button" title="Koopt niets meer; open posities worden gewoon verkocht">Noodstop</button>
     <button id="btn-settings" type="button">Instellingen</button>
     <button id="btn-quit" class="danger" type="button">Afsluiten</button>
+  </header>
+
+  <div class="statusbar" id="statusbar">
+    <div class="sb-row">
+      <span id="sb-dot" class="bigdot" role="img" aria-label="Werkt alles? laden"></span>
+      <div class="sb-chips" id="sb-chips" role="group" aria-label="Werkt alles? Tik voor details"></div>
+      <button type="button" id="sb-uptime" class="sb-uptime" hidden></button>
+    </div>
     <div id="stall-banner" class="topbar-alert critical" role="alert" hidden></div>
     <div id="halt-line" class="topbar-line" role="status" hidden></div>
-  </header>
+  </div>
 
   <div id="banner" class="banner" role="status" hidden></div>
 
   <main>
-    <div class="top">
-      <section class="card hero" aria-live="polite">
-        <div class="hero-label">Vandaag</div>
-        <div class="hero-value" id="today-pct">–</div>
-        <div class="sub" id="today-sub">&nbsp;</div>
+    <div class="grid2 lead">
+      <section class="card today" id="today-card" aria-live="polite">
+        <div class="card-head">
+          <h2>Vandaag</h2>
+          <span id="money-badge" class="badge">–</span>
+        </div>
+        <div class="today-big"><span class="hero-value" id="today-pct">–</span><span class="sub" id="today-since"></span></div>
+        <div class="today-line" id="today-line2"></div>
+        <div class="today-parts" id="today-line3"></div>
+        <div class="alert-box" id="today-stop" role="alert" hidden></div>
+        <div class="note" id="today-normal" hidden></div>
+        <div class="note" id="today-note"></div>
       </section>
-      <div class="tiles">
-        <section class="card tile">
-          <div class="label">Saldo</div>
-          <div class="value" id="bal">–</div>
-          <div class="sub" id="bal-sub">&nbsp;</div>
-        </section>
-        <section class="card tile">
-          <div class="label">Sinds start</div>
-          <div class="value" id="total">–</div>
-          <div class="sub" id="total-sub">&nbsp;</div>
-        </section>
-        <section class="card tile">
-          <div class="label">Volgende inzet (max)</div>
-          <div class="value" id="next">–</div>
-          <div class="sub" id="next-sub">&nbsp;</div>
-        </section>
-        <section class="card tile">
-          <div class="label">Trades vandaag</div>
-          <div class="value" id="trades-n">–</div>
-          <div class="sub" id="trades-sub">&nbsp;</div>
-        </section>
-      </div>
+      <section class="card" id="funnel-card">
+        <div class="card-head"><h2>Vandaag gezien</h2><span class="sub">van dood vak tot verkocht</span></div>
+        <ol class="funnel" id="funnel"></ol>
+        <h3 class="mini">Waarom niet gekocht</h3>
+        <ul class="skips" id="skips"></ul>
+        <div class="note">"Te laat" is normaal: na de eerste koper ligt er zelden nog iets goedkoops. Zie je vaak "Orderboek niet bereikbaar" of "Bedrag te klein", dan is er iets mis of staat een instelling te krap.</div>
+      </section>
+    </div>
+
+    <div class="grid2">
+      <section class="card" id="pos-card">
+        <div class="card-head"><h2>Open posities</h2><span class="sub" id="pos-head">Open: 0</span></div>
+        <ul class="pos-list" id="pos-list"></ul>
+        <button type="button" id="pos-more" class="more" hidden>meer</button>
+        <div class="note" id="pos-note">Normaal is een aankoop binnen enkele seconden doorverkocht voor 0,99. Lukt dat na 30 seconden niet, dan slaat de bot alarm, koopt hij niets meer in die markt en controleert hij de meting opnieuw.</div>
+      </section>
+      <section class="card" id="htt-card">
+        <div class="card-head"><h2>HighTempTation vandaag</h2><span class="sub" id="htt-updated"></span></div>
+        <div id="htt-summary" class="htt-summary">Wordt opgehaald…</div>
+        <div id="htt-missed" class="htt-missed" hidden></div>
+        <ul class="htt-list" id="htt-list"></ul>
+        <div class="note">Vergelijkt zijn aankopen sinds middernacht met wat jouw bot zag. "Gemist" is een bovengrens: als hij eerst was, lag er meestal niets goedkoops meer.</div>
+        <details id="compare-details">
+          <summary>Alles vergelijken (sinds de eerste start)</summary>
+          <div class="compare-box">
+            <button id="btn-compare" type="button">Vergelijk alles</button>
+            <div id="compare-out" class="muted"></div>
+          </div>
+        </details>
+      </section>
     </div>
 
     <section class="card">
@@ -81,20 +103,6 @@
       <div class="table-wrap"><table id="trades-table"></table></div>
     </section>
 
-    <div class="grid2">
-      <section class="card" id="pos-card">
-        <div class="card-head"><h2>Open posities</h2><span class="sub" id="pos-head">Open: 0</span></div>
-        <ul class="pos-list" id="pos-list"></ul>
-        <button type="button" id="pos-more" class="more" hidden>meer</button>
-        <div class="note" id="pos-note">Normaal is een aankoop binnen enkele seconden doorverkocht voor 0,99. Lukt dat na 30 seconden niet, dan slaat de bot alarm, koopt hij niets meer in die markt en controleert hij de meting opnieuw.</div>
-      </section>
-      <section class="card">
-        <h2>Gezondheid</h2>
-        <ul class="health" id="health"></ul>
-        <div class="note" id="awake-note">Laat de Mac aan de stroom en de klep open (klep dicht = bot stopt, tenzij extern scherm). Na een slaapstand haalt de bot alles opnieuw op en koopt hij één ronde niets.</div>
-      </section>
-    </div>
-
     <section class="card">
       <div class="card-head"><h2>Markten nu</h2><span class="sub">steden waar het nu de marktdag is; vanaf 23:30 ook die van morgen</span></div>
       <div class="table-wrap"><table id="events-table"></table></div>
@@ -107,20 +115,29 @@
     </section>
 
     <section class="card">
-      <div class="card-head">
-        <h2>Vergelijk met HighTempTation</h2>
-        <button id="btn-compare" type="button">Vergelijk nu</button>
-      </div>
-      <div id="compare-out" class="muted">Kijkt welke vakken HighTempTation kocht terwijl jouw bot draaide, en of jouw bot ze ook vond (en sneller of trager was).</div>
-    </section>
-
-    <section class="card">
       <details>
         <summary>Logboek</summary>
         <pre id="logs"></pre>
       </details>
     </section>
   </main>
+
+  <dialog id="health-dialog" class="sheet" aria-labelledby="health-title">
+    <div class="dlg-head"><h2 id="health-title">Werkt alles?</h2><button type="button" id="btn-close-health">Sluiten</button></div>
+    <div class="dlg-body">
+      <ul class="health" id="health"></ul>
+      <section>
+        <h3 class="mini">Weerstations</h3>
+        <div class="table-wrap"><table id="stations-table"></table></div>
+        <div class="note" id="seen-delay"></div>
+      </section>
+      <section>
+        <h3 class="mini">Laatste fouten</h3>
+        <ul class="errors" id="errors-list"></ul>
+      </section>
+      <div class="note" id="awake-note">Laat de Mac aan de stroom en de klep open (klep dicht = bot stopt, tenzij extern scherm). Na een slaapstand haalt de bot alles opnieuw op en koopt hij één ronde niets.</div>
+    </div>
+  </dialog>
 
   <dialog id="settings-dialog" aria-labelledby="settings-title">
     <form method="dialog" id="settings-form">
@@ -131,7 +148,7 @@
           <div class="field">
             <label for="start-amount">Beginnen met ($)</label>
             <input id="start-amount" type="number" min="1" step="1" inputmode="decimal">
-            <div class="help">Opnieuw beginnen wist de grafiek en zet het saldo op dit bedrag. Bij live handelen gebruikt de bot nooit meer dan dit bedrag plus zijn eigen winst.</div>
+            <div class="help">Opnieuw beginnen wist de grafiek en zet het saldo op dit bedrag. Bij live handelen gebruikt de bot nooit meer dan dit bedrag plus zijn eigen winst. <span id="min-start"></span></div>
           </div>
           <div><button type="button" id="btn-reset-bank">Opnieuw beginnen met dit bedrag</button> <span id="bank-msg" class="msg"></span></div>
         </fieldset>

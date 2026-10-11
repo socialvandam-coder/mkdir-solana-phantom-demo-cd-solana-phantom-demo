@@ -289,6 +289,11 @@ class ObservationStore:
         obs = self._by_station.get(station)
         return max(obs) if obs else None
 
+    def latest(self, station: str) -> Observation | None:
+        """The station's newest report (None = none yet)."""
+        obs = self._by_station.get(station)
+        return obs[max(obs)] if obs else None
+
     def cadence_min(self, station: str) -> float:
         """Usual minutes between reports: median gap of the last 6 reports (or the default)."""
         times = sorted(self._by_station.get(station, {}))[-6:]

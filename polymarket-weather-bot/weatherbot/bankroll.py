@@ -200,7 +200,8 @@ class Bankroll:
         return self.balance - float(self.state["day_start_balance"])
 
     @property
-    def today_pct(self) -> float:
+    def today_realized_pct(self) -> float:
+        """Today's result on closed trades only, in % of the day's start balance."""
         base = float(self.state["day_start_balance"])
         return self.today_pnl / base * 100 if base > 0 else 0.0
 
@@ -210,12 +211,25 @@ class Bankroll:
         return self.equity - float(self.state["day_start_equity"])
 
     @property
+    def today_pct(self) -> float:
+        """Today's result including open positions at their current value (what the dashboard shows):
+        a wrong bucket counts the moment its price drops, not only when the market resolves."""
+        pnl = self.today_equity_pnl
+        base = float(self.state["day_start_equity"])
+        return pnl / base * 100 if base > 0 else 0.0
+
+    @property
     def total_pnl(self) -> float:
         return float(self.state["realized"])
 
     @property
     def total_pct(self) -> float:
         return self.total_pnl / self.start_amount * 100 if self.start_amount > 0 else 0.0
+
+    @property
+    def total_equity_pct(self) -> float:
+        """Since the start, open positions included at their current value."""
+        return (self.equity - self.start_amount) / self.start_amount * 100 if self.start_amount > 0 else 0.0
 
     def stopped_for_today(self) -> bool:
         """Lost DAILY_LOSS_PCT of today's start equity (open positions at their current value)."""
@@ -339,10 +353,13 @@ class Bankroll:
             "equity": round(self.equity, 4),
             "available": round(self.available, 4),
             "open_cost": round(self.open_cost, 4),
-            "today_pnl": round(self.today_pnl, 4),
-            "today_pct": round(self.today_pct, 3),
+            "open_value": round(self.open_cost if self.open_value is None else self.open_value, 4),
+            "today_pnl": round(self.today_pnl, 4),                   # closed trades only
+            "today_realized_pct": round(self.today_realized_pct, 3),
+            "today_pct": round(self.today_pct, 3),                   # incl. open positions at their value
             "today_equity_pnl": round(self.today_equity_pnl, 4),
             "day_start_equity": round(float(self.state["day_start_equity"]), 4),
+            "total_equity_pct": round(self.total_equity_pct, 3),
             "peak_equity": round(self.peak_equity, 4),
             "drawdown_pct": round(self.drawdown_pct, 3),
             "total_pnl": round(self.total_pnl, 4),

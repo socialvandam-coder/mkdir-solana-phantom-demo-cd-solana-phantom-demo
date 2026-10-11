@@ -112,7 +112,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/state":
             return self._json(engine.snapshot())
         if path == "/api/settings":
-            return self._json(settings_mod.current(engine.cfg, engine.live_access(refresh=True)))
+            return self._json(settings_mod.current(engine.cfg, engine.live_access(refresh=True), engine.bank.equity))
         return self._error(HTTPStatus.NOT_FOUND, "niet gevonden")
 
     # -- POST ------------------------------------------------------------------
@@ -154,16 +154,33 @@ class Handler(BaseHTTPRequestHandler):
                     geo = engine.live_access(refresh=True)
                     if not live_allowed(geo, engine.cfg):
                         raise ValueError(live_block_text(geo))
-                settings_mod.save(engine.home, values, pk if isinstance(pk, str) else None)
+                settings_mod.save(engine.home, values, pk if isinstance(pk, str) else None,
+                                  base=settings_mod.current_values(engine.cfg))
                 engine.cfg = engine.load_config()
                 engine.bank.cfg = engine.cfg
                 if engine.status == "running":
                     engine.restart()
-                return self._json({"ok": True, **settings_mod.current(engine.cfg, engine.live_access())})
+                return self._json({"ok": True, **settings_mod.current(engine.cfg, engine.live_access(),
+                                                                      engine.bank.equity)})
+            if path == "/api/settings/check":
+                # colours and '$ consequence' while the user types; saves nothing
+                values = body.get("values") or {}
+                if not isinstance(values, dict):
+                    raise ValueError("ongeldige instellingen")
+                return self._json({"ok": True, "checks": settings_mod.check(values, engine.cfg, engine.bank.equity)})
             if path == "/api/bankroll":
-                amount = float(str(body.get("start_amount", "")).replace(",", "."))
-                if not 1 <= amount <= 1_000_000:
+                try:
+                    amount = float(str(body.get("start_amount", "")).replace(",", "."))
+                except ValueError:
+                    raise ValueError("Startbedrag: geen geldig getal") from None
+                if not amount == amount or not 1 <= amount <= 1_000_000:     # also NaN
                     raise ValueError("Startbedrag moet tussen 1 en 1.000.000 liggen")
+                pct = engine.cfg.trade_pct
+                low = settings_mod.min_start_amount(pct)
+                if amount < low:
+                    raise ValueError(f"Met {settings_mod.usd_short(amount)} en {settings_mod.num_nl(pct, 1)}% per "
+                                     "aankoop is een aankoop kleiner dan 5 shares (Polymarket-minimum). "
+                                     f"Kies minstens {settings_mod.usd_short(low)}.")
                 engine.reset_bankroll(amount)
                 return self._json({"ok": True, "bank": engine.bank.snapshot()})
             if path in ("/api/check", "/api/compare"):

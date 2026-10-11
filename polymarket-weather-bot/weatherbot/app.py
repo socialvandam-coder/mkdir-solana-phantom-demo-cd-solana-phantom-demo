@@ -168,6 +168,7 @@ def _run(args: argparse.Namespace) -> int:
     log.info("Weerbot dashboard: %s (data in %s)", url, home)
     if engine.cfg.autostart:
         engine.start()
+    engine.start_background()      # 'HighTempTation vandaag' panel (only fetches while the dashboard is open)
     awake = _keep_awake()
     threading.Thread(target=disable_app_nap, args=(home,), daemon=True).start()
     if not args.no_browser:
@@ -181,6 +182,7 @@ def _run(args: argparse.Namespace) -> int:
     try:
         server.serve_forever(poll_interval=0.5)
     finally:
+        engine.stop_background()
         engine.stop()
         server.server_close()
         if awake:

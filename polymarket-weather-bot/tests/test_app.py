@@ -100,6 +100,8 @@ class DashboardTests(unittest.TestCase):
         from weatherbot import engine as engine_mod
         from weatherbot.dashboard import DashboardServer
         cls.tmp = tempfile.TemporaryDirectory()
+        cls.env = mock.patch.dict(os.environ)     # saving settings writes to os.environ: undo afterwards
+        cls.env.start()
         cls.patch = mock.patch.object(engine_mod.BotRunner, "run", lambda self, stop: stop.wait(30))
         cls.patch.start()
         cls.engine = engine_mod.Engine(cls.tmp.name)
@@ -115,6 +117,7 @@ class DashboardTests(unittest.TestCase):
         cls.server.shutdown()
         cls.server.server_close()
         cls.patch.stop()
+        cls.env.stop()
         cls.tmp.cleanup()
 
     def req(self, path, body=None, headers=None):
@@ -159,7 +162,11 @@ class DashboardTests(unittest.TestCase):
         status, body = self.req("/api/settings", {"values": {"TRADE_PCT": "500"}}, tok)
         self.assertEqual(status, 400)
         self.assertIn("tussen", json.loads(body)["error"])
+        # the daily stop (6%) must be at least one buy: 7% alone is refused, together it is fine
         status, body = self.req("/api/settings", {"values": {"TRADE_PCT": "7"}}, tok)
+        self.assertEqual(status, 400)
+        self.assertIn("minstens even groot", json.loads(body)["error"])
+        status, body = self.req("/api/settings", {"values": {"TRADE_PCT": "7", "DAILY_LOSS_PCT": "8"}}, tok)
         self.assertEqual(status, 200)
         self.assertEqual(self.engine.cfg.trade_pct, 7.0)
         status, body = self.req("/api/bankroll", {"start_amount": "321"}, tok)

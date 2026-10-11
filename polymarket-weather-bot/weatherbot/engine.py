@@ -4,7 +4,9 @@ from __future__ import annotations
 import collections
 import dataclasses
 import logging
+import math
 import os
+import statistics
 import threading
 import time
 from datetime import datetime, timezone
@@ -16,8 +18,9 @@ import requests
 
 from .bankroll import HALT_LABELS, USER_CLEARABLE, Bankroll, next_local_midnight
 from .cities import CITY_TZ
+from .compare import compare_today
 from .config import Config, load_config
-from .execution import Executor, LiveExecutor, PaperExecutor, Position, position_row
+from .execution import Executor, LiveExecutor, PaperExecutor, Position, position_row, skip_labels
 from .geoblock import check_geoblock
 from .journal import Journal, read_journal
 from .markets import TempEvent, fetch_events
@@ -154,11 +157,17 @@ class BotRunner:
         self.health = {"metar_ok": None, "metar_error": None, "metar_at": None, "markets_ok": None,
                        "markets_error": None, "markets_at": None, "last_step": None, "step_ms": None,
                        "geoblock": initial_geo, "metar_fail_streak": 0, "metar_failures_1h": 0,
-                       "metar_source": None, "metar_last_ok": None, "clock_skew_s": None,
+                       "metar_source": None, "metar_primary": cfg.metar_source, "metar_last_ok": None,
+                       "clock_skew_s": None,
                        "stale_stations": [], "loop_gap_s": None, "hot_stations": [], "hot_ok": None,
                        "hot_error": None, "hot_at": None, "power": None, "stations": [],
-                       "market_refresh_s": cfg.market_refresh_seconds, "last_wake": None}
+                       "market_refresh_s": cfg.market_refresh_seconds, "last_wake": None,
+                       "sources": {}, "errors": [], "seen_delay_s_p50": None}
         self._metar_failures: collections.deque = collections.deque(maxlen=2000)
+        self._market_fail_streak = 0
+        self._markets_last_ok: float | None = None
+        self._last_errors: dict[str, tuple[float, str]] = {}          # source -> (when, text) of its last error
+        self.recent_errors: collections.deque = collections.deque(maxlen=20)   # for the dashboard's details sheet
         if executor is not None:
             self.executor = executor
             self.executor.notifier = self.notifier
@@ -209,6 +218,11 @@ class BotRunner:
                 continue
         if n:
             log.info("reloaded %d measured report times", n)
+
+    def _note_error(self, source: str, text: str, now: float | None = None) -> None:
+        now = time.time() if now is None else now
+        self._last_errors[source] = (now, text)
+        self.recent_errors.append({"ts": now, "what": source, "text": text[:200]})
 
     # -- Polymarket access (geoblock) --------------------------------------
     def check_access(self, now: float) -> dict:
@@ -314,11 +328,14 @@ class BotRunner:
                 self.events = fetch_events(self.session, now_dt, self.cfg.cities,
                                            ahead_s=self.cfg.market_refresh_seconds + 60)
                 self.last_refresh = t0
+                self._market_fail_streak, self._markets_last_ok = 0, t0
                 self.health.update(markets_ok=True, markets_error=None, markets_at=t0)
                 log.info("watching %d markets on %d stations", len(self.events),
                          len({e.station for e in self.events}))
             except requests.RequestException as exc:
                 self._market_retry_at = t0 + MARKET_RETRY_SECONDS
+                self._market_fail_streak += 1
+                self._note_error("markten", short_error(exc), t0)
                 self.health.update(markets_ok=False, markets_error=short_error(exc), markets_at=t0)
                 log.warning("market list failed: %s", short_error(exc))
         self.health["market_refresh_s"] = self._refresh_every(now_dt)
@@ -366,6 +383,7 @@ class BotRunner:
                 streak = self.health["metar_fail_streak"] + 1
                 self.health.update(metar_ok=False, metar_error=short_error(exc), metar_at=t0,
                                    metar_fail_streak=streak)
+                self._note_error("weer", short_error(exc), t0)
                 log.warning("weather data failed (both sources, %dx in a row): %s", streak, short_error(exc))
         now = time.time()
         self.hot = [st for st in stations if self.store.is_hot(st, now)]
@@ -382,6 +400,7 @@ class BotRunner:
         except requests.RequestException as exc:
             self._hot_down_until = now + HOT_SOURCE_BACKOFF
             self.health.update(hot_ok=False, hot_error=short_error(exc), hot_at=now)
+            self._note_error("snel kijken", short_error(exc), now)
             log.info("quick look failed (%s); every %.0f s via the normal source for now", short_error(exc),
                      self.cfg.poll_seconds)
 
@@ -425,7 +444,28 @@ class BotRunner:
 
         self.health.update(last_step=time.time(), step_ms=round((time.time() - t0) * 1000))
         self.health["stations"] = self._station_rows(live_events, now_dt)
+        self.health["sources"] = self.sources()
+        self.health["errors"] = self.last_errors(5)
         self.view = self._build_view(live_events, now_dt)
+
+    def sources(self) -> dict:
+        """Per data source: last success, failures in a row, last error ('Werkt alles?' on the dashboard)."""
+        def last_err(name):
+            when, text = self._last_errors.get(name, (None, None))
+            return {"last_error": text, "last_error_ts": when}
+        h = self.health
+        return {
+            "weer": {"last_ok_ts": h.get("metar_last_ok"), "consecutive_fail": h.get("metar_fail_streak", 0),
+                     **last_err("weer")},
+            "markten": {"last_ok_ts": self._markets_last_ok, "consecutive_fail": self._market_fail_streak,
+                        **last_err("markten")},
+            "orderboek": dict(self.executor.book_status),
+        }
+
+    def last_errors(self, n: int = 5) -> list[dict]:
+        """The newest errors of the data sources and of buying/selling, newest first."""
+        rows = list(self.recent_errors) + list(getattr(self.executor, "error_log", []))
+        return sorted(rows, key=lambda r: r["ts"], reverse=True)[:n]
 
     # -- data re-check for an unconfirmed position ---------------------------------
     def recheck_position(self, p: Position) -> bool | None:
@@ -537,13 +577,23 @@ class BotRunner:
     def _station_rows(self, live_events: list[TempEvent], now_dt: datetime) -> list[dict]:
         """Per watched station: last report, cadence, when its reports come out, measured delay."""
         cities: dict[str, set[str]] = {}
+        kinds: dict[str, set[str]] = {}
         for e in live_events:
             cities.setdefault(e.station, set()).add(e.city)
-        rows = []
+            kinds.setdefault(e.station, set()).add(e.kind)
+        rows, delays = [], []
+        since = now_dt.timestamp() - 86400
         for st in sorted(cities):
             row = self.store.station_status(st, now_dt)
             row["cities"] = sorted(cities[st])
+            row["kinds"] = sorted(kinds[st])
+            last = self.store.latest(st)
+            row["last_temp_c"] = last.temp_c if last else None
             rows.append(row)
+            delays.extend(self.store.delays(st, since=since))
+        # how long after a report's own time the bot usually saw it (all stations, last 24 h)
+        self.health["seen_delay_s_p50"] = round(statistics.median(delays)) if delays else None
+        self.health["seen_delay_n"] = len(delays)
         return rows
 
     def _build_view(self, live_events: list[TempEvent], now_dt: datetime) -> dict:
@@ -579,6 +629,7 @@ class BotRunner:
             except Exception as exc:  # noqa: BLE001 - keep the loop alive, but record what happened
                 log.exception("unexpected error")
                 self.journal.write("error", error=repr(exc))
+                self._note_error("bot", repr(exc))
             now = time.time()
             stop.wait(max(0.5, self.next_wait(now) - (now - t0)))
 
@@ -591,6 +642,113 @@ class BotRunner:
         if self.executor.wants_fast_loop(now):
             wait = min(wait, FAST_LOOP_SECONDS)
         return wait
+
+
+# Rows only a running bot loop writes: evidence that the bot was looking at that moment.
+LOOP_TYPES = {"report_seen", "signal", "skip", "opportunity", "buy", "buy_error", "sell", "sell_order", "close",
+              "gap", "geoblock", "power", "unconfirmed", "recheck", "confirmed", "error", "sell_cancel"}
+
+
+def uptime(marks: list[tuple], t0: float, t1: float, alive: bool, last_loop_ts: float | None,
+           stalled_from: float | None = None) -> dict:
+    """How much of [t0, t1] the bot was looking, from the journal's start / stop / gap rows.
+
+    marks: (ts, 'start', last loop row before it) / (ts, 'stop', last loop row before it) /
+    (ts, 'gap', (from, to, slept)), in time order. A start without a stop means the app was
+    killed: that run counts until its last loop row. alive: the loop runs right now."""
+    segs: list[tuple[float, float]] = []
+    run_from = None
+    seen = False
+    for ts, kind, info in marks:
+        if kind == "gap":
+            continue
+        if kind == "start":
+            if run_from is not None:
+                segs.append((run_from, max(run_from, info or run_from)))
+            elif not seen and info is not None:
+                segs.append((-math.inf, info))           # an earlier run without a stop row
+            run_from = ts
+        elif kind == "stop":
+            if run_from is not None:
+                segs.append((run_from, ts))
+            elif not seen and info is not None:
+                segs.append((-math.inf, ts))             # running since before the journal we read
+            run_from = None
+        seen = True
+    if run_from is not None:
+        segs.append((run_from, t1 if alive else max(run_from, last_loop_ts or run_from)))
+    elif not seen and last_loop_ts is not None:
+        segs.append((-math.inf, t1 if alive else last_loop_ts))
+
+    def clip(a: float, b: float) -> float:
+        return max(0.0, min(b, t1) - max(a, t0))
+
+    running = sum(clip(a, b) for a, b in segs)
+    gaps = slept = 0.0
+    for ts, kind, info in marks:
+        if kind == "gap":
+            g = clip(info[0], info[1])
+            gaps += g
+            slept += g if info[2] else 0.0
+    if alive and stalled_from is not None:
+        gaps += clip(stalled_from, t1)               # stuck right now (the gap row comes later)
+    span = max(0.0, t1 - t0)
+    active = max(0.0, min(span, running - gaps))
+    missed = span - active
+    closed = max(0.0, span - running)
+    if missed < 60:
+        reason = None
+    elif slept >= max(gaps - slept, closed):
+        reason = "slept"                 # the Mac slept
+    elif closed >= gaps:
+        reason = "closed"                # the app or the bot was off
+    else:
+        reason = "stalled"               # running, but not looking (network, a hang)
+    return {"since": t0, "active_s": round(active), "missed_s": round(missed), "slept_s": round(slept),
+            "closed_s": round(closed), "pct": round(active / span * 100, 1) if span > 0 else None,
+            "reason": reason}
+
+
+def local_midnight(now: float) -> float:
+    d = datetime.fromtimestamp(now)
+    return datetime(d.year, d.month, d.day).timestamp()
+
+
+def percentile(values: list[float], q: float) -> float:
+    xs = sorted(values)
+    if not xs:
+        raise ValueError("no values")
+    k = (len(xs) - 1) * q
+    lo, hi = math.floor(k), math.ceil(k)
+    return xs[lo] + (xs[hi] - xs[lo]) * (k - lo)
+
+
+def daily_pcts(history: list, today: str) -> list[float]:
+    """The bot's own result per local day with at least one closed trade (today excluded), in %."""
+    out: list[float] = []
+    prev_bal: float | None = None
+    day_start: float | None = None
+    cur_day: str | None = None
+    last_bal: float | None = None
+    for ts, bal in history:
+        day = time.strftime("%Y-%m-%d", time.localtime(ts))
+        if prev_bal is None:              # the start amount
+            prev_bal = bal
+            continue
+        if day != cur_day:
+            if cur_day is not None and cur_day != today and day_start:
+                out.append((last_bal - day_start) / day_start * 100)
+            cur_day, day_start = day, prev_bal
+        last_bal = bal
+        prev_bal = bal
+    if cur_day is not None and cur_day != today and day_start:
+        out.append((last_bal - day_start) / day_start * 100)
+    return out
+
+
+NORMAL_MIN_DAYS = 7          # own trading days before 'normaal voor jouw bot' is shown
+HTT_EVERY_SECONDS = 120      # HighTempTation panel: refresh this often ...
+HTT_IDLE_SECONDS = 600       # ... but only while someone looks at the dashboard
 
 
 class _FeedLogHandler(logging.Handler):
@@ -630,6 +788,19 @@ class Engine:
         self.bank = Bankroll(self.cfg, self.home / self.cfg.state_file)
         self._geo: dict | None = None           # last Polymarket access check (when the bot is not running)
         self.geo_check = check_geoblock
+        # 'Werkt alles?': start/stop/gap rows of the last two days, and the newest row of a running loop
+        self._marks: collections.deque = collections.deque(maxlen=5000)
+        self._last_loop_ts: float | None = None
+        # 'Vandaag gezien': per local day, the buckets at each step (each bucket counted once)
+        self.funnel: dict[str, dict] = {}
+        self.token_result: collections.OrderedDict = collections.OrderedDict()   # token -> bought / skip reason
+        # 'HighTempTation vandaag' (filled by a background thread while the dashboard is open)
+        self.htt: dict | None = None
+        self._htt_at = 0.0
+        self._last_view = 0.0
+        self._bg: threading.Thread | None = None
+        self._bg_stop = threading.Event()
+        self.htt_session_factory = make_session
         for row in read_journal(str(self.home / self.cfg.journal_dir), since_ts=time.time() - 86400):
             self._on_row(row)
 
@@ -640,15 +811,24 @@ class Engine:
 
     def _on_row(self, row: dict) -> None:
         kind = row.get("type")
-        day = time.strftime("%Y-%m-%d", time.localtime(row.get("ts", time.time())))
+        ts = float(row.get("ts") or time.time())
+        day = time.strftime("%Y-%m-%d", time.localtime(ts))
         c = self.counts.setdefault(day, collections.Counter())
         c[kind] += 1
         if kind == "close":
-            c["pnl_cents"] += round(float(row.get("pnl") or 0) * 100)
-            if float(row.get("pnl") or 0) > 0:
+            pnl = float(row.get("pnl") or 0)
+            c["pnl_cents"] += round(pnl * 100)
+            if pnl > 0:
                 c["wins"] += 1
+            elif pnl < 0:
+                c["losses"] += 1
         elif kind == "gap":
             c["gap_s"] += round(float(row.get("seconds") or 0))
+        elif kind == "skip":
+            c["skip:" + str(row.get("reason"))] += 1
+        if kind in ("buy", "sell") and row.get("fee"):
+            c["fee_microusd"] += round(float(row["fee"]) * 1e6)
+        self._track(kind, row, ts, day)
         if len(self.counts) > 3:
             for old in sorted(self.counts)[:-3]:
                 del self.counts[old]
@@ -656,6 +836,115 @@ class Engine:
             self.trades.append(row)
         elif kind == "signal":
             self.signals.append(row)
+
+    def _track(self, kind: str, row: dict, ts: float, day: str) -> None:
+        """Uptime markers, today's funnel and what became of each signal."""
+        if kind in ("start", "stop"):
+            self._marks.append((ts, kind, self._last_loop_ts))
+        elif kind == "gap":
+            secs = float(row.get("seconds") or 0)
+            frm = row.get("from")
+            self._marks.append((ts, "gap", (float(frm) if frm else ts - secs, ts, bool(row.get("slept")))))
+        if kind in LOOP_TYPES:
+            self._last_loop_ts = ts
+        while self._marks and self._marks[0][0] < ts - 2 * 86400:
+            self._marks.popleft()
+        token = row.get("token_id")
+        if not token or kind not in ("signal", "skip", "opportunity", "buy", "sell"):
+            return
+        f = self.funnel.setdefault(day, {"signal": set(), "opportunity": set(), "buy": set(), "sell": set(),
+                                         "skips": {}})
+        if len(self.funnel) > 3:
+            for old in sorted(self.funnel)[:-3]:
+                del self.funnel[old]
+        res = self.token_result.setdefault(token, {"bought": False, "skip": None})
+        self.token_result.move_to_end(token)
+        while len(self.token_result) > 5000:
+            self.token_result.popitem(last=False)
+        if kind == "skip":
+            f["skips"].setdefault(str(row.get("reason")), set()).add(token)
+            res["skip"] = row.get("reason")
+        elif kind == "buy":
+            if float(row.get("shares") or 0) > 0:      # live writes unfilled orders too
+                f["buy"].add(token)
+                res["bought"] = True
+        else:
+            f[kind].add(token)
+
+    def uptime_today(self, now: float | None = None) -> dict:
+        now = time.time() if now is None else now
+        t0 = max(local_midnight(now), float(self.bank.state.get("started_at") or 0))
+        runner, thread = self.runner, self._thread
+        alive = bool(thread and thread.is_alive())
+        last_step = runner.health.get("last_step") if runner else None
+        stalled = last_step if alive and last_step and now - last_step > GAP_SECONDS else None
+        return uptime(list(self._marks), t0, now, alive, self._last_loop_ts, stalled)
+
+    def funnel_today(self, day: str | None = None) -> dict:
+        f = self.funnel.get(day or time.strftime("%Y-%m-%d", time.localtime()))
+        if not f:
+            return {"signalen": 0, "met_goedkope_orders": 0, "gekocht": 0, "verkocht": 0, "skips": {}}
+        # 'why not bought': buckets that were bought after all don't count (e.g. 'al gekocht').
+        # Copies first: the bot thread may add rows while the dashboard reads.
+        bought = set(f["buy"])
+        skips = {r: len(set(t) - bought) for r, t in dict(f["skips"]).items()}
+        skips = {r: n for r, n in skips.items() if n}
+        return {"signalen": len(f["signal"]), "met_goedkope_orders": len(f["opportunity"]),
+                "gekocht": len(f["buy"]), "verkocht": len(f["sell"]),
+                "skips": dict(sorted(skips.items(), key=lambda kv: -kv[1]))}
+
+    def normal_range(self) -> list[float] | None:
+        """p10-p90 of the bot's own daily % (only after NORMAL_MIN_DAYS trading days)."""
+        pcts = daily_pcts(self.bank.state.get("history") or [], time.strftime("%Y-%m-%d", time.localtime()))
+        if len(pcts) < NORMAL_MIN_DAYS:
+            return None
+        return [round(percentile(pcts, 0.1), 2), round(percentile(pcts, 0.9), 2)]
+
+    # -- HighTempTation panel ------------------------------------------------
+    def start_background(self) -> None:
+        """Start the thread that keeps the 'HighTempTation vandaag' panel up to date."""
+        if self._bg and self._bg.is_alive():
+            return
+        self._bg_stop.clear()
+        self._bg = threading.Thread(target=self._bg_loop, name="weerbot-htt", daemon=True)
+        self._bg.start()
+
+    def stop_background(self) -> None:
+        self._bg_stop.set()
+
+    def htt_due(self, now: float) -> bool:
+        """Refresh every HTT_EVERY_SECONDS, but only while the dashboard was polled in the last 10 minutes."""
+        return now - self._last_view <= HTT_IDLE_SECONDS and now - self._htt_at >= HTT_EVERY_SECONDS
+
+    def _bg_loop(self) -> None:
+        session = None
+        while not self._bg_stop.wait(5):
+            now = time.time()
+            if not self.htt_due(now):
+                continue                  # nobody is looking, or refreshed recently
+            session = session or self.htt_session_factory()
+            self.refresh_htt(session, now)
+
+    def refresh_htt(self, session, now: float | None = None) -> dict:
+        """One data-api call: HighTempTation's buys since local midnight next to what the bot saw."""
+        now = time.time() if now is None else now
+        self._htt_at = now
+        since = local_midnight(now)
+        try:
+            rows = [r for r in read_journal(str(self.home / self.cfg.journal_dir), since_ts=since)
+                    if r.get("type") in ("signal", "skip", "buy")]
+            res = compare_today(rows, session, since=since, budget=self.bank.budget(""),
+                                fee_rate=self.cfg.fee_rate, sell_price=self.cfg.sell_price)
+            res["updated_at"] = now
+            self.htt = res
+        except Exception as exc:  # noqa: BLE001 - keep the last result, show the error
+            msg = short_error(exc) if isinstance(exc, requests.RequestException) else str(exc)[:200]
+            log.info("HighTempTation panel: %s", msg)
+            old = dict(self.htt or {})
+            if old.get("since") and old["since"] != since:
+                old = {}                  # yesterday's numbers are not 'vandaag'
+            self.htt = {**old, "error": msg, "error_at": now}
+        return self.htt
 
     # -- control -------------------------------------------------------------
     def start(self) -> None:
@@ -699,13 +988,17 @@ class Engine:
     def stop(self) -> None:
         with self._lock:
             thread = self._thread
+            was_alive = bool(thread and thread.is_alive())
             self._stop.set()
         if thread:
             thread.join(timeout=30)
         with self._lock:
             if self.status == "running":
                 self.status = "stopped"
-            self.journal.write("stop")
+            if was_alive:
+                # only when a loop was running: 'Vandaag x% actief' counts from start to stop
+                # (a loop that crashed has no stop row; it counts until its last row)
+                self.journal.write("stop")
 
     def restart(self) -> None:
         was_running = self.status == "running"
@@ -778,7 +1071,23 @@ class Engine:
             out.append({"day": day, "pnl": round(by_day.get(day, 0.0), 4)})
         return out
 
+    def _signal_rows(self, labels: dict[str, str]) -> list[dict]:
+        out = []
+        for row in list(reversed(list(self.signals)))[:60]:
+            res = self.token_result.get(row.get("token_id")) or {}
+            row = dict(row)
+            if res.get("bought"):
+                row["result"], row["result_label"] = "bought", "gekocht"
+            elif res.get("skip"):
+                row["result"] = res["skip"]
+                row["result_label"] = labels.get(res["skip"], res["skip"])
+            else:
+                row["result"], row["result_label"] = None, None
+            out.append(row)
+        return out
+
     def snapshot(self) -> dict:
+        self._last_view = time.time()          # someone is looking: keep the HighTempTation panel fresh
         with self._lock:
             runner, status, error = self.runner, self.status, self.error
             cfg = self.cfg
@@ -787,6 +1096,13 @@ class Engine:
         health = dict(runner.health) if runner else {}
         if not health.get("geoblock") and self._geo:
             health["geoblock"] = self._geo
+        up = self.uptime_today()
+        health["uptime"] = up
+        health["uptime_today_pct"] = up["pct"]
+        labels = skip_labels(cfg)
+        bank = self.bank.snapshot()
+        bank.update(fees_today=round(c["fee_microusd"] / 1e6, 4), today_trades=c["close"],
+                    today_wins=c["wins"], today_losses=c["losses"])
         positions = view["positions"]
         if runner is None or status != "running":
             # the loop is not running: show what is open from the saved state
@@ -799,19 +1115,23 @@ class Engine:
         return {
             "status": status, "error": error, "mode": cfg.mode, "started_at": self.started_at,
             "now": time.time(),
-            "bank": self.bank.snapshot(),
+            "bank": bank,
             "history": self.bank.history(),
             "daily": self._daily(),
             "today": {
                 "signals": c["signal"], "opportunities": c["opportunity"], "buys": c["buy"],
-                "closes": c["close"], "wins": c["wins"], "pnl": c["pnl_cents"] / 100,
+                "closes": c["close"], "wins": c["wins"], "losses": c["losses"], "pnl": c["pnl_cents"] / 100,
+                "fees": round(c["fee_microusd"] / 1e6, 4), "funnel": self.funnel_today(),
+                "normal_range": self.normal_range(),
             },
+            "skip_labels": labels,
+            "htt": self.htt,
             "events": view["events"],
             "positions": positions,
             "loop_alive": bool(thread and thread.is_alive()),
             "halt": self.bank.halt_info(),
             "trades": list(reversed(list(self.trades)))[:150],
-            "signals": list(reversed(list(self.signals)))[:60],
+            "signals": self._signal_rows(labels),
             "logs": list(reversed(list(self.logs)))[:120],
             "health": health,
             "settings": {"trade_pct": cfg.trade_pct, "market_pct": cfg.market_pct, "open_pct": cfg.open_pct,
@@ -819,5 +1139,6 @@ class Engine:
                          "event_pct": cfg.event_pct, "max_drawdown_pct": cfg.max_drawdown_pct,
                          "max_trade_usdc": cfg.max_trade_usdc, "max_event_usdc": cfg.max_event_usdc,
                          "max_buy_price": cfg.max_buy_price, "sell_price": cfg.sell_price,
-                         "confirm_seconds": cfg.confirm_seconds, "hot_poll_seconds": HOT_POLL_SECONDS},
+                         "confirm_seconds": cfg.confirm_seconds, "hot_poll_seconds": HOT_POLL_SECONDS,
+                         "fresh_seconds": cfg.fresh_seconds},
         }

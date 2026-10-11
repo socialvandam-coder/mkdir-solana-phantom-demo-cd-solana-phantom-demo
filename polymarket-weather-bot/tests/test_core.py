@@ -159,21 +159,33 @@ class OrderbookTests(unittest.TestCase):
 
     def test_sweep_respects_budget_and_edge(self):
         b = self.book([(0.80, 10), (0.90, 10), (0.975, 100), (0.985, 100)])
-        plan = plan_sweep(b, max_price=0.98, sell_price=0.99, budget_usdc=20, min_size=5,
-                          min_edge=0.005, fee_rate=0.05)
+        plan, why = plan_sweep(b, max_price=0.98, sell_price=0.99, budget_usdc=20, min_size=5,
+                               min_edge=0.005, fee_rate=0.05)
+        self.assertIsNone(why)
         self.assertEqual(plan.worst_price, 0.975)
         self.assertLessEqual(plan.cost, 20.0001)
         self.assertGreater(plan.est_profit, 0)
 
     def test_sweep_skips_when_nothing_cheap(self):
         b = self.book([(0.99, 100)])
-        self.assertIsNone(plan_sweep(b, max_price=0.98, sell_price=0.99, budget_usdc=20, min_size=5,
-                                     min_edge=0.005, fee_rate=0.05))
+        self.assertEqual(plan_sweep(b, max_price=0.98, sell_price=0.99, budget_usdc=20, min_size=5,
+                                    min_edge=0.005, fee_rate=0.05), (None, "price"))
+        self.assertEqual(plan_sweep(self.book([]), max_price=0.98, sell_price=0.99, budget_usdc=20, min_size=5,
+                                    min_edge=0.005, fee_rate=0.05), (None, "no_asks"))
 
     def test_sweep_min_size(self):
         b = self.book([(0.90, 3)])
-        self.assertIsNone(plan_sweep(b, max_price=0.98, sell_price=0.99, budget_usdc=20, min_size=5,
-                                     min_edge=0.005, fee_rate=0.05))
+        self.assertEqual(plan_sweep(b, max_price=0.98, sell_price=0.99, budget_usdc=20, min_size=5,
+                                    min_edge=0.005, fee_rate=0.05), (None, "min_size"))
+
+    def test_sweep_reasons_budget_and_edge(self):
+        b = self.book([(0.95, 100)])
+        # $3 buys 3.15 shares: fewer than the 5-share minimum because of the money, not the book
+        self.assertEqual(plan_sweep(b, max_price=0.98, sell_price=0.99, budget_usdc=3, min_size=5,
+                                    min_edge=0.005, fee_rate=0.05), (None, "budget"))
+        # an ask under the max price that leaves less than min_edge after fees
+        self.assertEqual(plan_sweep(self.book([(0.98, 100)]), max_price=0.98, sell_price=0.99, budget_usdc=20,
+                                    min_size=5, min_edge=0.02, fee_rate=0.05), (None, "edge"))
 
     def test_fillable(self):
         b = self.book([], bids=[(0.995, 3), (0.99, 4), (0.98, 100)])

@@ -42,6 +42,41 @@ WAIT_FOR_RESULT_SECONDS = 3600
 RECHECK_TRIES = 5
 KIND_NL = {"high": "max", "low": "min"}
 
+# Why a dead bucket was not bought, in plain Dutch (the dashboard's 'Vandaag gezien' card).
+SKIP_LABELS = {
+    "late_no_cheap_asks": "Te laat: goedkope orders al weg",
+    "edge_too_small": "Winst na kosten te klein",
+    "budget_too_small": "Bedrag te klein (min. 5 shares)",
+    "limit_market": "Max per vak bereikt",
+    "limit_event": "Max per markt bereikt",
+    "limit_open": "Max tegelijk bereikt",
+    "daily_stop": "Dagverlies-stop actief",
+    "too_old": "Meting te oud (>{fresh_min} min)",
+    "already_holding": "Al gekocht (oefenen koopt een vak één keer)",
+    "event_locked": "Markt vergrendeld na onbevestigde positie",
+    "stale_station": "Weerstation te lang stil",
+    "book_error": "Orderboek niet bereikbaar",
+    "no_book": "Geen orderboek (markt dicht?)",
+    "fak_unfilled": "Order niet gevuld (iemand was sneller)",
+    "paused": "Kopen gepauzeerd",
+    "halted": "Kopen staat stil (noodstop of alarm)",
+    "geoblock": "Polymarket staat handelen hier niet toe",
+    "woke_up": "Net wakker uit slaapstand",
+    "rebuy_cheaper": "Bijkopen na prijsdaling (doet hij nooit)",
+    "rebuy_unconfirmed": "Eerdere aankoop nog niet verkocht",
+}
+
+
+def skip_labels(cfg: Config) -> dict[str, str]:
+    fresh_min = cfg.fresh_seconds / 60
+    fresh = f"{fresh_min:.0f}" if fresh_min == int(fresh_min) else nl(fresh_min, 1)
+    return {k: v.format(fresh_min=fresh) for k, v in SKIP_LABELS.items()}
+
+
+# plan_sweep's 'why' -> skip reason
+SWEEP_REASON = {"no_asks": "late_no_cheap_asks", "price": "late_no_cheap_asks", "min_size": "late_no_cheap_asks",
+                "edge": "edge_too_small", "budget": "budget_too_small"}
+
 
 def nl(v: float, digits: int = 2) -> str:
     """Number with a decimal comma, for Dutch messages."""
@@ -219,6 +254,10 @@ class Executor:
         # False = not dead after all -> sell now, None = could not check)
         self.recheck_hook: Callable[[Position], bool | None] | None = None
         self.error_times: collections.deque = collections.deque(maxlen=500)
+        self.error_log: collections.deque = collections.deque(maxlen=20)   # {ts, what, text} for the dashboard
+        # the order book source ('orderboek' on the dashboard): last success, failures in a row
+        self.book_status: dict = {"last_ok_ts": None, "consecutive_fail": 0, "last_error": None,
+                                  "last_error_ts": None}
         self._skipped: set[tuple[str, str]] = set()
         st = self.bank.state
         # pick up positions that were still open when the app last stopped
@@ -231,9 +270,9 @@ class Executor:
             w = Watch.from_dict(token, d) if isinstance(d, dict) else None
             if w:
                 self.watch[token] = w
-        now = time.time()
+        # expired locks are dropped by on_signals() with its own clock, not here
         self.locked_events = {k: float(v) for k, v in (st.get("locked_events") or {}).items()
-                              if isinstance(v, (int, float)) and v > now}
+                              if isinstance(v, (int, float))}
         self._sync_event_cost()
         if self.positions:
             log.info("resumed %d open position(s) from the last run", len(self.positions))
@@ -259,7 +298,21 @@ class Executor:
 
     def note_error(self, now: float, what: str, exc: Exception | str) -> None:
         self.error_times.append(now)
+        self.error_log.append({"ts": now, "what": what, "text": str(exc)[:200]})
         log.warning("%s error: %s", what, exc)
+
+    def _books(self, tokens: list[str]) -> dict[str, Book]:
+        """fetch_books, keeping track of whether the order book source works. Raises like fetch_books."""
+        try:
+            books = fetch_books(self.session, tokens, self.cfg.clob_host)
+        except requests.RequestException as exc:
+            st = self.book_status
+            st["consecutive_fail"] += 1
+            st["last_error"], st["last_error_ts"] = str(exc)[:200], time.time()
+            self.error_log.append({"ts": time.time(), "what": "orderboek", "text": str(exc)[:200]})
+            raise
+        self.book_status.update(last_ok_ts=time.time(), consecutive_fail=0)
+        return books
 
     def errors_since(self, since: float) -> int:
         return sum(1 for t in self.error_times if t >= since)
@@ -294,7 +347,8 @@ class Executor:
         for w in self.watch.values():
             w.last_check = 0.0
 
-    def _skip(self, s: Signal, reason: str, now: float, **extra) -> None:
+    def _skip(self, s: Signal, reason: str, now: float, best_ask: float | None = None,
+              budget: float | None = None, **extra) -> None:
         """Journal why a signal was not bought - once per token and reason."""
         key = (s.token_id, reason)
         if key in self._skipped:
@@ -302,7 +356,8 @@ class Executor:
         self._skipped.add(key)
         w = self.watch.get(s.token_id)
         self.journal.write("skip", token_id=s.token_id, city=s.city, kind=s.kind, event=s.event_slug,
-                           bucket=s.market.bucket.label, outcome=s.outcome, reason=reason,
+                           bucket=s.market.bucket.label, outcome=s.outcome, reason=reason, best_ask=best_ask,
+                           budget=None if budget is None else round(budget, 2),
                            since_signal_s=round(now - w.first_seen, 1) if w else None,
                            obs_age_s=round(now - (w.obs_time if w else s.obs_time.timestamp()), 1), **extra)
 
@@ -369,7 +424,7 @@ class Executor:
                     continue
             budget = self.bank.budget(s.token_id, s.event_slug)
             if budget < 1.0:
-                self._skip(s, self._budget_reason(s), now, budget=round(budget, 2))
+                self._skip(s, self._budget_reason(s), now, budget=budget)
                 continue
             due.append(s)
         if changed:
@@ -377,7 +432,7 @@ class Executor:
         if not due:
             return
         try:
-            books = fetch_books(self.session, [s.token_id for s in due], self.cfg.clob_host)
+            books = self._books([s.token_id for s in due])
         except requests.RequestException as exc:
             log.warning("order book fetch failed: %s", exc)
             for s in due:
@@ -388,19 +443,17 @@ class Executor:
             w.last_check = now
             book = books.get(s.token_id)
             if not book:
+                self._skip(s, "no_book", now)
                 continue
             budget = self.bank.budget(s.token_id, s.event_slug)
-            plan = plan_sweep(book, max_price=self.cfg.max_buy_price, sell_price=self.cfg.sell_price,
-                              budget_usdc=budget, min_size=s.market.min_size,
-                              min_edge=self.cfg.min_edge, fee_rate=self.cfg.fee_rate)
+            plan, why = plan_sweep(book, max_price=self.cfg.max_buy_price, sell_price=self.cfg.sell_price,
+                                   budget_usdc=budget, min_size=s.market.min_size,
+                                   min_edge=self.cfg.min_edge, fee_rate=self.cfg.fee_rate)
             if plan is None:
-                if book.best_ask is None or book.best_ask > self.cfg.max_buy_price:
-                    why = "late_no_cheap_asks"
-                elif budget / book.best_ask < s.market.min_size:
-                    why = "budget_too_small"
-                else:
-                    why = "edge_too_small"
-                self._skip(s, why, now, best_ask=book.best_ask, budget=round(budget, 2))
+                reason = SWEEP_REASON.get(why or "", "late_no_cheap_asks")
+                if reason == "budget_too_small":
+                    reason = self._budget_reason(s)      # which limit made the amount too small
+                self._skip(s, reason, now, best_ask=book.best_ask, budget=budget, sweep=why)
                 continue
             # never average down: a quick rebuy must not be much cheaper than the first fill
             if (w.first_avg is not None and w.first_fill_at is not None
@@ -424,7 +477,7 @@ class Executor:
     # -- positions -> sells ------------------------------------------------
     def _fetch_books(self, tokens: list[str]) -> dict[str, Book] | None:
         try:
-            return fetch_books(self.session, sorted(set(tokens)), self.cfg.clob_host)
+            return self._books(sorted(set(tokens)))
         except requests.RequestException as exc:
             log.warning("order book fetch failed: %s", exc)
             return None
@@ -500,12 +553,14 @@ class Executor:
         if n <= 0:
             return
         fee = taker_fee_per_share(price, self.cfg.fee_rate) * n
+        if proceeds is not None:
+            fee = max(0.0, n * price - proceeds)
         p.sold_shares += n
         p.proceeds += (n * price - fee) if proceeds is None else proceeds
         if price >= self.cfg.sell_price - CONFIRM_PRICE_SLACK:
             p.target_sold += n
         self.journal.write("sell", mode=mode, token_id=p.token_id, shares=round(n, 4), price=round(price, 4),
-                           after_s=round(now - p.opened_at, 1), exit=bool(p.exit_reason))
+                           after_s=round(now - p.opened_at, 1), exit=bool(p.exit_reason), fee=round(fee, 6))
         self._check_confirmation(p, now)
 
     def _check_confirmation(self, p: Position, now: float) -> None:
@@ -645,7 +700,8 @@ class PaperExecutor(Executor):
         self._on_fill(s, plan.avg_price, now)
         self.journal.write("buy", mode="paper", city=s.city, kind=s.kind, event=s.event_slug,
                            bucket=s.market.bucket.label, outcome=s.outcome, token_id=s.token_id,
-                           shares=plan.shares, cost=round(cost, 4), avg_price=round(plan.avg_price, 4))
+                           shares=plan.shares, cost=round(cost, 4), avg_price=round(plan.avg_price, 4),
+                           fee=round(fee, 6))
         self._persist()
         log.info("PAPER BUY %s %s %s %.2f sh @ %.3f", s.city, s.market.bucket.label, s.outcome,
                  plan.shares, plan.avg_price)
@@ -713,6 +769,7 @@ class LiveExecutor(Executor):
     def buy(self, s: Signal, plan: SweepPlan, book: Book, now: float) -> None:
         amount = math.floor(plan.cost * 100) / 100
         if amount < 1.0:
+            self._skip(s, "budget_too_small", now, best_ask=book.best_ask, budget=plan.cost)
             return
         ok, why = self.can_buy()          # last check right before the order goes out
         if not ok:
@@ -729,9 +786,12 @@ class LiveExecutor(Executor):
             return
         spent = float(resp.get("makingAmount") or 0)
         shares = float(resp.get("takingAmount") or 0)
+        # estimated taker fee (the exchange takes it from the fill; shown as 'kosten' on the dashboard)
+        fee = taker_fee_per_share(spent / shares, self.cfg.fee_rate) * shares if shares else 0.0
         self.journal.write("buy", mode="live", city=s.city, kind=s.kind, event=s.event_slug,
                            bucket=s.market.bucket.label, outcome=s.outcome, token_id=s.token_id, shares=shares,
-                           cost=spent, avg_price=round(spent / shares, 4) if shares else None, response=resp)
+                           cost=spent, avg_price=round(spent / shares, 4) if shares else None, response=resp,
+                           fee=round(fee, 6))
         if not resp.get("success") or shares <= 0:
             log.info("LIVE BUY not filled: %s", resp)
             self._skip(s, "fak_unfilled", now)

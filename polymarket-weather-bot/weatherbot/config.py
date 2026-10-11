@@ -72,7 +72,7 @@ class Config:
     geoblock_every_seconds: float = 600.0
 
     # --- data ---
-    metar_source: str = "aviationweather"   # or "tgftp" (NOAA per-station files, often a bit faster)
+    metar_source: str = "tgftp"             # NOAA's station files: first in 49 of 51 reports in our race; backup aviationweather
     cities: tuple[str, ...] = ()            # empty = all cities
     journal_dir: str = "logs"
     state_file: str = "state.json"          # saved balance, history and open positions
@@ -120,7 +120,7 @@ def load_config(env_file: str | os.PathLike = ".env") -> Config:
         hard_block_countries=tuple(c.strip().upper() for c in _get("HARD_BLOCK_COUNTRIES", "NL").split(",")
                                    if c.strip()),
         geoblock_every_seconds=_get("GEOBLOCK_EVERY_SECONDS", 600.0, float),
-        metar_source=_get("METAR_SOURCE", "aviationweather").lower(),
+        metar_source=_get("METAR_SOURCE", "tgftp").lower(),
         cities=cities,
         journal_dir=_get("JOURNAL_DIR", "logs"),
         state_file=_get("STATE_FILE", "state.json"),

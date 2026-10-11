@@ -64,31 +64,50 @@ class SweepPlan:
 
 
 def plan_sweep(book: Book, *, max_price: float, sell_price: float, budget_usdc: float,
-               min_size: float, min_edge: float, fee_rate: float) -> SweepPlan | None:
-    """Take every ask that still leaves `min_edge` profit per share after fees."""
+               min_size: float, min_edge: float, fee_rate: float) -> tuple[SweepPlan | None, str | None]:
+    """Take every ask that still leaves `min_edge` profit per share after fees.
+
+    Returns (plan, None), or (None, why) with why one of:
+      'no_asks'  - nobody is selling at all
+      'price'    - every ask is above max_price (the cheap ones are gone)
+      'edge'     - the asks under max_price leave too little profit after fees
+      'min_size' - fewer cheap shares left than the market's minimum order
+      'budget'   - the money we may spend buys fewer shares than the minimum order
+    """
+    if not book.asks:
+        return None, "no_asks"
     sell_fee = taker_fee_per_share(sell_price, fee_rate)
     shares = cost = profit = 0.0
     worst = 0.0
+    stop = "exhausted"
     for lvl in book.asks:
         if lvl.price > max_price:
+            stop = "price"
             break
         edge = sell_price - lvl.price - taker_fee_per_share(lvl.price, fee_rate) - sell_fee
         if edge < min_edge:
+            stop = "edge"
             break
         remaining = budget_usdc - cost
         if remaining <= 0:
+            stop = "budget"
             break
         take = min(lvl.size, math.floor(remaining / lvl.price * 100) / 100)
         if take <= 0:
+            stop = "budget"
             break
         shares += take
         cost += take * lvl.price
         profit += take * edge
         worst = lvl.price
+        if take < lvl.size:
+            stop = "budget"            # the money ran out inside this level
     if shares < min_size or cost <= 0:
-        return None
+        if shares <= 0 and stop in ("price", "edge"):
+            return None, stop
+        return None, "budget" if stop == "budget" else "min_size"
     return SweepPlan(shares=round(shares, 2), cost=round(cost, 4), avg_price=cost / shares,
-                     worst_price=worst, est_profit=round(profit, 4))
+                     worst_price=worst, est_profit=round(profit, 4)), None
 
 
 def fillable_at(book: Book, price: float, shares: float) -> float:
