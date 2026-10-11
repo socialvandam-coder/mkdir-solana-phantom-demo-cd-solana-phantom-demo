@@ -1,0 +1,94 @@
+# Builds the standalone Weerbot.app (no Python needed) on real Macs - Apple Silicon and Intel -,
+# tests it like a double-click, and puts the zips on the branch "weerbot-downloads" so they can be
+# downloaded without a GitHub login (and fetched by the assistant to hand over in chat).
+name: publish-mac
+
+on:
+  push:
+    paths:
+      - '.github/requests/publish-mac.env'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            arch: AppleSilicon
+          - os: macos-15-intel
+            arch: Intel
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+        working-directory: polymarket-weather-bot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Unit tests
+        run: |
+          python -m pip install -q -r requirements.txt
+          python -m unittest discover -s tests
+      - name: Build the standalone app
+        env:
+          PYTHON: python
+        run: bash mac/build_standalone.sh
+      - name: Open it like a double-click and check the dashboard
+        run: bash mac/ci_launch_test.sh dist/standalone/Weerbot.app standalone
+      - name: Name the zip
+        run: |
+          mkdir -p out
+          cp dist/Weerbot-standalone-mac.zip "out/Weerbot-${{ matrix.arch }}.zip"
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: weerbot-${{ matrix.arch }}
+          path: polymarket-weather-bot/out/Weerbot-${{ matrix.arch }}.zip
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dl
+          merge-multiple: true
+      - name: Push the zips to the weerbot-downloads branch
+        env:
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ls -la dl
+          mkdir site && cd site
+          git init -q -b weerbot-downloads
+          cp ../dl/*.zip .
+          cat > README.md <<EOF
+          # Weerbot downloads
+
+          Built from commit ${SHA} on real Macs and tested by opening the app like a double-click.
+
+          - **Apple Silicon** (M1/M2/M3/M4): Weerbot-AppleSilicon.zip
+          - **Intel**: Weerbot-Intel.zip
+
+          Unzip, drag Weerbot.app to Applications, double-click. The first time macOS asks to confirm:
+          System Settings > Privacy & Security > "Open toch" (Open Anyway).
+          The app starts in paper mode (no real money).
+          EOF
+          git add -A
+          git -c user.name="weerbot-ci" -c user.email="weerbot-ci@users.noreply.github.com" \
+              commit -q -m "Weerbot builds for ${SHA}"
+          git push -q --force "https://x-access-token:${TOKEN}@github.com/${REPO}.git" HEAD:weerbot-downloads
+          echo "published to branch weerbot-downloads"
