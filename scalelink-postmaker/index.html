@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <style>
 /* Layout: werkbank in drie kolommen — briefing | afwerken | live LinkedIn-voorbeeld dat meeschuift.
-   Huisstijl van scalelink.io: indigo op crème, Plus Jakarta Sans, ronde pill-knoppen. */
+   Huisstijl van de Scalelink-site: indigo op crème, Plus Jakarta Sans, ronde pill-knoppen. */
 :root{
   --bg:#FAF8F2; --surface:#FFFFFF; --surface-2:#FAF8F2; --ink:#1B211E; --muted:#5E6960; --line:#E9E4D6;
   --brand:#5B4FE8; --brand-hover:#4539C9; --brand-light:#EEECFF; --brand-ink:#FFFFFF; --brand-text:#4539C9;
@@ -260,7 +260,7 @@ details.profile[open]>summary{margin-bottom:16px}
           <label class="field"><span>Sterke punten <em>(één per regel)</em></span><textarea id="pUsps" rows="4" data-bind="profile.usps"></textarea></label>
           <label class="field"><span>Feiten en cijfers die altijd mogen <em>(één per regel)</em></span><textarea id="pFacts" rows="4" data-bind="profile.facts"></textarea><small>Claude gebruikt alleen cijfers die hier of bij de briefing staan.</small></label>
           <label class="field"><span>Standaard call-to-action</span><input type="text" id="pCta" data-bind="profile.cta"></label>
-          <label class="field"><span>Website <em>(komt op de afbeelding)</em></span><input type="text" id="pSite" data-bind="profile.website" placeholder="scalelink.io" autocomplete="url"></label>
+          <label class="field"><span>Website <em>(komt op de afbeelding)</em></span><input type="text" id="pSite" data-bind="profile.website" placeholder="bijv. jouwdomein.nl" autocomplete="url"></label>
           <label class="field"><span>Vaste hashtags</span><input type="text" id="pTags" data-bind="profile.hashtags"></label>
           <div class="row2">
             <label class="field"><span>Afzender</span><input type="text" id="pSender" data-bind="profile.sender"></label>
@@ -428,7 +428,7 @@ details.profile[open]>summary{margin-bottom:16px}
     square:    { label: 'Vierkant',   w: 1080, h: 1080 },
     landscape: { label: 'Liggend',    w: 1200, h: 627 },
   };
-  // De vier huisstijlthema's komen van scalelink.io; hiText is de tekstkleur op de accentmarkering.
+  // De vier huisstijlthema's komen van de Scalelink-site; hiText is de tekstkleur op de accentmarkering.
   const THEMES = {
     indigo:   { label: 'Indigo',   alt: 'Indigo',           bg: '#5B4FE8', glow: '#7C71F7', deep: '#4539C9', fg: '#FFFFFF', accent: '#FFFFFF', hiText: '#4539C9', tileBg: '#FFFFFF', tileFg: '#5B4FE8' },
     creme:    { label: 'Crème',    alt: 'Crèmekleurige',    bg: '#FAF8F2', fg: '#1B211E', accent: '#5B4FE8', hiText: '#FFFFFF', tileBg: '#5B4FE8', tileFg: '#FFFFFF' },
@@ -445,7 +445,7 @@ details.profile[open]>summary{margin-bottom:16px}
       usps: 'Uitsluitend echte profielen: geen nepvolgers, geen bots en geen advertenties\nGerichte targeting op functie, sector en regio\nGroei op de achtergrond: één keer inloggen, verder niets veranderen\nElke maand een overzichtelijk rapport, plus updates via WhatsApp of e-mail\nDe controle over je account blijft bij jou\nMaandelijks opzegbaar, geen langlopend contract',
       facts: 'Via LinkedIn-advertenties betaal je gemiddeld zo\'n €10 tot €12 per nieuwe volger\nBij Scalelink betaal je gemiddeld €0,75 tot €2 per volger, vanaf €400 per maand (excl. btw)\nDe meeste zakelijke profielen groeien met zo\'n 150 tot 400+ relevante volgers per maand\nOpzegtermijn van één maand',
       cta: 'Plan een vrijblijvende kennismaking',
-      website: 'scalelink.io',
+      website: '',
       hashtags: '#LinkedIn #LinkedInGroei #B2B #Zichtbaarheid #Netwerken',
       sender: 'Scalelink',
       senderSub: 'Van nieuwe volger tot nieuwe klant',
@@ -461,7 +461,7 @@ details.profile[open]>summary{margin-bottom:16px}
         'Volgers kopen is makkelijk. Klanten krijgen niet.',
       ],
       hashtags: '#LinkedIn #LinkedInGroei #B2B #Zichtbaarheid',
-      firstComment: 'Plan je vrijblijvende kennismaking via scalelink.io: [link]',
+      firstComment: 'Plan je vrijblijvende kennismaking hier: [link]',
       altText: 'Indigo afbeelding van Scalelink met de tekst "Van nieuwe volger tot nieuwe klant." Daaronder: gerichte groei van je LinkedIn-netwerk, bij de juiste beslissers.',
       postTime: 'Dinsdag tot en met donderdag tussen 08:00 en 09:30, voordat beslissers aan hun eerste afspraak beginnen.',
       example: true,
@@ -501,6 +501,10 @@ details.profile[open]>summary{margin-bottom:16px}
     }
     state.profile.colors = Object.assign(clone(DEFAULTS.profile.colors), (saved.profile && saved.profile.colors) || {});
     if (!Array.isArray(state.post.hooks)) state.post.hooks = [];
+    // scalelink.io stond eerder als standaard ingevuld; haal het weg uit eerder bewaarde gegevens.
+    if (/^(https?:\/\/)?(www\.)?scalelink\.io\/?$/i.test(String(state.profile.website).trim())) state.profile.website = '';
+    state.post.firstComment = String(state.post.firstComment).replace(/ via scalelink\.io/gi, ' hier');
+    if (state.post.example) state.post = clone(DEFAULTS.post);
     if (!TYPES[state.brief.type]) state.brief.type = 'tip';
     if (!TEMPLATES[state.image.template]) state.image.template = 'statement';
     if (!FORMATS[state.image.format]) state.image.format = 'portrait';
@@ -920,7 +924,7 @@ details.profile[open]>summary{margin-bottom:16px}
       ctx.fillStyle = t.bg; ctx.fillRect(0, 0, W, H);
     }
   }
-  // Rasterlijnen die naar onderen uitfaden, zoals de afsluitende band op scalelink.io.
+  // Rasterlijnen die naar onderen uitfaden, zoals de afsluitende band op de Scalelink-site.
   function drawGrid(ctx, W, H, t, s) {
     const g = document.createElement('canvas'); g.width = W; g.height = H;
     const c = g.getContext('2d');
