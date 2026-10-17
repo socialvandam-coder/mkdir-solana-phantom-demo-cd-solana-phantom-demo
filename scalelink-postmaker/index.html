@@ -1,0 +1,1639 @@
+<title>Scalelink Postmaker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: werkbank in drie kolommen — briefing | afwerken | live LinkedIn-voorbeeld dat meeschuift.
+   Huisstijl van scalelink.io: indigo op crème, Plus Jakarta Sans, ronde pill-knoppen. */
+:root{
+  --bg:#FAF8F2; --surface:#FFFFFF; --surface-2:#FAF8F2; --ink:#1B211E; --muted:#5E6960; --line:#E9E4D6;
+  --brand:#5B4FE8; --brand-hover:#4539C9; --brand-light:#EEECFF; --brand-ink:#FFFFFF; --brand-text:#4539C9;
+  --focus:#5B4FE8; --good:#1C7A4B; --warn:#9A5800; --bad:#B42318;
+  --li-bg:#FFFFFF; --li-ink:rgba(0,0,0,.9); --li-muted:rgba(0,0,0,.6); --li-link:#0A66C2; --li-line:#E3E3E3;
+  --shadow:0 1px 2px rgba(27,33,30,.05),0 18px 40px -30px rgba(69,57,201,.45);
+  --font:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-li:-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12161C; --surface:#1B212B; --surface-2:#161B23; --ink:#F2F0EA; --muted:#A8B0BC; --line:rgba(255,255,255,.12);
+    --brand:#6F63F5; --brand-hover:#5B4FE8; --brand-light:#1F1D38; --brand-ink:#FFFFFF; --brand-text:#A89FFF;
+    --focus:#A89FFF; --good:#5BC48C; --warn:#E8A33D; --bad:#F2877D;
+    --li-bg:#1B1F23; --li-ink:rgba(255,255,255,.9); --li-muted:rgba(255,255,255,.6); --li-link:#70B5F9; --li-line:#38434F;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 18px 40px -30px rgba(0,0,0,.7);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161C; --surface:#1B212B; --surface-2:#161B23; --ink:#F2F0EA; --muted:#A8B0BC; --line:rgba(255,255,255,.12);
+  --brand:#6F63F5; --brand-hover:#5B4FE8; --brand-light:#1F1D38; --brand-ink:#FFFFFF; --brand-text:#A89FFF;
+  --focus:#A89FFF; --good:#5BC48C; --warn:#E8A33D; --bad:#F2877D;
+  --li-bg:#1B1F23; --li-ink:rgba(255,255,255,.9); --li-muted:rgba(255,255,255,.6); --li-link:#70B5F9; --li-line:#38434F;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 18px 40px -30px rgba(0,0,0,.7);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--font);-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--font);text-wrap:balance;margin:0;letter-spacing:-.015em}
+.app{max-width:1520px;margin:0 auto;padding-block:20px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Kop */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;padding-block:4px 22px}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.tile{width:44px;height:44px;flex:none;border-radius:13px;background:var(--brand);color:#FFFFFF;display:grid;place-items:center}
+.tile svg{width:24px;height:24px}
+h1{font-size:24px;font-weight:800;line-height:1.1}
+h1 span{color:var(--brand-text)}
+.top p{margin:3px 0 0;color:var(--muted);font-size:13.5px}
+.status{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:12.5px;font-weight:700;white-space:nowrap}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.status[data-state="on"]{color:var(--brand-text)}
+.status[data-state="off"]{color:var(--warn)}
+
+/* Raster */
+.grid{display:grid;gap:20px;align-items:start;grid-template-columns:minmax(0,360px) minmax(0,1fr) minmax(0,410px)}
+.col{display:grid;gap:20px;min-width:0}
+@media (max-width:1240px){
+  .grid{grid-template-columns:minmax(0,1fr) minmax(0,390px)}
+  .col-brief{grid-column:1;grid-row:1}
+  .col-edit{grid-column:1;grid-row:2}
+  .col-preview{grid-column:2;grid-row:1 / span 2}
+}
+@media (max-width:820px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .col-brief,.col-edit,.col-preview{grid-column:auto;grid-row:auto}
+  .col-brief{order:1}.col-preview{order:2}.col-edit{order:3}
+}
+@media (min-width:821px){
+  .sticky{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);max-height:calc(100vh - 32px);overflow:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:16px;padding-bottom:2px}
+  .sticky>*{flex:none}
+}
+@media (max-width:820px){ .sticky{display:grid;gap:16px} }
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow);min-width:0}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+h2{font-size:18px;font-weight:800;line-height:1.25;display:flex;align-items:center;gap:10px}
+.step{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--brand);color:var(--brand-ink);font:800 13px/1 var(--font);flex:none;letter-spacing:0}
+h3{font-size:14px;font-weight:800;letter-spacing:0}
+.stack{display:grid;gap:16px}
+.note{margin:0;color:var(--muted);font-size:13.5px;min-height:1.5em}
+.note.is-error{color:var(--bad)}
+.note.is-good{color:var(--good)}
+.num{font-variant-numeric:tabular-nums}
+
+/* Velden */
+.field{display:grid;gap:6px;min-width:0}
+.field>span,.legend{font-size:13.5px;font-weight:700}
+.field em,.legend em{font-style:normal;font-weight:500;color:var(--muted)}
+.field small{color:var(--muted);font-size:12.5px}
+input[type="text"],textarea{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);transition:border-color .15s}
+textarea{resize:vertical;line-height:1.5}
+input[type="text"]:hover,textarea:hover{border-color:var(--muted)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+input[type="text"]:focus-visible,textarea:focus-visible{outline-offset:0;border-color:var(--focus)}
+.row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.check input{width:17px;height:17px;accent-color:var(--brand)}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+.legend{display:block;margin-bottom:8px;padding:0}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px}
+.chip{position:relative;cursor:pointer}
+.chip input,.seg input,.swatch input{position:absolute;opacity:0;pointer-events:none}
+.chip span{display:inline-block;padding:7px 13px;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);font-size:13.5px;font-weight:600;line-height:1.35;transition:background .15s,border-color .15s}
+.chip:hover span{border-color:var(--brand)}
+.chip input:checked+span{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.chip input:focus-visible+span,.seg input:focus-visible+span,.swatch input:focus-visible+span{outline:2px solid var(--focus);outline-offset:2px}
+.seg-row{display:inline-flex;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px;max-width:100%}
+.seg{position:relative;cursor:pointer}
+.seg span{display:block;padding:6px 13px;border-radius:999px;font-size:13.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+.seg input:checked+span{background:var(--brand-light);color:var(--brand-text)}
+.swatch-row{display:flex;flex-wrap:wrap;gap:10px}
+.swatch{position:relative;cursor:pointer;display:grid;gap:5px;justify-items:center;font-size:12px;font-weight:600;color:var(--muted)}
+.swatch span.sw{display:block;width:54px;height:42px;border-radius:10px;background:var(--sw-bg);border:1px solid var(--line);position:relative;overflow:hidden}
+.swatch span.sw::before{content:"";position:absolute;left:8px;right:16px;top:12px;height:5px;border-radius:3px;background:var(--sw-fg)}
+.swatch span.sw::after{content:"";position:absolute;left:8px;width:22px;top:22px;height:8px;border-radius:3px;background:var(--sw-ac)}
+.swatch input:checked+span.sw{outline:2px solid var(--brand);outline-offset:2px}
+.colors{display:flex;flex-wrap:wrap;gap:12px}
+.colors label{display:flex;align-items:center;gap:8px;font-size:13.5px}
+input[type="color"]{width:38px;height:30px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer}
+input[type="file"]{font-size:13px;max-width:100%}
+
+/* Knoppen */
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 20px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer;transition:border-color .15s,background .15s,color .15s,transform .05s}
+.btn:hover{border-color:var(--brand);color:var(--brand-text)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn-primary:hover{background:var(--brand-hover);border-color:var(--brand-hover);color:var(--brand-ink)}
+.btn-sm{padding:7px 13px;font-size:13px}
+.btn-link{background:none;border:0;padding:0;color:var(--brand-text);font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.busy-dot{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.busy-dot{animation:none}*{transition:none!important}}
+
+/* Ideeën */
+.ideas{display:grid;gap:8px}
+.idea{display:grid;gap:2px;text-align:left;width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);cursor:pointer}
+.idea:hover{border-color:var(--brand)}
+.idea b{font-weight:700;font-size:14px;line-height:1.35}
+.idea small{color:var(--muted);font-size:12.5px}
+
+/* Merkprofiel */
+details.profile>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+details.profile>summary::-webkit-details-marker{display:none}
+details.profile>summary h2::after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translateY(-3px);margin-left:4px}
+details.profile[open]>summary h2::after{transform:rotate(-135deg) translateY(-1px)}
+details.profile[open]>summary{margin-bottom:16px}
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;background:var(--brand-light);color:var(--brand-text)}
+.pill-warn{background:none;border:1px solid currentColor;color:var(--warn)}
+.pill-muted{background:var(--surface-2);border:1px solid var(--line);color:var(--muted)}
+.tipbox{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border-radius:14px;background:var(--brand-light);font-size:13.5px;color:var(--ink)}
+
+/* Tabs */
+.tabs{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.tab{border:0;background:none;padding:7px 16px;border-radius:999px;font-weight:700;font-size:14px;color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--brand);color:var(--brand-ink)}
+
+/* Tekst-tab */
+.hooks{display:grid;gap:8px}
+.hook-list{display:grid;gap:6px}
+.hook{text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);cursor:pointer;font-size:14px;line-height:1.4}
+.hook:hover{border-color:var(--brand)}
+.hook small{display:block;color:var(--muted);font-size:11.5px;font-weight:600;margin-top:2px}
+#postText{min-height:340px;font-size:15px;line-height:1.6;background:var(--surface)}
+.meta-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px}
+.count{font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.count.is-warn{color:var(--warn)} .count.is-bad{color:var(--bad)}
+.tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tools .sep{width:1px;align-self:stretch;background:var(--line);margin:2px 4px}
+.label-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+
+/* Afbeelding-tab */
+.thumb-mobile{display:none}
+@media (max-width:820px){.thumb-mobile{display:block;width:100%;max-width:340px;height:auto;border-radius:14px;border:1px solid var(--line)}}
+
+/* LinkedIn-voorbeeld */
+.prev-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.li{background:var(--li-bg);color:var(--li-ink);border:1px solid var(--li-line);border-radius:10px;font:14px/1.43 var(--font-li);overflow:hidden;box-shadow:var(--shadow);transition:opacity .2s}
+.li.is-busy{opacity:.55}
+.li-head{display:flex;gap:9px;padding:12px 16px 0;align-items:flex-start}
+.li-avatar{width:48px;height:48px;border-radius:4px;background:#5B4FE8;color:#FFFFFF;display:grid;place-items:center;overflow:hidden;flex:none}
+.li-avatar img{width:100%;height:100%;object-fit:contain;background:#FFFFFF}
+.li-avatar svg{width:26px;height:26px}
+.li-who{min-width:0;display:grid}
+.li-name{font-weight:600;font-size:14px;line-height:1.3;overflow-wrap:anywhere}
+.li-sub,.li-time{color:var(--li-muted);font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+.li-follow{margin-left:auto;color:var(--li-link);font-weight:600;font-size:14px;white-space:nowrap}
+.li-text{padding:10px 16px 10px;white-space:pre-wrap;overflow-wrap:anywhere;min-height:3em}
+.li-tag{color:var(--li-link);font-weight:600}
+.li-more{background:none;border:0;padding:0;color:var(--li-muted);font:inherit;cursor:pointer}
+.li-more:hover{color:var(--li-link);text-decoration:underline}
+.li-img{display:block;width:100%;height:auto;max-width:100%;background:var(--surface-2)}
+.li-stats{display:flex;justify-content:space-between;padding:8px 16px;color:var(--li-muted);font-size:12px;border-bottom:1px solid var(--li-line)}
+.li-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:2px 6px}
+.li-actions span{text-align:center;padding:10px 2px;color:var(--li-muted);font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Checklist */
+.checklist ul{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:11px}
+.checklist li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;font-size:13.5px;line-height:1.45}
+.checklist li b{font-weight:700;display:block;color:var(--ink)}
+.checklist li span.txt{color:var(--muted)}
+.ico{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font:800 11px/1 var(--font);border:1.5px solid currentColor;margin-top:1px}
+.ico.ok{color:var(--good)} .ico.warn{color:var(--warn)} .ico.bad{color:var(--bad)} .ico.todo{color:var(--muted)} .ico.info{color:var(--brand-text)}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="tile" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="6" r="3"/><circle cx="17" cy="18" r="3"/><path d="M9.6 10.6l4.8-3.2M9.6 13.4l4.8 3.2"/></svg>
+      </div>
+      <div>
+        <h1>Scalelink <span>Postmaker</span></h1>
+        <p>Van idee tot klaar om te posten: tekst, afbeelding en checklist in één keer.</p>
+      </div>
+    </div>
+    <span id="aiStatus" class="status" data-state="pending" title="Of Claude in deze weergave teksten kan schrijven">Claude verbinden…</span>
+  </header>
+
+  <main class="grid">
+    <!-- 1. Briefing -->
+    <section class="col col-brief" aria-labelledby="h-brief">
+      <div class="panel stack">
+        <h2 id="h-brief"><span class="step">1</span>Wat wil je posten?</h2>
+        <div id="profileTip" class="tipbox" hidden>
+          <span>Het merkprofiel is nog een voorbeeld. <button type="button" class="btn-link" id="btnOpenProfile">Vul het in</button>, dan schrijft Claude precies over jouw aanbod.</span>
+        </div>
+        <label class="field"><span>Onderwerp</span>
+          <textarea id="topic" rows="2" data-bind="brief.topic" placeholder="Bijv. waarom volgers kopen je account in gevaar brengt"></textarea>
+        </label>
+        <label class="field"><span>Feiten, cijfers of verhaal <em>(optioneel)</em></span>
+          <textarea id="details" rows="3" data-bind="brief.details" placeholder="Bijv. recruitmentbureau uit Utrecht: van 1.200 naar 2.050 volgers in 3 maanden. Claude gebruikt alleen wat hier en in je merkprofiel staat als feit."></textarea>
+        </label>
+        <fieldset><legend class="legend">Soort post</legend><div class="chip-row" id="typeRow"></div></fieldset>
+        <fieldset><legend class="legend">Doel</legend><div class="chip-row" id="goalRow"></div></fieldset>
+        <fieldset><legend class="legend">Toon</legend><div class="chip-row" id="toneRow"></div></fieldset>
+        <div class="row2">
+          <fieldset><legend class="legend">Lengte</legend><div class="seg-row" id="lengthRow"></div></fieldset>
+          <fieldset><legend class="legend">Taal</legend><div class="seg-row" id="langRow"></div></fieldset>
+        </div>
+        <label class="check"><input type="checkbox" id="emoji" data-bind="brief.emoji"> Een paar emoji gebruiken</label>
+        <div class="actions">
+          <button type="button" id="btnGenerate" class="btn btn-primary">Maak mijn post</button>
+          <button type="button" id="btnStop" class="btn" hidden>Stop</button>
+          <button type="button" id="btnIdeas" class="btn">Geef me ideeën</button>
+        </div>
+        <p id="genStatus" class="note" role="status" aria-live="polite"></p>
+        <div id="ideas" class="ideas" hidden></div>
+      </div>
+
+      <details class="panel profile" id="profilePanel">
+        <summary><h2>Merkprofiel</h2><span id="profileBadge" class="pill pill-warn">Voorbeeld, pas aan</span></summary>
+        <div class="stack">
+          <label class="field"><span>Bedrijfsnaam</span><input type="text" id="pName" data-bind="profile.name"></label>
+          <label class="field"><span>Wat doet je bedrijf?</span><textarea id="pWhat" rows="4" data-bind="profile.what"></textarea></label>
+          <label class="field"><span>Voor wie?</span><textarea id="pAudience" rows="2" data-bind="profile.audience"></textarea></label>
+          <label class="field"><span>Sterke punten <em>(één per regel)</em></span><textarea id="pUsps" rows="4" data-bind="profile.usps"></textarea></label>
+          <label class="field"><span>Feiten en cijfers die altijd mogen <em>(één per regel)</em></span><textarea id="pFacts" rows="4" data-bind="profile.facts"></textarea><small>Claude gebruikt alleen cijfers die hier of bij de briefing staan.</small></label>
+          <label class="field"><span>Standaard call-to-action</span><input type="text" id="pCta" data-bind="profile.cta"></label>
+          <label class="field"><span>Website <em>(komt op de afbeelding)</em></span><input type="text" id="pSite" data-bind="profile.website" placeholder="scalelink.io" autocomplete="url"></label>
+          <label class="field"><span>Vaste hashtags</span><input type="text" id="pTags" data-bind="profile.hashtags"></label>
+          <div class="row2">
+            <label class="field"><span>Afzender</span><input type="text" id="pSender" data-bind="profile.sender"></label>
+            <label class="field"><span>Ondertitel</span><input type="text" id="pSenderSub" data-bind="profile.senderSub"></label>
+          </div>
+          <div class="field"><span class="legend">Merkkleuren <em>(voor het thema Eigen kleuren)</em></span>
+            <div class="colors">
+              <label><input type="color" id="cBg" data-bind="profile.colors.bg"> Achtergrond</label>
+              <label><input type="color" id="cFg" data-bind="profile.colors.fg"> Tekst</label>
+              <label><input type="color" id="cAc" data-bind="profile.colors.accent"> Accent</label>
+            </div>
+          </div>
+          <div class="field"><span class="legend">Logo <em>(PNG of SVG, vervangt het standaardlogo)</em></span>
+            <div class="actions"><input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp,image/svg+xml"><button type="button" class="btn btn-sm" id="btnLogoRemove" hidden>Verwijder logo</button></div>
+          </div>
+          <div class="actions"><button type="button" class="btn btn-sm" id="btnResetProfile">Herstel voorbeeldprofiel</button></div>
+          <p class="note">Je profiel wordt bewaard in deze browser.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 2. Afwerken -->
+    <section class="col col-edit" aria-labelledby="h-edit">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 id="h-edit"><span class="step">2</span>Werk je post af</h2>
+          <div class="tabs" role="tablist" aria-label="Onderdeel">
+            <button type="button" class="tab" role="tab" id="tabBtn-text" aria-controls="tab-text" aria-selected="true">Tekst</button>
+            <button type="button" class="tab" role="tab" id="tabBtn-image" aria-controls="tab-image" aria-selected="false">Afbeelding</button>
+          </div>
+        </div>
+
+        <div id="tab-text" role="tabpanel" aria-labelledby="tabBtn-text" class="stack">
+          <div class="hooks" id="hooksBox">
+            <h3>Andere openingszinnen <span class="count">klik om te wisselen</span></h3>
+            <div class="hook-list" id="hookList"></div>
+          </div>
+          <div class="field">
+            <div class="label-row"><label for="postText" class="legend" style="margin:0">Posttekst</label><span id="hookCount" class="count"></span></div>
+            <textarea id="postText" data-bind="post.text" spellcheck="true"></textarea>
+            <div class="meta-row"><span id="charCount" class="count"></span><span class="count">eerste regel = je hook</span></div>
+          </div>
+          <div class="tools" aria-label="Tekst bewerken">
+            <button type="button" class="btn btn-sm" id="btnBold" title="Zet geselecteerde tekst in vette letters die LinkedIn toont">Maak selectie vet</button>
+            <span class="sep" aria-hidden="true"></span>
+            <span id="rewriteTools" class="tools" hidden>
+              <button type="button" class="btn btn-sm" data-rewrite="kort">Korter</button>
+              <button type="button" class="btn btn-sm" data-rewrite="hook">Sterkere hook</button>
+              <button type="button" class="btn btn-sm" data-rewrite="persoonlijk">Persoonlijker</button>
+              <button type="button" class="btn btn-sm" data-rewrite="verkoop">Duidelijkere CTA</button>
+              <button type="button" class="btn btn-sm" data-rewrite="vertaal" id="btnTranslate">Naar Engels</button>
+            </span>
+            <button type="button" class="btn btn-sm" id="btnUndo" disabled>Ongedaan maken</button>
+          </div>
+          <label class="field"><span>Hashtags</span><input type="text" id="hashtags" data-bind="post.hashtags"></label>
+          <label class="field"><span>Eerste reactie <em>(plaats hier je link)</em></span><textarea id="firstComment" rows="2" data-bind="post.firstComment"></textarea></label>
+          <div class="field">
+            <div class="label-row"><label for="altText" class="legend" style="margin:0">Alt-tekst afbeelding</label><button type="button" class="btn-link" id="btnAltFromImage">Vul in vanuit afbeelding</button></div>
+            <textarea id="altText" rows="2" data-bind="post.altText"></textarea>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn btn-primary" id="btnCopyAll">Kopieer post + hashtags</button>
+            <button type="button" class="btn" id="btnCopyComment">Kopieer eerste reactie</button>
+            <button type="button" class="btn" id="btnCopyAlt">Kopieer alt-tekst</button>
+          </div>
+          <p id="textStatus" class="note" role="status" aria-live="polite"></p>
+        </div>
+
+        <div id="tab-image" role="tabpanel" aria-labelledby="tabBtn-image" class="stack" hidden>
+          <img id="imgThumb" class="thumb-mobile" alt="">
+          <fieldset><legend class="legend">Sjabloon</legend><div class="seg-row" id="tplRow"></div></fieldset>
+          <fieldset><legend class="legend">Formaat</legend><div class="seg-row" id="fmtRow"></div></fieldset>
+          <fieldset><legend class="legend">Kleuren</legend><div class="swatch-row" id="themeRow"></div></fieldset>
+          <label class="field"><span>Label bovenaan <em>(leeg = geen label)</em></span><input type="text" id="iLabel" data-bind="image.label" maxlength="28"></label>
+          <label class="field img-field" data-for="statement lijst foto"><span>Kop</span><textarea id="iHeadline" rows="2" data-bind="image.headline"></textarea></label>
+          <label class="field img-field" data-for="statement lijst foto quote"><span>Accent <em>(woord of woorden uit de kop of het citaat)</em></span><input type="text" id="iHighlight" data-bind="image.highlight"></label>
+          <div class="row2 img-field" data-for="cijfer">
+            <label class="field"><span>Cijfer</span><input type="text" id="iStat" data-bind="image.stat" placeholder="bijv. 3×"></label>
+            <label class="field"><span>Wat betekent het?</span><input type="text" id="iStatLabel" data-bind="image.statLabel"></label>
+          </div>
+          <label class="field img-field" data-for="lijst"><span>Punten <em>(één per regel, max. 5)</em></span><textarea id="iPoints" rows="4" data-bind="image.points"></textarea></label>
+          <label class="field img-field" data-for="quote"><span>Citaat</span><textarea id="iQuote" rows="3" data-bind="image.quote"></textarea></label>
+          <label class="field img-field" data-for="quote"><span>Van wie?</span><input type="text" id="iQuoteBy" data-bind="image.quoteBy"></label>
+          <label class="field img-field" data-for="statement cijfer foto"><span>Subregel</span><textarea id="iSub" rows="2" data-bind="image.sub"></textarea></label>
+          <div class="field img-field" data-for="foto"><span class="legend">Foto</span>
+            <input type="file" id="photoFile" accept="image/png,image/jpeg,image/webp">
+            <small>Je foto blijft op dit apparaat en wordt niet bewaard na herladen.</small>
+          </div>
+          <label class="check"><input type="checkbox" id="iShowSite" data-bind="image.showSite"> Website tonen onderaan</label>
+          <div class="actions">
+            <button type="button" class="btn btn-primary" id="btnDownload">Download afbeelding</button>
+            <button type="button" class="btn" id="btnCopyImg">Kopieer afbeelding</button>
+          </div>
+          <p id="imgStatus" class="note" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Voorbeeld -->
+    <aside class="col col-preview" aria-labelledby="h-prev">
+      <div class="sticky">
+        <div class="prev-head"><h2 id="h-prev"><span class="step">3</span>Zo ziet het eruit</h2><span id="examplePill" class="pill pill-muted">Voorbeeldpost</span></div>
+        <article class="li" id="liCard" aria-label="Voorbeeld van je LinkedIn-post">
+          <div class="li-head">
+            <div class="li-avatar" id="liAvatar"></div>
+            <div class="li-who">
+              <span class="li-name" id="liName"></span>
+              <span class="li-sub" id="liSub"></span>
+              <span class="li-time">Nu · Openbaar</span>
+            </div>
+            <span class="li-follow" aria-hidden="true">+ Volgen</span>
+          </div>
+          <div class="li-text" id="liText"></div>
+          <img class="li-img" id="liImg" alt="">
+          <div class="li-stats"><span>Nog geen reacties</span><span>0 reposts</span></div>
+          <div class="li-actions" aria-hidden="true"><span>Interessant</span><span>Reageren</span><span>Repost</span><span>Versturen</span></div>
+        </article>
+        <div class="panel checklist">
+          <h3>Klaar om te posten?</h3>
+          <ul id="checklist"></ul>
+        </div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const KEY = 'scalelink-postmaker:v1';
+  const LOGO_KEY = 'scalelink-postmaker:logo';
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
+    del(k) { try { localStorage.removeItem(k); } catch (e) { /* geen opslag */ } },
+  };
+
+  // ---------- Keuzes ----------
+  const TYPES = {
+    tip:      { label: 'Tip / how-to',       brief: 'een praktische waardepost met concrete tips over zichtbaarheid en netwerkgroei op LinkedIn', tag: 'LinkedIn-tip' },
+    mythe:    { label: 'Mythe vs. feit',     brief: 'een post die een veelgehoorde misvatting over LinkedIn-groei ontkracht', tag: 'Mythe' },
+    case:     { label: 'Resultaat',          brief: 'het verhaal en resultaat van een klant, uitsluitend op basis van de aangeleverde feiten', tag: 'Resultaat' },
+    verhaal:  { label: 'Zo werken we',       brief: 'een kijkje in hoe het team werkt: doelgroep bepalen, targeting, maandrapport', tag: 'Zo werken we' },
+    aanbod:   { label: 'Dienst promoten',    brief: 'een post die laat zien wat het bedrijf biedt en voor wie, met een duidelijke call-to-action', tag: 'Scalelink' },
+    stelling: { label: 'Stelling',           brief: 'een prikkelende mening die tot discussie uitnodigt', tag: 'Stelling' },
+    nieuws:   { label: 'Aankondiging',       brief: 'een aankondiging van nieuws, een lancering, event of mijlpaal', tag: 'Nieuw' },
+  };
+  const GOALS = {
+    leads:      { label: 'Leads & gesprekken', brief: 'gesprekken en aanvragen opleveren bij de doelgroep' },
+    bereik:     { label: 'Bereik',             brief: 'zoveel mogelijk relevante mensen bereiken en reacties uitlokken' },
+    vertrouwen: { label: 'Vertrouwen',         brief: 'expertise en betrouwbaarheid laten zien' },
+  };
+  const TONES = {
+    zakelijk:    { label: 'Zakelijk',    brief: 'zakelijk en helder, zonder stijf te worden' },
+    persoonlijk: { label: 'Persoonlijk', brief: 'persoonlijk en warm, in de ik- of wij-vorm' },
+    prikkelend:  { label: 'Prikkelend',  brief: 'uitgesproken en prikkelend, met een duidelijke mening' },
+    luchtig:     { label: 'Luchtig',     brief: 'luchtig en toegankelijk, met een knipoog' },
+  };
+  const LENGTHS = { kort: { label: 'Kort', words: 80 }, middel: { label: 'Middel', words: 150 }, lang: { label: 'Lang', words: 230 } };
+  const LANGS = { nl: { label: 'Nederlands' }, en: { label: 'Engels' } };
+  const TEMPLATES = { statement: { label: 'Statement' }, cijfer: { label: 'Cijfer' }, lijst: { label: 'Lijst' }, quote: { label: 'Quote' }, foto: { label: 'Foto' } };
+  const FORMATS = {
+    portrait:  { label: 'Staand 4:5', w: 1080, h: 1350 },
+    square:    { label: 'Vierkant',   w: 1080, h: 1080 },
+    landscape: { label: 'Liggend',    w: 1200, h: 627 },
+  };
+  // De vier huisstijlthema's komen van scalelink.io; hiText is de tekstkleur op de accentmarkering.
+  const THEMES = {
+    indigo:   { label: 'Indigo',   alt: 'Indigo',           bg: '#5B4FE8', glow: '#7C71F7', deep: '#4539C9', fg: '#FFFFFF', accent: '#FFFFFF', hiText: '#4539C9', tileBg: '#FFFFFF', tileFg: '#5B4FE8' },
+    creme:    { label: 'Crème',    alt: 'Crèmekleurige',    bg: '#FAF8F2', fg: '#1B211E', accent: '#5B4FE8', hiText: '#FFFFFF', tileBg: '#5B4FE8', tileFg: '#FFFFFF' },
+    lavendel: { label: 'Lavendel', alt: 'Lavendelkleurige', bg: '#EEECFF', fg: '#1B211E', accent: '#5B4FE8', hiText: '#FFFFFF', tileBg: '#5B4FE8', tileFg: '#FFFFFF' },
+    nacht:    { label: 'Nacht',    alt: 'Donkere',          bg: '#12161C', fg: '#F2F0EA', accent: '#6F63F5', hiText: '#FFFFFF', tileBg: '#6F63F5', tileFg: '#FFFFFF' },
+    eigen:    { label: 'Eigen',    alt: 'Gekleurde' },
+  };
+
+  const DEFAULTS = {
+    profile: {
+      name: 'Scalelink',
+      what: 'Scalelink laat je zakelijke netwerk op LinkedIn gericht en structureel groeien, bij de juiste beslissers. We selecteren relevante profielen op functie, sector en regio. Zo ontstaan echte volgers, connecties en uiteindelijk gesprekken. Je logt één keer in en post daarna gewoon zoals je gewend bent; de groei loopt op de achtergrond. Je content maak je zelf, wij zorgen dat die bij meer van de juiste mensen terechtkomt.',
+      audience: 'Bedrijven en MKB, consultants, recruiters en B2B-founders die zichtbaar willen zijn bij de juiste beslissers, zonder er elke dag tijd in te steken.',
+      usps: 'Uitsluitend echte profielen: geen nepvolgers, geen bots en geen advertenties\nGerichte targeting op functie, sector en regio\nGroei op de achtergrond: één keer inloggen, verder niets veranderen\nElke maand een overzichtelijk rapport, plus updates via WhatsApp of e-mail\nDe controle over je account blijft bij jou\nMaandelijks opzegbaar, geen langlopend contract',
+      facts: 'Via LinkedIn-advertenties betaal je gemiddeld zo\'n €10 tot €12 per nieuwe volger\nBij Scalelink betaal je gemiddeld €0,75 tot €2 per volger, vanaf €400 per maand (excl. btw)\nDe meeste zakelijke profielen groeien met zo\'n 150 tot 400+ relevante volgers per maand\nOpzegtermijn van één maand',
+      cta: 'Plan een vrijblijvende kennismaking',
+      website: 'scalelink.io',
+      hashtags: '#LinkedIn #LinkedInGroei #B2B #Zichtbaarheid #Netwerken',
+      sender: 'Scalelink',
+      senderSub: 'Van nieuwe volger tot nieuwe klant',
+      colors: { bg: '#5B4FE8', fg: '#FFFFFF', accent: '#EEECFF' },
+      edited: false,
+    },
+    brief: { topic: 'Waarom je volgersaantal de eerste indruk bij prospects bepaalt', details: '', type: 'aanbod', goal: 'leads', tone: 'zakelijk', length: 'middel', lang: 'nl', emoji: true },
+    post: {
+      text: 'Je bedrijf is sterker dan je volgersaantal doet vermoeden.\n\nToch is dat getal vaak het eerste wat een prospect ziet. En daar baseren ze hun eerste oordeel op.\n\nAdverteren voor volgers is duur: via LinkedIn-advertenties betaal je al snel €10 tot €12 per nieuwe volger.\n\nVolgers kopen is nog erger. Nepaccounts worden nooit klant, en LinkedIn grijpt in zodra groei er verdacht uitziet.\n\nBij Scalelink pakken we het anders aan:\n\n→ We bepalen samen je doelgroep op functie, sector en regio\n→ Je netwerk groeit op de achtergrond, met uitsluitend echte profielen\n→ Elke maand zie je in een rapport wie er bij is gekomen\n\nDe meeste zakelijke profielen groeien zo met 150 tot 400+ relevante volgers per maand. Mensen die je content zien, en soms je volgende klant worden.\n\nHoeveel van jouw volgers zijn eigenlijk beslissers?\n\n👉 Benieuwd wat dit voor jouw profiel kan doen? Plan een vrijblijvende kennismaking. De link staat in de eerste reactie.',
+      hooks: [
+        '€10 tot €12 per volger. Dat betaal je gemiddeld via LinkedIn-advertenties.',
+        'Prospects zien je volgersaantal voordat ze je bericht lezen.',
+        'Volgers kopen is makkelijk. Klanten krijgen niet.',
+      ],
+      hashtags: '#LinkedIn #LinkedInGroei #B2B #Zichtbaarheid',
+      firstComment: 'Plan je vrijblijvende kennismaking via scalelink.io: [link]',
+      altText: 'Indigo afbeelding van Scalelink met de tekst "Van nieuwe volger tot nieuwe klant." Daaronder: gerichte groei van je LinkedIn-netwerk, bij de juiste beslissers.',
+      postTime: 'Dinsdag tot en met donderdag tussen 08:00 en 09:30, voordat beslissers aan hun eerste afspraak beginnen.',
+      example: true,
+    },
+    image: {
+      template: 'statement', format: 'portrait', theme: 'indigo', label: 'Scalelink',
+      headline: 'Van nieuwe volger tot nieuwe klant.', highlight: 'nieuwe klant.',
+      sub: 'Gerichte groei van je LinkedIn-netwerk, bij de juiste beslissers.',
+      stat: '€0,75', statLabel: 'per volger, in plaats van €10 tot €12 via LinkedIn-ads',
+      points: 'Alleen echte profielen\nTargeting op functie, sector en regio\nMaandrapport met resultaten',
+      quote: '', quoteBy: '', showSite: true,
+    },
+    ui: { tab: 'text' },
+  };
+  const STATIC_IDEAS = [
+    { title: 'Drie signalen dat je LinkedIn-netwerk niet bij je doelgroep past', type: 'tip', angle: 'Herkenbare signalen, met per signaal wat je eraan doet.' },
+    { title: 'Mythe: je volgersaantal maakt niet uit, alleen je content telt', type: 'mythe', angle: 'Prospects kijken wél naar dat getal.' },
+    { title: 'Wat 150 tot 400 relevante volgers per maand met je bereik doen', type: 'case', angle: 'Vul bij de feiten de cijfers van een echte klant in.' },
+    { title: 'Zo bepalen we samen je doelgroep: functie, sector en regio', type: 'verhaal', angle: 'Laat zien hoe de targeting werkt.' },
+    { title: 'Adverteren voor volgers kost €10 per volger. Dit is het alternatief.', type: 'aanbod', angle: 'Rekenvoorbeeld ads versus Scalelink.' },
+    { title: 'Volgers kopen is zinloos. Gerichte groei niet.', type: 'stelling', angle: 'Een stelling die reacties uitlokt.' },
+  ];
+
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+  const state = {
+    profile: clone(DEFAULTS.profile), brief: clone(DEFAULTS.brief), post: clone(DEFAULTS.post),
+    image: clone(DEFAULTS.image), ui: clone(DEFAULTS.ui),
+  };
+  const flags = { imageSaved: false, expanded: false, busy: false };
+  let undoText = null;
+  let logoImg = null, logoUrl = null, photoImg = null;
+
+  function load(saved) {
+    if (!saved || typeof saved !== 'object') return;
+    for (const k of ['profile', 'brief', 'post', 'image', 'ui']) {
+      if (saved[k] && typeof saved[k] === 'object') state[k] = Object.assign(clone(DEFAULTS[k]), saved[k]);
+    }
+    state.profile.colors = Object.assign(clone(DEFAULTS.profile.colors), (saved.profile && saved.profile.colors) || {});
+    if (!Array.isArray(state.post.hooks)) state.post.hooks = [];
+    if (!TYPES[state.brief.type]) state.brief.type = 'tip';
+    if (!TEMPLATES[state.image.template]) state.image.template = 'statement';
+    if (!FORMATS[state.image.format]) state.image.format = 'portrait';
+    if (!THEMES[state.image.theme]) state.image.theme = 'indigo';
+  }
+  function persistable() {
+    return { profile: state.profile, brief: state.brief, post: state.post, image: state.image, ui: state.ui };
+  }
+  let saveTimer = 0;
+  function save() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => store.set(KEY, JSON.stringify(persistable())), 250);
+  }
+
+  // ---------- Claude-capabilities ----------
+  const api = (window.claude && typeof window.claude.use === 'function') ? window.claude : null;
+  let sampleFn = null, sampleState = 'pending', downloadsApi = null;
+  const sampleReady = (api ? api.use('sample') : Promise.resolve(null))
+    .then((s) => { sampleFn = s; sampleState = s ? 'on' : 'off'; })
+    .catch(() => { sampleState = 'off'; })
+    .then(() => { renderAiState(); });
+  const downloadsReady = (api ? api.use('downloads') : Promise.resolve(null))
+    .then((d) => { downloadsApi = d; return d; })
+    .catch(() => null);
+
+  function disableAi(msg) {
+    sampleFn = null; sampleState = 'off'; renderAiState();
+    if (msg) setNote('genStatus', msg, 'error');
+  }
+  function renderAiState() {
+    const el = $('aiStatus');
+    el.dataset.state = sampleState;
+    el.textContent = sampleState === 'on' ? 'Claude schrijft mee' : sampleState === 'off' ? 'Sjabloonmodus' : 'Claude verbinden…';
+    el.title = sampleState === 'off'
+      ? 'Claude is hier niet beschikbaar. Je krijgt een sjabloon om zelf in te vullen. Open de pagina in Claude om de tekst te laten schrijven.'
+      : 'Claude schrijft de tekst en de afbeeldingstekst op basis van je merkprofiel.';
+    $('rewriteTools').hidden = sampleState !== 'on';
+  }
+  function aiErrorCopy(e) {
+    const code = e && e.code;
+    switch (code) {
+      case 'not_granted': return 'Je hebt Claude niet toegestaan voor deze pagina. Je kunt verder in sjabloonmodus.';
+      case 'sampling_disabled': case 'not_declared': case 'capability_disabled': case 'capability_removed':
+        return 'Claude is in deze weergave niet beschikbaar. Je kunt verder in sjabloonmodus.';
+      case 'rate_limited': return 'Even te veel verzoeken achter elkaar. Probeer het over een minuut opnieuw.';
+      case 'session_expired': return 'Je sessie is verlopen. Log opnieuw in bij Claude en probeer het nog eens.';
+      case 'invalid_json': return 'Het antwoord kwam niet in het juiste formaat terug. Klik nog een keer, dan probeert Claude het opnieuw.';
+      case 'refused': return 'Claude wil deze opdracht niet uitvoeren. Pas het onderwerp of de feiten aan.';
+      case 'prompt_too_large': return 'Je profiel of feiten zijn te lang. Maak ze wat korter en probeer het opnieuw.';
+      case 'empty_completion': return 'Claude gaf geen antwoord. Maak de opdracht wat eenvoudiger en probeer het opnieuw.';
+      default: return 'Er ging iets mis bij Claude. Probeer het opnieuw.';
+    }
+  }
+  const AI_OFF_CODES = ['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'];
+
+  // ---------- Hulpjes ----------
+  const lines = (s) => String(s || '').split('\n').map((x) => x.trim()).filter(Boolean);
+  const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max || 2000) : '');
+  const chars = (s) => [...String(s || '')].length;
+  const nf = new Intl.NumberFormat('nl-NL');
+  function setNote(id, msg, kind) {
+    const el = $(id);
+    el.textContent = msg || '';
+    el.classList.toggle('is-error', kind === 'error');
+    el.classList.toggle('is-good', kind === 'good');
+  }
+  function getPath(p) { return p.split('.').reduce((o, k) => (o == null ? o : o[k]), state); }
+  function setPath(p, v) {
+    const ks = p.split('.'); let o = state;
+    for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]];
+    o[ks[ks.length - 1]] = v;
+  }
+  function fullText() {
+    const t = state.post.text.trim();
+    const h = state.post.hashtags.trim();
+    return h ? t + '\n\n' + h : t;
+  }
+  function slug(s) {
+    return String(s || 'post').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'post';
+  }
+  function hexToRgb(h) {
+    let x = String(h || '#000000').replace('#', '');
+    if (x.length === 3) x = x.split('').map((c) => c + c).join('');
+    const n = parseInt(x, 16) || 0;
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  const rgba = (h, a) => { const [r, g, b] = hexToRgb(h); return `rgba(${r},${g},${b},${a})`; };
+
+  // ---------- Formulier opbouwen ----------
+  function buildRadios(rowId, name, bind, options, cls) {
+    const row = $(rowId); row.textContent = '';
+    for (const [val, opt] of Object.entries(options)) {
+      const lab = document.createElement('label'); lab.className = cls;
+      const inp = document.createElement('input');
+      inp.type = 'radio'; inp.name = name; inp.value = val; inp.id = name + '-' + val; inp.dataset.bind = bind;
+      const sp = document.createElement('span'); sp.textContent = opt.label;
+      lab.append(inp, sp); row.append(lab);
+    }
+  }
+  function buildSwatches() {
+    const row = $('themeRow'); row.textContent = '';
+    for (const [val, opt] of Object.entries(THEMES)) {
+      const lab = document.createElement('label'); lab.className = 'swatch';
+      const inp = document.createElement('input');
+      inp.type = 'radio'; inp.name = 'theme'; inp.value = val; inp.id = 'theme-' + val; inp.dataset.bind = 'image.theme';
+      const sw = document.createElement('span'); sw.className = 'sw'; sw.dataset.theme = val;
+      const nm = document.createElement('span'); nm.textContent = opt.label;
+      lab.append(inp, sw, nm); row.append(lab);
+    }
+    paintSwatches();
+  }
+  function paintSwatches() {
+    document.querySelectorAll('.sw[data-theme]').forEach((sw) => {
+      const t = themeFor(sw.dataset.theme);
+      sw.style.setProperty('--sw-bg', t.bg); sw.style.setProperty('--sw-fg', t.fg); sw.style.setProperty('--sw-ac', t.accent);
+    });
+  }
+  function fillForm() {
+    document.querySelectorAll('[data-bind]').forEach((el) => {
+      const v = getPath(el.dataset.bind);
+      if (el.type === 'radio') el.checked = (el.value === v);
+      else if (el.type === 'checkbox') el.checked = !!v;
+      else if (v != null && el.value !== String(v)) el.value = v;
+    });
+  }
+
+  // ---------- Reageren op invoer ----------
+  function onInput(e) {
+    const el = e.target;
+    const p = el.dataset && el.dataset.bind;
+    if (!p) return;
+    if (el.type === 'radio' && !el.checked) return;
+    setPath(p, el.type === 'checkbox' ? el.checked : el.value);
+    const area = p.split('.')[0];
+    if (area === 'profile') {
+      state.profile.edited = true;
+      renderProfileBadge(); renderPreview(); paintSwatches(); scheduleImage();
+    } else if (area === 'post') {
+      state.post.example = false;
+      renderPreview(); renderCounts(); renderChecklist();
+    } else if (area === 'image') {
+      flags.imageSaved = false;
+      if (p === 'image.template') renderImageFields();
+      scheduleImage(); renderChecklist();
+    } else if (area === 'brief' && p === 'brief.lang') {
+      renderTranslateLabel();
+    }
+    save();
+  }
+
+  // ---------- Weergave ----------
+  function renderProfileBadge() {
+    const b = $('profileBadge');
+    const edited = state.profile.edited;
+    b.textContent = edited ? 'Bewaard in deze browser' : 'Voorbeeld, pas aan';
+    b.className = 'pill ' + (edited ? 'pill-good' : 'pill-warn');
+    $('profileTip').hidden = edited;
+  }
+  function markSvg() {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="6" r="3"/><circle cx="17" cy="18" r="3"/><path d="M9.6 10.6l4.8-3.2M9.6 13.4l4.8 3.2"/></svg>';
+  }
+  function appendWithTags(el, text) {
+    const parts = text.split(/(#[\p{L}\p{N}_]+)/u);
+    for (const part of parts) {
+      if (!part) continue;
+      if (part.startsWith('#') && part.length > 1) {
+        const s = document.createElement('span'); s.className = 'li-tag'; s.textContent = part; el.append(s);
+      } else el.append(document.createTextNode(part));
+    }
+  }
+  function needsFold(s) { return s.split('\n').length > 3 || chars(s) > 210; }
+  function foldText(s) {
+    let out = s.split('\n').slice(0, 3).join('\n');
+    if (chars(out) > 210) out = [...out].slice(0, 210).join('').replace(/\s+\S*$/, '');
+    return out.replace(/\s+$/, '');
+  }
+  function renderPreview() {
+    const p = state.profile;
+    $('liName').textContent = p.sender || p.name || 'Scalelink';
+    $('liSub').textContent = p.senderSub || '';
+    const av = $('liAvatar');
+    if (logoUrl) {
+      av.textContent = '';
+      const img = document.createElement('img'); img.src = logoUrl; img.alt = ''; av.append(img);
+    } else av.innerHTML = markSvg();
+    const full = fullText();
+    const el = $('liText'); el.textContent = '';
+    const fold = needsFold(full);
+    if (fold && !flags.expanded) {
+      appendWithTags(el, foldText(full));
+      el.append(document.createTextNode('… '));
+      const more = document.createElement('button'); more.type = 'button'; more.className = 'li-more'; more.textContent = 'meer';
+      more.addEventListener('click', () => { flags.expanded = true; renderPreview(); });
+      el.append(more);
+    } else {
+      appendWithTags(el, full || 'Je posttekst verschijnt hier.');
+      if (fold) {
+        el.append(document.createTextNode(' '));
+        const less = document.createElement('button'); less.type = 'button'; less.className = 'li-more'; less.textContent = 'minder';
+        less.addEventListener('click', () => { flags.expanded = false; renderPreview(); });
+        el.append(less);
+      }
+    }
+    $('liImg').alt = state.post.altText || '';
+    $('examplePill').hidden = !state.post.example;
+  }
+  function renderCounts() {
+    const total = chars(fullText());
+    const cc = $('charCount');
+    cc.textContent = `${nf.format(total)} / 3.000 tekens`;
+    cc.className = 'count' + (total > 3000 ? ' is-bad' : total > 2600 ? ' is-warn' : '');
+    const hook = state.post.text.split('\n')[0] || '';
+    const hl = chars(hook);
+    const hc = $('hookCount');
+    hc.textContent = `hook: ${hl} tekens`;
+    hc.className = 'count' + (hl > 140 ? ' is-warn' : '');
+  }
+  function renderHooks() {
+    const list = $('hookList'); list.textContent = '';
+    const hooks = (state.post.hooks || []).filter(Boolean);
+    $('hooksBox').hidden = hooks.length === 0;
+    hooks.forEach((h, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'hook'; b.id = 'hook-' + i;
+      b.append(document.createTextNode(h));
+      const sm = document.createElement('small'); sm.textContent = `${chars(h)} tekens`; b.append(sm);
+      b.addEventListener('click', () => useHook(i));
+      list.append(b);
+    });
+  }
+  function useHook(i) {
+    const hooks = state.post.hooks;
+    const h = hooks[i]; if (!h) return;
+    pushUndo();
+    const t = state.post.text;
+    const nl = t.indexOf('\n');
+    const old = nl === -1 ? t : t.slice(0, nl);
+    state.post.text = h + (nl === -1 ? '' : t.slice(nl));
+    hooks[i] = old.trim();
+    state.post.example = false;
+    afterTextChange();
+    setNote('textStatus', 'Openingszin gewisseld. De oude staat nu in de lijst.', 'good');
+  }
+  function renderTranslateLabel() {
+    $('btnTranslate').textContent = state.brief.lang === 'en' ? 'Naar Nederlands' : 'Naar Engels';
+  }
+  function renderImageFields() {
+    const tpl = state.image.template;
+    document.querySelectorAll('.img-field').forEach((el) => {
+      el.hidden = !el.dataset.for.split(' ').includes(tpl);
+    });
+  }
+  function afterTextChange() {
+    fillForm(); renderHooks(); renderPreview(); renderCounts(); renderChecklist(); save();
+    $('btnUndo').disabled = undoText == null;
+  }
+  function pushUndo() { undoText = state.post.text; $('btnUndo').disabled = false; }
+
+  function renderChecklist() {
+    const post = state.post, text = post.text;
+    const items = [];
+    const hook = text.split('\n')[0] || '';
+    const hl = chars(hook);
+    items.push(hl === 0 ? ['bad', 'Hook ontbreekt', 'De eerste regel bepaalt of mensen doorlezen.']
+      : hl <= 140 ? ['ok', 'Sterke, korte hook', `${hl} tekens: volledig zichtbaar op mobiel, vóór "meer".`]
+      : ['warn', 'Hook is lang', `${hl} tekens. Op mobiel valt het einde weg achter "meer". Mik op maximaal 140.`]);
+    const total = chars(fullText());
+    items.push(total <= 3000 ? ['ok', 'Lengte past', `${nf.format(total)} van de 3.000 tekens die LinkedIn toestaat.`]
+      : ['bad', 'Te lang voor LinkedIn', `${nf.format(total)} tekens. LinkedIn knipt af bij 3.000.`]);
+    items.push(/https?:\/\/|www\./i.test(text) ? ['warn', 'Link in de post', 'Zet je link in de eerste reactie. Posts met een link krijgen vaak minder bereik.']
+      : ['ok', 'Link staat in de eerste reactie', 'Plak de eerste reactie direct na het plaatsen.']);
+    const tags = (post.hashtags.match(/#[\p{L}\p{N}_]+/gu) || []).length;
+    items.push(tags >= 3 && tags <= 5 ? ['ok', `${tags} hashtags`, 'Precies goed: relevant zonder spammy te ogen.']
+      : ['warn', tags ? `${tags} hashtags` : 'Geen hashtags', 'Gebruik er 3 tot 5 die je doelgroep echt volgt.']);
+    items.push(post.altText.trim() ? ['ok', 'Alt-tekst klaar', 'Voeg hem toe via "Alternatieve tekst" bij het uploaden.']
+      : ['warn', 'Alt-tekst ontbreekt', 'Klik bij de alt-tekst op "Vul in vanuit afbeelding".']);
+    items.push(flags.imageSaved ? ['ok', 'Afbeelding opgeslagen', 'Upload hem bij je post.']
+      : ['todo', 'Afbeelding nog opslaan', 'Ga naar Afbeelding en klik op Download.']);
+    items.push(['info', 'Beste moment', post.postTime || 'Dinsdag tot en met donderdag tussen 08:00 en 09:30.']);
+    items.push(['info', 'Na het plaatsen', 'Reageer het eerste uur op elke reactie. Dat geeft je post extra bereik.']);
+    const ul = $('checklist'); ul.textContent = '';
+    const icons = { ok: '✓', warn: '!', bad: '×', todo: '', info: 'i' };
+    for (const [kind, title, sub] of items) {
+      const li = document.createElement('li');
+      const ic = document.createElement('span'); ic.className = 'ico ' + kind; ic.textContent = icons[kind]; ic.setAttribute('aria-hidden', 'true');
+      const tx = document.createElement('span'); tx.className = 'txt';
+      const b = document.createElement('b'); b.textContent = title;
+      tx.append(b, document.createTextNode(sub));
+      li.append(ic, tx); ul.append(li);
+    }
+  }
+
+  // ---------- Afbeelding tekenen ----------
+  const canvas = document.createElement('canvas');
+  const FONT = '"Plus Jakarta Sans","Helvetica Neue",Arial,sans-serif';
+  const DISPLAY = FONT, BODY = FONT;
+  const F_HEAD = (sz) => `800 ${sz}px ${FONT}`;
+  const F_SUB = (sz) => `500 ${sz}px ${FONT}`;
+  const F_LABEL2 = (sz) => `700 ${sz}px ${FONT}`;
+  const F_POINT = (sz) => `600 ${sz}px ${FONT}`;
+  const F_QUOTE = (sz) => `700 ${sz}px ${FONT}`;
+  let lastBlob = null, lastUrl = null, renderTimer = 0, renderSeq = 0;
+
+  function themeFor(k) {
+    if (k === 'eigen') {
+      const c = state.profile.colors;
+      return { bg: c.bg, fg: c.fg, accent: c.accent, hiText: c.bg, tileBg: c.accent, tileFg: c.bg };
+    }
+    return THEMES[k] || THEMES.indigo;
+  }
+  function scheduleImage() { clearTimeout(renderTimer); renderTimer = setTimeout(renderImage, 40); }
+
+  function tokenize(text, highlight) {
+    const words = String(text || '').trim().split(/\s+/).filter(Boolean);
+    const norm = (w) => w.toLowerCase().replace(/[^\p{L}\p{N}%×+\-]/gu, '');
+    const hw = String(highlight || '').trim().split(/\s+/).map(norm).filter(Boolean);
+    const hi = words.map(() => false);
+    if (hw.length) {
+      for (let i = 0; i + hw.length <= words.length; i++) {
+        if (hw.every((h, j) => norm(words[i + j]) === h)) for (let j = 0; j < hw.length; j++) hi[i + j] = true;
+      }
+    }
+    return words.map((w, i) => ({ w, hi: hi[i] }));
+  }
+  function layout(ctx, tokens, font, size, maxW) {
+    ctx.font = font(size);
+    const space = ctx.measureText(' ').width;
+    const out = []; let line = []; let lw = 0; let widest = 0;
+    for (const t of tokens) {
+      const w = ctx.measureText(t.w).width;
+      widest = Math.max(widest, w);
+      if (line.length && lw + space + w > maxW) { out.push({ items: line, w: lw }); line = []; lw = 0; }
+      lw += (line.length ? space : 0) + w;
+      line.push({ w: t.w, hi: t.hi, width: w });
+    }
+    if (line.length) out.push({ items: line, w: lw });
+    return { lines: out, space, widest, size };
+  }
+  function fit(ctx, tokens, font, maxW, maxH, start, min, lh, maxLines) {
+    let size = start;
+    while (size > min) {
+      const L = layout(ctx, tokens, font, size, maxW);
+      if (L.lines.length * size * lh <= maxH && L.lines.length <= (maxLines || 99) && L.widest <= maxW) return L;
+      size *= 0.95;
+    }
+    return layout(ctx, tokens, font, min, maxW);
+  }
+  const blockH = (L, lh) => L.lines.length * L.size * lh;
+  function rr(ctx, x, y, w, h, r) {
+    r = Math.min(r, h / 2, w / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+  }
+  function drawLines(ctx, L, x, y, lh, o) {
+    ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+    let yy = y;
+    for (const line of L.lines) {
+      if (o.marker) {
+        let px = x, runStart = null;
+        line.items.forEach((it, i) => {
+          if (it.hi && runStart === null) runStart = px;
+          const end = px + it.width;
+          const next = line.items[i + 1];
+          if (it.hi && !(next && next.hi)) {
+            const padX = L.size * 0.1;
+            rr(ctx, runStart - padX, yy + L.size * 0.05, end - runStart + padX * 2, L.size * 0.92, L.size * 0.18);
+            ctx.fillStyle = o.marker; ctx.fill();
+            runStart = null;
+          }
+          px = end + L.space;
+        });
+      }
+      ctx.font = o.font(L.size);
+      let xx = x;
+      for (const it of line.items) {
+        ctx.fillStyle = it.hi ? o.hiColor : o.color;
+        ctx.fillText(it.w, xx, yy);
+        xx += it.width + L.space;
+      }
+      yy += L.size * lh;
+    }
+    return blockH(L, lh);
+  }
+  // Het Scalelink-netwerkicoon (drie knooppunten), getekend in een vak van size × size.
+  function drawNet(ctx, x, y, size, color, lw) {
+    const k = size / 24;
+    ctx.save(); ctx.translate(x, y); ctx.scale(k, k);
+    ctx.strokeStyle = color; ctx.lineWidth = lw / k; ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (const [cx, cy] of [[7, 12], [17, 6], [17, 18]]) { ctx.moveTo(cx + 3, cy); ctx.arc(cx, cy, 3, 0, Math.PI * 2); }
+    ctx.moveTo(9.6, 10.6); ctx.lineTo(14.4, 7.4); ctx.moveTo(9.6, 13.4); ctx.lineTo(14.4, 16.6);
+    ctx.stroke(); ctx.restore();
+  }
+  function drawTile(ctx, x, y, size, t) {
+    rr(ctx, x, y, size, size, size * 0.3);
+    ctx.fillStyle = t.tileBg; ctx.fill();
+    const inner = size * 0.56;
+    drawNet(ctx, x + (size - inner) / 2, y + (size - inner) / 2, inner, t.tileFg, inner / 12);
+  }
+  function drawWatermark(ctx, W, H, t, s) {
+    const size = 560 * s;
+    drawNet(ctx, W - size * 0.62, -size * 0.12, size, rgba(t.fg, t.glow ? 0.13 : 0.08), size / 18);
+  }
+  function drawBackground(ctx, W, H, t, s) {
+    if (t.glow) {
+      const g = ctx.createRadialGradient(W / 2, 0, 0, W / 2, 0, Math.hypot(W, H) * 0.95);
+      g.addColorStop(0, t.glow); g.addColorStop(0.45, t.bg); g.addColorStop(1, t.deep);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      const h = ctx.createRadialGradient(W / 2, -H * 0.05, 0, W / 2, -H * 0.05, 560 * s);
+      h.addColorStop(0, 'rgba(255,255,255,0.22)'); h.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = h; ctx.fillRect(0, 0, W, H);
+    } else {
+      ctx.fillStyle = t.bg; ctx.fillRect(0, 0, W, H);
+    }
+  }
+  // Rasterlijnen die naar onderen uitfaden, zoals de afsluitende band op scalelink.io.
+  function drawGrid(ctx, W, H, t, s) {
+    const g = document.createElement('canvas'); g.width = W; g.height = H;
+    const c = g.getContext('2d');
+    const step = 48 * s;
+    c.strokeStyle = rgba(t.fg, t.glow ? 0.09 : 0.07); c.lineWidth = Math.max(1, 1.5 * s);
+    c.beginPath();
+    for (let x = step; x < W; x += step) { c.moveTo(x, 0); c.lineTo(x, H); }
+    for (let y = step; y < H; y += step) { c.moveTo(0, y); c.lineTo(W, y); }
+    c.stroke();
+    c.globalCompositeOperation = 'destination-in';
+    const m = c.createRadialGradient(W * 0.5, H * 0.1, 0, W * 0.5, H * 0.1, Math.max(W, H) * 0.8);
+    m.addColorStop(0, 'rgba(0,0,0,1)'); m.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = m; c.fillRect(0, 0, W, H);
+    ctx.drawImage(g, 0, 0);
+  }
+  function drawSpaced(ctx, text, x, y, spacing) {
+    let xx = x;
+    for (const ch of text) { ctx.fillText(ch, xx, y); xx += ctx.measureText(ch).width + spacing; }
+    return xx - spacing - x;
+  }
+  function measureSpaced(ctx, text, spacing) {
+    let w = 0; for (const ch of text) w += ctx.measureText(ch).width + spacing;
+    return w - spacing;
+  }
+  function drawLabel(ctx, text, x, y, t, s) {
+    const size = 22 * s, sp = size * 0.14, h = 52 * s, padX = 22 * s, dot = 10 * s, gap = 12 * s;
+    ctx.font = `800 ${size}px ${FONT}`;
+    const tw = measureSpaced(ctx, text, sp);
+    rr(ctx, x, y, padX * 2 + dot + gap + tw, h, h / 2);
+    ctx.fillStyle = rgba(t.fg, t.glow ? 0.1 : 0.05); ctx.fill();
+    ctx.lineWidth = 2 * s; ctx.strokeStyle = rgba(t.fg, 0.32); ctx.stroke();
+    ctx.save();
+    ctx.shadowColor = t.accent; ctx.shadowBlur = 12 * s;
+    ctx.fillStyle = t.accent; ctx.beginPath(); ctx.arc(x + padX + dot / 2, y + h / 2, dot / 2, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = t.fg; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    drawSpaced(ctx, text, x + padX + dot + gap, y + h / 2 + 1 * s, sp);
+  }
+  function drawFooter(ctx, W, H, t, s, pad) {
+    const p = state.profile;
+    const by = H - pad;
+    if (logoImg) {
+      const bh = 64 * s, maxW = 340 * s;
+      const r = Math.min(maxW / logoImg.width, bh / logoImg.height);
+      ctx.drawImage(logoImg, pad, by - logoImg.height * r, logoImg.width * r, logoImg.height * r);
+    } else {
+      const m = 60 * s;
+      drawTile(ctx, pad, by - m, m, t);
+      ctx.font = `800 ${38 * s}px ${FONT}`; ctx.fillStyle = t.fg; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+      ctx.fillText(p.name || 'Scalelink', pad + m + 16 * s, by - m / 2 + 1 * s);
+    }
+    if (state.image.showSite && p.website.trim()) {
+      ctx.font = `600 ${27 * s}px ${FONT}`; ctx.fillStyle = rgba(t.fg, 0.82); ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
+      ctx.fillText(p.website.trim().replace(/^https?:\/\//, '').replace(/\/$/, ''), W - pad, by - 30 * s);
+      ctx.textAlign = 'left';
+    }
+  }
+  function drawCover(ctx, img, W, H) {
+    const r = Math.max(W / img.width, H / img.height);
+    const w = img.width * r, h = img.height * r;
+    ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+  }
+
+  function tplStatement(ctx, box, t, s, im, bottom) {
+    const head = fit(ctx, tokenize(im.headline || ' ', im.highlight), F_HEAD, box.w, box.h * (im.sub.trim() ? 0.72 : 0.92), 150 * s, 40 * s, 1.04, 7);
+    const subT = im.sub.trim();
+    const sub = subT ? fit(ctx, tokenize(subT), F_SUB, Math.min(box.w, 860 * s), box.h * 0.24, 40 * s, 22 * s, 1.3, 4) : null;
+    const gap = 36 * s;
+    const hh = blockH(head, 1.04), sh = sub ? blockH(sub, 1.3) : 0;
+    const total = hh + (sub ? gap + sh : 0);
+    const y = bottom ? box.y + box.h - total : box.y + Math.max(0, (box.h - total) * 0.45);
+    drawLines(ctx, head, box.x, y, 1.04, { font: F_HEAD, color: t.fg, hiColor: t.hiText, marker: t.accent });
+    if (sub) drawLines(ctx, sub, box.x, y + hh + gap, 1.3, { font: F_SUB, color: rgba(t.fg, 0.8) });
+  }
+  function tplCijfer(ctx, box, t, s, im) {
+    const stat = fit(ctx, [{ w: im.stat.trim() || '0', hi: false }], F_HEAD, box.w, box.h * 0.5, 400 * s, 80 * s, 1, 1);
+    const lab = im.statLabel.trim() ? fit(ctx, tokenize(im.statLabel), F_LABEL2, box.w, box.h * 0.26, 68 * s, 30 * s, 1.1, 3) : null;
+    const sub = im.sub.trim() ? fit(ctx, tokenize(im.sub), F_SUB, Math.min(box.w, 860 * s), box.h * 0.2, 38 * s, 22 * s, 1.3, 3) : null;
+    const sh = stat.size * 0.98, g1 = 18 * s, g2 = 30 * s;
+    const lh = lab ? blockH(lab, 1.1) : 0, subh = sub ? blockH(sub, 1.3) : 0;
+    const total = sh + (lab ? g1 + lh : 0) + (sub ? g2 + subh : 0);
+    let y = box.y + Math.max(0, (box.h - total) * 0.45);
+    drawLines(ctx, stat, box.x - stat.size * 0.04, y, 0.98, { font: F_HEAD, color: t.accent });
+    y += sh;
+    if (lab) { y += g1; y += drawLines(ctx, lab, box.x, y, 1.1, { font: F_LABEL2, color: t.fg }); }
+    if (sub) { y += g2; drawLines(ctx, sub, box.x, y, 1.3, { font: F_SUB, color: rgba(t.fg, 0.8) }); }
+  }
+  function tplLijst(ctx, box, t, s, im) {
+    const head = fit(ctx, tokenize(im.headline || ' ', im.highlight), F_HEAD, box.w, box.h * 0.34, 104 * s, 40 * s, 1.04, 3);
+    const hh = blockH(head, 1.04);
+    const pts = lines(im.points).slice(0, 5);
+    const gapHead = 46 * s, rowGap = 26 * s;
+    const avail = box.h - hh - gapHead;
+    let size = 46 * s, ls = [], tot = 0, d = 0;
+    while (true) {
+      d = size * 1.45;
+      const tw = box.w - d - 26 * s;
+      ls = pts.map((p) => layout(ctx, tokenize(p), F_POINT, size, tw));
+      tot = ls.reduce((a, L) => a + Math.max(blockH(L, 1.25), d), 0) + Math.max(0, pts.length - 1) * rowGap;
+      if (tot <= avail || size <= 20 * s) break;
+      size *= 0.95;
+    }
+    let y = box.y + Math.max(0, (box.h - (hh + gapHead + tot)) * 0.45);
+    drawLines(ctx, head, box.x, y, 1.04, { font: F_HEAD, color: t.fg, hiColor: t.hiText, marker: t.accent });
+    y += hh + gapHead;
+    ls.forEach((L, i) => {
+      const rowH = Math.max(blockH(L, 1.25), d);
+      ctx.fillStyle = t.accent;
+      ctx.beginPath(); ctx.arc(box.x + d / 2, y + d / 2, d / 2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = t.hiText; ctx.font = `800 ${size * 0.78}px ${DISPLAY}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), box.x + d / 2, y + d / 2 + size * 0.03);
+      const th = blockH(L, 1.25);
+      const ty = L.lines.length === 1 ? y + (d - size * 1.25) / 2 + size * 0.06 : y;
+      drawLines(ctx, L, box.x + d + 26 * s, ty, 1.25, { font: F_POINT, color: t.fg });
+      y += Math.max(rowH, th) + rowGap;
+    });
+  }
+  function tplQuote(ctx, box, t, s, im) {
+    const markSize = 230 * s;
+    const q = fit(ctx, tokenize(im.quote || im.headline || ' ', im.highlight), F_QUOTE, box.w, box.h * 0.66, 84 * s, 32 * s, 1.16, 8);
+    const by = im.quoteBy.trim();
+    const qh = blockH(q, 1.16), byH = by ? 30 * s * 1.3 + 30 * s : 0, markH = markSize * 0.5;
+    const total = markH + qh + byH;
+    let y = box.y + Math.max(0, (box.h - total) * 0.45);
+    ctx.font = `800 ${markSize}px ${DISPLAY}`; ctx.fillStyle = t.accent; ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+    ctx.fillText('“', box.x - 8 * s, y - markSize * 0.12);
+    y += markH;
+    y += drawLines(ctx, q, box.x, y, 1.16, { font: F_QUOTE, color: t.fg, hiColor: t.accent });
+    if (by) {
+      ctx.font = `600 ${30 * s}px ${BODY}`; ctx.fillStyle = rgba(t.fg, 0.75); ctx.textBaseline = 'top';
+      ctx.fillText('— ' + by, box.x, y + 30 * s);
+    }
+  }
+
+  function renderImage() {
+    const f = FORMATS[state.image.format] || FORMATS.portrait;
+    const W = f.w, H = f.h;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    const t = themeFor(state.image.theme);
+    const s = Math.min(W, H) / 1080;
+    const pad = Math.round(84 * s);
+    const im = state.image;
+    const usePhoto = im.template === 'foto' && photoImg;
+
+    drawBackground(ctx, W, H, t, s);
+    if (usePhoto) {
+      drawCover(ctx, photoImg, W, H);
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, rgba(t.bg, 0.55)); g.addColorStop(0.22, rgba(t.bg, 0));
+      g.addColorStop(0.38, rgba(t.bg, 0)); g.addColorStop(0.66, rgba(t.bg, 0.78)); g.addColorStop(1, rgba(t.bg, 0.96));
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    } else {
+      drawGrid(ctx, W, H, t, s);
+      drawWatermark(ctx, W, H, t, s);
+    }
+    const label = im.label.trim().toUpperCase();
+    if (label) drawLabel(ctx, label, pad, pad, t, s);
+
+    const top = pad + 172 * s, footerTop = H - pad - 64 * s;
+    const box = { x: pad, y: top, w: W - pad * 2, h: footerTop - 44 * s - top };
+    if (im.template === 'cijfer') tplCijfer(ctx, box, t, s, im);
+    else if (im.template === 'lijst') tplLijst(ctx, box, t, s, im);
+    else if (im.template === 'quote') tplQuote(ctx, box, t, s, im);
+    else tplStatement(ctx, box, t, s, im, im.template === 'foto');
+    drawFooter(ctx, W, H, t, s, pad);
+
+    const seq = ++renderSeq;
+    canvas.toBlob((blob) => {
+      if (!blob || seq !== renderSeq) return;
+      lastBlob = blob;
+      const url = URL.createObjectURL(blob);
+      $('liImg').src = url; $('imgThumb').src = url;
+      if (lastUrl) URL.revokeObjectURL(lastUrl);
+      lastUrl = url;
+    }, 'image/png');
+  }
+
+  // ---------- Bestanden ----------
+  function readImageFile(file, maxSide) {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onerror = () => reject(new Error('read'));
+      fr.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('decode'));
+        img.onload = () => {
+          const r = Math.min(1, maxSide / Math.max(img.width, img.height));
+          const c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(img.width * r)); c.height = Math.max(1, Math.round(img.height * r));
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          const out = new Image();
+          const url = c.toDataURL('image/png');
+          out.onload = () => resolve({ img: out, url });
+          out.onerror = () => reject(new Error('decode'));
+          out.src = url;
+        };
+        img.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
+  function setLogo(url) {
+    if (!url) { logoImg = null; logoUrl = null; $('btnLogoRemove').hidden = true; renderPreview(); scheduleImage(); return; }
+    const img = new Image();
+    img.onload = () => { logoImg = img; logoUrl = url; $('btnLogoRemove').hidden = false; renderPreview(); scheduleImage(); };
+    img.src = url;
+  }
+
+  // ---------- Prompts ----------
+  function profileBlock() {
+    const p = state.profile;
+    return [
+      `Bedrijf: ${p.name}`,
+      `Wat het bedrijf doet: ${p.what}`,
+      `Doelgroep: ${p.audience}`,
+      `Sterke punten:\n${lines(p.usps).map((u) => '- ' + u).join('\n')}`,
+      lines(p.facts).length ? `Vaste feiten en cijfers:\n${lines(p.facts).map((u) => '- ' + u).join('\n')}` : '',
+      `Standaard call-to-action: ${p.cta}`,
+      p.website.trim() ? `Website: ${p.website.trim()}` : '',
+      `Vaste hashtags: ${p.hashtags}`,
+      `De post wordt geplaatst door: ${p.sender || p.name}`,
+    ].filter(Boolean).join('\n');
+  }
+  function buildPostPrompt() {
+    const b = state.brief, p = state.profile, ty = TYPES[b.type];
+    const en = b.lang === 'en';
+    return `Je bent de vaste LinkedIn-copywriter van ${p.name}. Schrijf één LinkedIn-post die ${p.name} promoot, plus de tekst voor een bijbehorende afbeelding.
+
+MERKPROFIEL
+${profileBlock()}
+
+OPDRACHT
+Onderwerp: ${b.topic.trim() || 'kies zelf een sterk onderwerp dat past bij het merkprofiel'}
+Soort post: ${ty.label}: ${ty.brief}
+Doel: ${GOALS[b.goal].brief}
+Toon: ${TONES[b.tone].brief}
+Lengte: ongeveer ${LENGTHS[b.length].words} woorden
+Emoji: ${b.emoji ? 'hooguit 2 of 3, alleen waar ze iets toevoegen' : 'geen emoji'}
+Taal: ${en ? 'Engels. Schrijf alle tekst in het Engels, ook de afbeelding.' : 'Nederlands. Schrijf alle tekst in het Nederlands, ook de afbeelding.'}
+Extra feiten voor deze post: ${b.details.trim() || 'geen extra feiten aangeleverd'}
+
+SCHRIJFREGELS
+- De eerste regel is de hook: maximaal 120 tekens, maakt nieuwsgierig en staat op zichzelf. Dit is het enige wat mensen zien vóór "meer weergeven".
+- Korte alinea's van één of twee zinnen, met een witregel ertussen. Een opsomming mag.
+- Geen markdown: geen sterretjes, geen #-koppen.
+- Verzin geen cijfers, percentages, prijzen, klantnamen, citaten of resultaten. Gebruik alleen wat in het merkprofiel of bij de extra feiten staat.
+- Beloof niets wat het merkprofiel niet zegt.
+- Geen URL in de post. Verwijs naar de link in de eerste reactie.
+- Zet geen hashtags in de posttekst; die komen apart.
+- Eindig met een vraag aan de lezer of met de call-to-action.
+- Schrijf zoals een ervaren ondernemer praat. Vermijd clichés als "in de snel veranderende wereld van vandaag", "game changer", "laten we eerlijk zijn" en "de sleutel tot succes".
+
+AFBEELDING
+Kies het sjabloon dat het best bij de post past:
+- "statement": headline van maximaal 8 woorden en sub van maximaal 14 woorden.
+- "cijfer": alleen als het merkprofiel of de extra feiten een echt cijfer bevatten dat bij de post past. stat is dat cijfer kort genoteerd (zoals "3×" of "42%"), statLabel maximaal 8 woorden, sub mag.
+- "lijst": headline van maximaal 6 woorden en 3 of 4 points van elk maximaal 6 woorden.
+- "quote": alleen als de feiten een citaat bevatten. quote maximaal 20 woorden, quoteBy is van wie het citaat is.
+label is 1 of 2 woorden die het soort post aanduiden, zoals "LinkedIn-tip" of "Resultaat". highlight is één woord of een korte woordgroep die letterlijk in headline (of in quote) staat en het accent krijgt.
+
+Antwoord met alleen dit JSON-object, zonder uitleg:
+{"hooks":["drie alternatieve hooks, elk maximaal 120 tekens"],"post":"de volledige posttekst, beginnend met je beste hook; regeleinden als \\n","hashtags":["3 tot 5 hashtags die met # beginnen; gebruik de vaste hashtags waar ze passen"],"firstComment":"tekst voor de eerste reactie, met [link] op de plek van de link","image":{"template":"statement","label":"","headline":"","highlight":"","sub":"","stat":"","statLabel":"","points":[],"quote":"","quoteBy":""},"altText":"beschrijving van de afbeelding voor screenreaders, maximaal 2 zinnen","postTime":"beste moment om te posten voor deze doelgroep, met één korte zin waarom"}`;
+  }
+  const REWRITES = {
+    kort: 'Maak de post ongeveer 40% korter. Behoud de hook, de kern en de call-to-action.',
+    hook: 'Herschrijf alleen de eerste regel tot een sterkere hook van maximaal 120 tekens die nieuwsgierig maakt. Laat de rest van de post precies zoals hij is.',
+    persoonlijk: 'Maak de post persoonlijker: ik-vorm, een herkenbaar moment uit de praktijk, een warmere toon. Verzin geen feiten.',
+    verkoop: 'Maak de call-to-action aan het einde duidelijker en concreter, zonder opdringerig te worden. Laat de rest grotendeels zoals hij is.',
+    vertaalEn: 'Vertaal de post naar natuurlijk, idiomatisch Engels voor een zakelijk publiek. Behoud opmaak en witregels.',
+    vertaalNl: 'Vertaal de post naar natuurlijk, idiomatisch Nederlands voor een zakelijk publiek. Behoud opmaak en witregels.',
+  };
+  function buildRewritePrompt(kind) {
+    const p = state.profile;
+    return `Je redigeert een LinkedIn-post voor ${p.name}. Over het bedrijf: ${p.what}
+
+Opdracht: ${REWRITES[kind]}
+
+Regels: geen markdown, geen hashtags, geen URL's, verzin geen nieuwe feiten of cijfers, korte alinea's met een witregel ertussen. Antwoord met alleen de nieuwe posttekst, zonder inleiding, toelichting of aanhalingstekens.
+
+POST:
+${state.post.text}`;
+  }
+  function buildIdeasPrompt() {
+    const b = state.brief, p = state.profile;
+    return `Bedenk 6 sterke, concrete LinkedIn-postideeën om ${p.name} te promoten. Wissel de soorten posts af en maak elk idee specifiek genoeg om meteen over te schrijven.
+
+MERKPROFIEL
+${profileBlock()}
+${b.topic.trim() ? `\nHuidig thema waar de gebruiker aan denkt: ${b.topic.trim()}\n` : ''}
+Taal van de ideeën: ${b.lang === 'en' ? 'Engels' : 'Nederlands'}.
+Toegestane waarden voor type: tip, mythe, case, verhaal, aanbod, stelling, nieuws.
+
+Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
+[{"title":"het onderwerp als één pakkende zin","type":"tip","angle":"één korte zin over de invalshoek"}]`;
+  }
+
+  // ---------- Toepassen ----------
+  function applyAI(d) {
+    if (!d || typeof d !== 'object' || !str(d.post)) throw { code: 'invalid_json' };
+    const post = state.post, img = state.image;
+    pushUndo();
+    post.text = str(d.post, 3500).replace(/\r\n/g, '\n');
+    post.hooks = Array.isArray(d.hooks) ? d.hooks.map((h) => str(h, 220)).filter(Boolean).slice(0, 4) : [];
+    const tags = Array.isArray(d.hashtags) ? d.hashtags : String(d.hashtags || '').split(/\s+/);
+    post.hashtags = tags.map((x) => '#' + String(x).trim().replace(/^#+/, '').replace(/\s+/g, '')).filter((x) => x.length > 1).slice(0, 6).join(' ');
+    post.firstComment = str(d.firstComment, 600) || `${state.profile.cta}: [link]`;
+    post.altText = str(d.altText, 400);
+    post.postTime = str(d.postTime, 260);
+    post.example = false;
+    const im = (d.image && typeof d.image === 'object') ? d.image : {};
+    const points = Array.isArray(im.points) ? im.points.map((x) => str(String(x), 70)).filter(Boolean).slice(0, 5) : [];
+    let tpl = TEMPLATES[im.template] ? im.template : 'statement';
+    if (tpl === 'foto') tpl = 'statement';
+    if (tpl === 'cijfer' && !str(im.stat)) tpl = 'statement';
+    if (tpl === 'quote' && !str(im.quote)) tpl = 'statement';
+    if (tpl === 'lijst' && points.length < 2) tpl = 'statement';
+    if (img.template === 'foto' && photoImg) tpl = 'foto';
+    Object.assign(img, {
+      template: tpl, label: str(im.label, 28), headline: str(im.headline, 140), highlight: str(im.highlight, 70),
+      sub: str(im.sub, 180), stat: str(im.stat, 14), statLabel: str(im.statLabel, 90), points: points.join('\n'),
+      quote: str(im.quote, 220), quoteBy: str(im.quoteBy, 70),
+    });
+    if (!img.headline) img.headline = (post.text.split('\n')[0] || '').slice(0, 90);
+    if (!post.altText) post.altText = altFromImage();
+  }
+
+  const FALLBACK = {
+    tip: '{topic}: zo pak je het aan.\n\nBij {name} zien we het steeds opnieuw. Wie dit goed doet, valt op. Wie het overslaat, blijft onzichtbaar.\n\nDrie dingen die werken:\n\n1. [Eerste tip in één zin]\n\n2. [Tweede tip in één zin]\n\n3. [Derde tip in één zin]\n\n{details}\n\nWelke van de drie pak jij als eerste op?\n\n{cta}',
+    mythe: '"{topic}". Dat hoor ik vaak. Het klopt niet.\n\n[Waarom deze mythe zo hardnekkig is, in één zin.]\n\nWat wel klopt: [het feit, in één zin].\n\n{details}\n\nWelke LinkedIn-mythe kom jij het vaakst tegen?\n\n{cta}',
+    case: 'Van [startsituatie] naar [resultaat]. Zo pakten we het aan: {topicLow}.\n\nDe uitdaging: [wat er speelde bij de klant].\n\nWat we deden:\n→ [stap 1]\n→ [stap 2]\n→ [stap 3]\n\nHet resultaat: {detailsOr}\n\nHerken je dezelfde uitdaging?\n\n{cta}',
+    verhaal: 'Een kijkje achter de schermen bij {name}: {topicLow}.\n\n[Wat er gebeurde, in twee zinnen.]\n\nWat ik ervan leerde: [de les in één zin].\n\n{details}\n\nHerkenbaar?\n\n{cta}',
+    aanbod: '{topic}.\n\n[Het probleem dat je klant herkent, in één zin.]\n\nDaar helpt {name} bij. Concreet:\n\n{usps}\n\n{details}\n\nVoor wie? {audience}\n\n{cta}',
+    stelling: '{topic}.\n\nDaar krijg ik vast tegenwind op. Toch blijf ik erbij.\n\n[Je belangrijkste argument.]\n\n[Een voorbeeld uit de praktijk.]\n\n{details}\n\nEens of oneens? Ik ben benieuwd.\n\n{cta}',
+    nieuws: 'Nieuws bij {name}: {topicLow}.\n\n[Wat er nieuw is, in één zin.]\n\nWat het voor jou betekent: [het voordeel voor de klant].\n\n{details}\n\n{cta}',
+  };
+  function lowerFirst(t) { return /^[A-Z][a-zà-ÿ]/.test(t) && !/^LinkedIn/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t; }
+  function applyTemplate() {
+    const b = state.brief, p = state.profile, post = state.post, img = state.image;
+    const topic = (b.topic.trim() || 'Gerichte groei van je LinkedIn-netwerk').replace(/[.?!]+$/, '');
+    const cta = (p.cta || '').replace(/[.!]+$/, '');
+    const ctaLine = cta ? `${b.emoji ? '👉 ' : ''}${cta}. De link staat in de eerste reactie.` : '';
+    const details = b.details.trim();
+    const text = FALLBACK[b.type]
+      .replace(/\{topic\}/g, topic.charAt(0).toUpperCase() + topic.slice(1))
+      .replace(/\{topicLow\}/g, lowerFirst(topic))
+      .replace(/\{name\}/g, p.name || 'Scalelink')
+      .replace(/\{audience\}/g, p.audience.trim())
+      .replace(/\{usps\}/g, lines(p.usps).map((u) => '✓ ' + u).join('\n'))
+      .replace(/\{detailsOr\}/g, details || '[concreet resultaat met cijfers]')
+      .replace(/\{details\}/g, details)
+      .replace(/\{cta\}/g, ctaLine)
+      .replace(/\n{3,}/g, '\n\n').trim();
+    pushUndo();
+    post.text = text;
+    const low = lowerFirst(topic);
+    post.hooks = [
+      `Iedereen heeft het over ${low}. Weinig bedrijven doen er echt iets mee.`,
+      `${topic.charAt(0).toUpperCase() + topic.slice(1)}? Hier begin je.`,
+      `Wat ik eerder had willen weten over ${low}.`,
+    ];
+    post.hashtags = p.hashtags.trim();
+    post.firstComment = cta ? `${cta}: [link]` : '[link]';
+    post.postTime = '';
+    post.example = false;
+    const num = details.match(/\d+(?:[.,]\d+)?\s?(?:%|×|x\b)?/);
+    let tpl = b.type === 'tip' ? 'lijst' : (b.type === 'case' && num) ? 'cijfer' : 'statement';
+    if (img.template === 'foto' && photoImg) tpl = 'foto';
+    Object.assign(img, {
+      template: tpl, label: TYPES[b.type].tag, headline: topic.charAt(0).toUpperCase() + topic.slice(1), highlight: '',
+      sub: cta, stat: num ? num[0].replace(/\s/g, '').replace(/x$/, '×') : '', statLabel: num ? topic : '',
+      points: tpl === 'lijst' ? '[Eerste tip]\n[Tweede tip]\n[Derde tip]' : img.points,
+    });
+    if (tpl === 'lijst') img.headline = img.headline.split(/\s+/).slice(0, 8).join(' ');
+    post.altText = altFromImage();
+  }
+  function altFromImage() {
+    const im = state.image;
+    const name = state.profile.name || 'Scalelink';
+    const kind = im.template === 'foto' && photoImg ? 'Foto' : ((THEMES[im.theme] && THEMES[im.theme].alt) || 'Gekleurde') + ' afbeelding';
+    let core;
+    if (im.template === 'cijfer') core = `het cijfer ${im.stat}${im.statLabel ? ' en de tekst "' + im.statLabel + '"' : ''}`;
+    else if (im.template === 'lijst') core = `de kop "${im.headline}" en de punten: ${lines(im.points).join('; ')}`;
+    else if (im.template === 'quote') core = `het citaat "${im.quote}"${im.quoteBy ? ' van ' + im.quoteBy : ''}`;
+    else core = `de tekst "${im.headline}"`;
+    const sub = (im.template !== 'lijst' && im.template !== 'quote' && im.sub.trim()) ? ` Daaronder: ${im.sub.trim()}` : '';
+    return `${kind} van ${name} met ${core}.${sub}`.replace(/\.\./g, '.');
+  }
+
+  // ---------- Acties ----------
+  let ctl = null;
+  function setBusy(on, msg) {
+    flags.busy = on;
+    ['btnGenerate', 'btnIdeas', 'btnUndo'].forEach((id) => { $(id).disabled = on || (id === 'btnUndo' && undoText == null); });
+    document.querySelectorAll('[data-rewrite]').forEach((b) => { b.disabled = on; });
+    $('btnStop').hidden = !on;
+    $('liCard').classList.toggle('is-busy', on);
+    $('postText').readOnly = on;
+    const gb = $('btnGenerate');
+    if (on) { gb.innerHTML = '<span class="busy-dot" aria-hidden="true"></span>Bezig…'; }
+    else { gb.textContent = state.post.example ? 'Maak mijn post' : 'Maak een nieuwe versie'; }
+    if (msg != null) setNote('genStatus', msg);
+  }
+  async function whenSampleKnown() {
+    if (sampleState === 'pending') {
+      setNote('genStatus', 'Claude verbinden…');
+      await sampleReady;
+    }
+    return sampleState === 'on' ? sampleFn : null;
+  }
+  async function generate() {
+    if (flags.busy) return;
+    setBusy(true, null);
+    const sample = await whenSampleKnown();
+    if (!sample) {
+      applyTemplate();
+      setBusy(false);
+      afterGenerate();
+      setNote('genStatus', state.brief.lang === 'en'
+        ? 'Sjabloon klaar (de sjablonen zijn Nederlandstalig). Vul de [haakjes] zelf in. Open deze pagina in Claude om de tekst te laten schrijven.'
+        : 'Sjabloon klaar. Vul de [haakjes] zelf in. Open deze pagina in Claude om de tekst te laten schrijven.', 'good');
+      return;
+    }
+    ctl = new AbortController();
+    setNote('genStatus', 'Claude denkt na over je post. Dit duurt meestal 10 tot 40 seconden.');
+    try {
+      const data = await sample.json(buildPostPrompt(), {
+        signal: ctl.signal, cache: false,
+        onText: ({ text }) => setNote('genStatus', `Claude schrijft… ${nf.format(text.length)} tekens`),
+      });
+      applyAI(data);
+      setBusy(false);
+      afterGenerate();
+      setNote('genStatus', 'Klaar. Lees hem na, pas aan wat je wilt en kopieer hem.', 'good');
+    } catch (e) {
+      setBusy(false);
+      if (e && e.code === 'cancelled') { setNote('genStatus', 'Gestopt.'); return; }
+      if (e && AI_OFF_CODES.includes(e.code)) { disableAi(aiErrorCopy(e)); return; }
+      setNote('genStatus', aiErrorCopy(e), 'error');
+    } finally { ctl = null; }
+  }
+  function afterGenerate() {
+    flags.expanded = false; flags.imageSaved = false;
+    fillForm(); renderImageFields(); renderHooks(); renderPreview(); renderCounts(); renderChecklist(); scheduleImage(); save();
+    $('btnGenerate').textContent = 'Maak een nieuwe versie';
+    $('btnUndo').disabled = undoText == null;
+  }
+  async function rewrite(kind) {
+    if (flags.busy || !state.post.text.trim()) return;
+    if (kind === 'vertaal') kind = state.brief.lang === 'en' ? 'vertaalNl' : 'vertaalEn';
+    const sample = await whenSampleKnown();
+    if (!sample) { setNote('textStatus', 'Herschrijven kan alleen als Claude beschikbaar is.', 'error'); return; }
+    const before = state.post.text;
+    ctl = new AbortController();
+    setBusy(true, null);
+    setNote('textStatus', 'Claude herschrijft je post…');
+    const ta = $('postText');
+    try {
+      const res = await sample(buildRewritePrompt(kind), {
+        signal: ctl.signal, cache: false, modelTier: 'quick',
+        onText: ({ text }) => { ta.value = text; },
+      });
+      let t = res.text.trim().replace(/^```[a-z]*\n?|```$/g, '').trim();
+      if (/^["“].*["”]$/s.test(t)) t = t.slice(1, -1).trim();
+      undoText = before;
+      state.post.text = t;
+      state.post.example = false;
+      if (kind === 'vertaalEn' || kind === 'vertaalNl') {
+        state.brief.lang = kind === 'vertaalEn' ? 'en' : 'nl';
+        renderTranslateLabel();
+      }
+      setBusy(false);
+      afterTextChange();
+      setNote('textStatus', res.truncated ? 'Het antwoord is afgekapt. Controleer het einde van je post.' : 'Herschreven. Niet goed? Klik op Ongedaan maken.', res.truncated ? 'error' : 'good');
+    } catch (e) {
+      ta.value = before;
+      setBusy(false);
+      if (e && e.code === 'cancelled') { setNote('textStatus', 'Gestopt. Je post is niet veranderd.'); return; }
+      if (e && AI_OFF_CODES.includes(e.code)) { disableAi(); setNote('textStatus', aiErrorCopy(e), 'error'); return; }
+      setNote('textStatus', aiErrorCopy(e), 'error');
+    } finally { ctl = null; }
+  }
+  function renderIdeas(ideas, note) {
+    const box = $('ideas'); box.textContent = ''; box.hidden = false;
+    const h = document.createElement('h3'); h.textContent = note || 'Ideeën om over te posten';
+    box.append(h);
+    ideas.forEach((idea, i) => {
+      const type = TYPES[idea.type] ? idea.type : 'tip';
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'idea'; b.id = 'idea-' + i;
+      const t = document.createElement('b'); t.textContent = idea.title;
+      const sm = document.createElement('small'); sm.textContent = TYPES[type].label + (idea.angle ? ' · ' + idea.angle : '');
+      b.append(t, sm);
+      b.addEventListener('click', () => {
+        state.brief.topic = idea.title; state.brief.type = type;
+        fillForm(); save();
+        setNote('genStatus', 'Onderwerp ingevuld. Klik op "Maak mijn post".', 'good');
+        $('btnGenerate').focus();
+      });
+      box.append(b);
+    });
+  }
+  async function ideas() {
+    if (flags.busy) return;
+    setBusy(true, null);
+    const sample = await whenSampleKnown();
+    if (!sample) {
+      setBusy(false);
+      renderIdeas(STATIC_IDEAS, 'Vaste ideeën (open in Claude voor ideeën op maat)');
+      setNote('genStatus', '');
+      return;
+    }
+    ctl = new AbortController();
+    setNote('genStatus', 'Claude bedenkt ideeën…');
+    try {
+      const arr = await sample.json(buildIdeasPrompt(), { signal: ctl.signal, cache: false, modelTier: 'quick' });
+      const list = (Array.isArray(arr) ? arr : (arr && Array.isArray(arr.ideas) ? arr.ideas : []))
+        .map((x) => ({ title: str(x && x.title, 160), type: x && x.type, angle: str(x && x.angle, 160) }))
+        .filter((x) => x.title).slice(0, 8);
+      setBusy(false);
+      if (!list.length) throw { code: 'invalid_json' };
+      renderIdeas(list);
+      setNote('genStatus', 'Kies een idee, dan vul ik het onderwerp in.', 'good');
+    } catch (e) {
+      setBusy(false);
+      if (e && e.code === 'cancelled') { setNote('genStatus', 'Gestopt.'); return; }
+      if (e && AI_OFF_CODES.includes(e.code)) { disableAi(aiErrorCopy(e)); renderIdeas(STATIC_IDEAS, 'Vaste ideeën'); return; }
+      setNote('genStatus', aiErrorCopy(e), 'error');
+    } finally { ctl = null; }
+  }
+  function copyText(text, statusId, okMsg, fallbackEl) {
+    const done = () => setNote(statusId, okMsg, 'good');
+    const fail = () => {
+      if (fallbackEl) { fallbackEl.focus(); fallbackEl.select(); }
+      setNote(statusId, 'Kopiëren lukte hier niet automatisch. De tekst is geselecteerd: druk op Ctrl+C (of Cmd+C).', 'error');
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fail);
+      else fail();
+    } catch (e) { fail(); }
+  }
+  function boldToggle() {
+    const ta = $('postText');
+    const a = ta.selectionStart, b = ta.selectionEnd;
+    if (a === b) { setNote('textStatus', 'Selecteer eerst de woorden die je vet wilt maken.', 'error'); return; }
+    const sel = ta.value.slice(a, b);
+    const isBold = /[\u{1D5D4}-\u{1D5FF}\u{1D600}-\u{1D607}\u{1D7EC}-\u{1D7F5}]/u.test(sel);
+    const conv = [...sel].map((c) => {
+      const n = c.codePointAt(0);
+      if (!isBold) {
+        if (n >= 65 && n <= 90) return String.fromCodePoint(0x1D5D4 + n - 65);
+        if (n >= 97 && n <= 122) return String.fromCodePoint(0x1D5EE + n - 97);
+        if (n >= 48 && n <= 57) return String.fromCodePoint(0x1D7EC + n - 48);
+      } else {
+        if (n >= 0x1D5D4 && n <= 0x1D5ED) return String.fromCharCode(65 + n - 0x1D5D4);
+        if (n >= 0x1D5EE && n <= 0x1D607) return String.fromCharCode(97 + n - 0x1D5EE);
+        if (n >= 0x1D7EC && n <= 0x1D7F5) return String.fromCharCode(48 + n - 0x1D7EC);
+      }
+      return c;
+    }).join('');
+    pushUndo();
+    ta.value = ta.value.slice(0, a) + conv + ta.value.slice(b);
+    state.post.text = ta.value; state.post.example = false;
+    ta.focus(); ta.setSelectionRange(a, a + conv.length);
+    renderPreview(); renderCounts(); renderChecklist(); save();
+    setNote('textStatus', isBold ? 'Vet weggehaald.' : 'Vetgedrukt. Gebruik het spaarzaam: schermlezers lezen deze letters slecht voor.', 'good');
+  }
+  function imgFileName() {
+    const base = state.image.template === 'cijfer' ? state.image.stat + ' ' + state.image.statLabel : (state.image.headline || state.image.quote || state.brief.topic);
+    return `${slug(state.profile.name)}-${slug(base)}-${state.image.format}.png`;
+  }
+  function freshBlob() {
+    return new Promise((resolve) => {
+      clearTimeout(renderTimer); renderImage();
+      canvas.toBlob((b) => resolve(b), 'image/png');
+    });
+  }
+  async function download() {
+    setNote('imgStatus', 'Afbeelding klaarzetten…');
+    const blob = await freshBlob();
+    const dl = downloadsApi || await downloadsReady;
+    if (!dl || !blob) {
+      setNote('imgStatus', 'Downloaden kan in deze weergave niet. Klik met rechts op de afbeelding in het voorbeeld (of houd hem ingedrukt) en kies "Afbeelding opslaan".', 'error');
+      return;
+    }
+    try {
+      await dl.save({ filename: imgFileName(), data: blob });
+      flags.imageSaved = true; renderChecklist();
+      setNote('imgStatus', 'Afbeelding opgeslagen.', 'good');
+    } catch (e) {
+      const c = e && e.code;
+      if (c === 'declined') setNote('imgStatus', 'Opslaan geannuleerd.');
+      else if (c === 'rate_limited') setNote('imgStatus', 'Er staat al een opslagvenster open. Rond dat eerst af.', 'error');
+      else setNote('imgStatus', 'Opslaan lukte niet. Klik met rechts op de afbeelding in het voorbeeld en kies "Afbeelding opslaan".', 'error');
+    }
+  }
+  function copyImage() {
+    try {
+      if (!window.ClipboardItem || !navigator.clipboard || !navigator.clipboard.write) throw new Error('nope');
+      const item = new ClipboardItem({ 'image/png': lastBlob ? Promise.resolve(lastBlob) : freshBlob() });
+      navigator.clipboard.write([item]).then(() => {
+        flags.imageSaved = true; renderChecklist();
+        setNote('imgStatus', 'Afbeelding gekopieerd. Plak hem direct in je LinkedIn-post.', 'good');
+      }, () => setNote('imgStatus', 'Kopiëren van afbeeldingen lukt hier niet. Gebruik Download afbeelding.', 'error'));
+    } catch (e) {
+      setNote('imgStatus', 'Kopiëren van afbeeldingen lukt hier niet. Gebruik Download afbeelding.', 'error');
+    }
+  }
+  function selectTab(tab) {
+    state.ui.tab = tab;
+    for (const k of ['text', 'image']) {
+      $('tabBtn-' + k).setAttribute('aria-selected', String(k === tab));
+      $('tabBtn-' + k).tabIndex = k === tab ? 0 : -1;
+      $('tab-' + k).hidden = k !== tab;
+    }
+    save();
+  }
+
+  // ---------- Start ----------
+  let resetArmed = 0;
+  function init() {
+    buildRadios('typeRow', 'type', 'brief.type', TYPES, 'chip');
+    buildRadios('goalRow', 'goal', 'brief.goal', GOALS, 'chip');
+    buildRadios('toneRow', 'tone', 'brief.tone', TONES, 'chip');
+    buildRadios('lengthRow', 'length', 'brief.length', LENGTHS, 'seg');
+    buildRadios('langRow', 'lang', 'brief.lang', LANGS, 'seg');
+    buildRadios('tplRow', 'tpl', 'image.template', TEMPLATES, 'seg');
+    buildRadios('fmtRow', 'fmt', 'image.format', FORMATS, 'seg');
+    buildSwatches();
+    fillForm();
+
+    document.addEventListener('input', onInput);
+    $('btnGenerate').addEventListener('click', generate);
+    $('btnIdeas').addEventListener('click', ideas);
+    $('btnStop').addEventListener('click', () => { if (ctl) ctl.abort(); });
+    $('btnOpenProfile').addEventListener('click', () => { const d = $('profilePanel'); d.open = true; $('pWhat').focus(); });
+    document.querySelectorAll('[data-rewrite]').forEach((b) => b.addEventListener('click', () => rewrite(b.dataset.rewrite)));
+    $('btnUndo').addEventListener('click', () => {
+      if (undoText == null) return;
+      const cur = state.post.text; state.post.text = undoText; undoText = cur;
+      afterTextChange();
+      setNote('textStatus', 'Vorige versie teruggezet. Klik nog eens om terug te gaan.');
+    });
+    $('btnBold').addEventListener('click', boldToggle);
+    $('btnCopyAll').addEventListener('click', () => copyText(fullText(), 'textStatus', 'Post en hashtags gekopieerd. Plak ze in LinkedIn.', $('postText')));
+    $('btnCopyComment').addEventListener('click', () => copyText(state.post.firstComment, 'textStatus', 'Eerste reactie gekopieerd. Vervang [link] door je link.', $('firstComment')));
+    $('btnCopyAlt').addEventListener('click', () => copyText(state.post.altText, 'textStatus', 'Alt-tekst gekopieerd.', $('altText')));
+    $('btnAltFromImage').addEventListener('click', () => { state.post.altText = altFromImage(); fillForm(); renderPreview(); renderChecklist(); save(); });
+    $('btnDownload').addEventListener('click', download);
+    $('btnCopyImg').addEventListener('click', copyImage);
+    for (const k of ['text', 'image']) $('tabBtn-' + k).addEventListener('click', () => selectTab(k));
+    $('tabBtn-text').parentElement.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      const next = state.ui.tab === 'text' ? 'image' : 'text';
+      selectTab(next); $('tabBtn-' + next).focus();
+    });
+    $('logoFile').addEventListener('change', async (e) => {
+      const f = e.target.files && e.target.files[0]; if (!f) return;
+      try {
+        const { url } = await readImageFile(f, 480);
+        if (!store.set(LOGO_KEY, url)) setNote('genStatus', 'Logo geladen, maar te groot om te bewaren in deze browser.');
+        state.profile.edited = true; renderProfileBadge(); save();
+        setLogo(url);
+      } catch (err) { setNote('genStatus', 'Dit bestand kan ik niet als logo lezen. Probeer een PNG of JPG.', 'error'); }
+      e.target.value = '';
+    });
+    $('btnLogoRemove').addEventListener('click', () => { store.del(LOGO_KEY); setLogo(null); });
+    $('photoFile').addEventListener('change', async (e) => {
+      const f = e.target.files && e.target.files[0]; if (!f) return;
+      try {
+        const { img } = await readImageFile(f, 1800);
+        photoImg = img; flags.imageSaved = false;
+        setNote('imgStatus', 'Foto geplaatst.', 'good');
+        scheduleImage();
+      } catch (err) { setNote('imgStatus', 'Deze foto kan ik niet lezen. Probeer een JPG of PNG.', 'error'); }
+    });
+    $('btnResetProfile').addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      if (Date.now() - resetArmed > 4000) {
+        resetArmed = Date.now(); btn.textContent = 'Zeker weten? Klik nog een keer';
+        setTimeout(() => { if (Date.now() - resetArmed >= 4000) btn.textContent = 'Herstel voorbeeldprofiel'; }, 4100);
+        return;
+      }
+      resetArmed = 0; btn.textContent = 'Herstel voorbeeldprofiel';
+      state.profile = clone(DEFAULTS.profile); store.del(LOGO_KEY); setLogo(null);
+      fillForm(); renderProfileBadge(); renderPreview(); paintSwatches(); scheduleImage(); save();
+    });
+
+    const savedLogo = store.get(LOGO_KEY);
+    if (savedLogo) setLogo(savedLogo);
+    selectTab(state.ui.tab === 'image' ? 'image' : 'text');
+    renderAiState(); renderProfileBadge(); renderTranslateLabel(); renderImageFields(); renderHooks();
+    renderPreview(); renderCounts(); renderChecklist();
+    $('btnGenerate').textContent = state.post.example ? 'Maak mijn post' : 'Maak een nieuwe versie';
+    renderImage();
+
+    if (document.fonts && document.fonts.load) {
+      const want = ['800 100px "Plus Jakarta Sans"', '700 100px "Plus Jakarta Sans"', '600 40px "Plus Jakarta Sans"', '500 40px "Plus Jakarta Sans"'];
+      Promise.race([Promise.all(want.map((f) => document.fonts.load(f))), new Promise((r) => setTimeout(r, 3000))])
+        .then(() => renderImage(), () => renderImage());
+      document.fonts.ready.then(() => scheduleImage());
+    }
+  }
+
+  const hot = window.claude && window.claude.hot;
+  if (hot && typeof hot.snapshot === 'function') { try { hot.snapshot(() => ({ saved: persistable() })); } catch (e) { /* optioneel */ } }
+  function start(data) {
+    let saved = null;
+    try { saved = JSON.parse(store.get(KEY) || 'null'); } catch (e) { saved = null; }
+    if (data && data.saved) saved = data.saved;
+    load(saved);
+    init();
+  }
+  if (hot && typeof hot.ready === 'function') hot.ready(start);
+  else start((hot && hot.data) || {});
+})();
+</script>
