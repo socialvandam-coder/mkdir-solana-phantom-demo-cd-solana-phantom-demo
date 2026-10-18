@@ -1,6 +1,6 @@
-# Scalelink Postmaker
+# ScaleLink Postmaker
 
-Een LinkedIn-postgenerator in de huisstijl van Scalelink (indigo `#5B4FE8`, crème, Plus Jakarta Sans, het netwerklogo).
+Een LinkedIn-postgenerator in de huisstijl van ScaleLink (indigo `#5B4FE8`, crème, Plus Jakarta Sans, het netwerklogo).
 Eén pagina zet alles klaar om te posten:
 
 - **Tekst**: Claude schrijft de post op basis van het merkprofiel, met drie alternatieve hooks, hashtags, een eerste reactie voor je link, alt-tekst en het beste moment om te posten. Daarna kun je de post laten herschrijven: korter, sterkere hook, persoonlijker, duidelijkere CTA of vertaald.
