@@ -1,0 +1,800 @@
+<title>Volgwachtrij</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: één beoordelingskaart als loket, met een smalle rail ernaast voor de dagteller en wie er hierna komt. */
+:root {
+  --bg: #f3f5f2;
+  --surface: #ffffff;
+  --sunken: #e9ede8;
+  --ink: #18201c;
+  --muted: #5a665f;
+  --line: #d8ded8;
+  --accent: #1d6b57;
+  --accent-ink: #ffffff;
+  --accent-soft: #dcefe7;
+  --good: #1e7f47;
+  --good-soft: #dff3e6;
+  --warn: #9a6408;
+  --warn-soft: #fbefd5;
+  --bad: #b2401a;
+  --bad-soft: #fbe5dc;
+  --shadow: 0 1px 2px rgb(20 40 30 / .06), 0 8px 24px rgb(20 40 30 / .07);
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111513; --surface: #191e1b; --sunken: #212824; --ink: #e6ebe7; --muted: #9aa69f;
+    --line: #2c3430; --accent: #55c3a2; --accent-ink: #0b1a14; --accent-soft: #1d3a31;
+    --good: #6fd498; --good-soft: #1b3326; --warn: #e7b65a; --warn-soft: #3a2e15;
+    --bad: #f08a64; --bad-soft: #3d221a; --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 8px 24px rgb(0 0 0 / .3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111513; --surface: #191e1b; --sunken: #212824; --ink: #e6ebe7; --muted: #9aa69f;
+  --line: #2c3430; --accent: #55c3a2; --accent-ink: #0b1a14; --accent-soft: #1d3a31;
+  --good: #6fd498; --good-soft: #1b3326; --warn: #e7b65a; --warn-soft: #3a2e15;
+  --bad: #f08a64; --bad-soft: #3d221a; --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 8px 24px rgb(0 0 0 / .3);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 15px/1.55 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 64px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 20px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: 2rem; font-weight: 750; letter-spacing: -.01em; }
+h2 { font-size: 1.25rem; font-weight: 600; }
+h3 { font-size: 1rem; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.mono { font-family: var(--f-mono); }
+.num { font-variant-numeric: tabular-nums; }
+.label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+
+/* header */
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.top .lede { max-width: 60ch; margin-top: 6px; color: var(--muted); }
+.status { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--muted); white-space: nowrap; }
+.status i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
+.status[data-s="saved"] i { background: var(--good); }
+.status[data-s="saving"] i { background: var(--warn); }
+.status[data-s="error"] i { background: var(--bad); }
+
+/* stats strip */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.stat { background: var(--surface); padding: 12px 16px; display: grid; gap: 2px; min-width: 0; }
+.stat b { font: 700 1.35rem/1.2 var(--f-mono); font-variant-numeric: tabular-nums; }
+.stat b small { font-size: .8rem; color: var(--muted); font-weight: 500; }
+.meter { height: 6px; border-radius: 3px; background: var(--sunken); overflow: hidden; margin-top: 6px; }
+.meter span { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .25s; }
+.meter.full span { background: var(--warn); }
+@media (max-width: 640px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* tabs */
+.tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--line); scrollbar-width: none; }
+.tabs button {
+  appearance: none; border: 0; background: none; color: var(--muted); font: 600 .92rem var(--f-body);
+  padding: 10px 12px; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; white-space: nowrap;
+}
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tabs button .count { font: 500 .78rem var(--f-mono); color: var(--muted); margin-left: 4px; }
+.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; }
+
+/* generic */
+.panel { display: grid; gap: 20px; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
+.btn {
+  appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font: 600 .92rem var(--f-body); padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); cursor: pointer; text-decoration: none; line-height: 1.2;
+}
+.btn:hover { background: var(--sunken); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.small { padding: 6px 10px; font-size: .82rem; border-radius: 8px; }
+.btn.ghost { border-color: transparent; background: none; color: var(--muted); }
+.btn.ghost:hover { background: var(--sunken); color: var(--ink); }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; pointer-events: none; }
+kbd { font: 500 .75rem var(--f-mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; background: var(--sunken); color: var(--ink); }
+label { font-weight: 600; font-size: .9rem; }
+input[type="text"], input[type="number"], textarea, select {
+  font: 15px/1.4 var(--f-body); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%;
+}
+textarea { font-family: var(--f-mono); font-size: .88rem; min-height: 170px; resize: vertical; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.field { display: grid; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--sunken); color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip.good { background: var(--good-soft); color: var(--good); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+.chip.accent { background: var(--accent-soft); color: var(--accent); }
+
+/* review */
+.review { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 820px) { .review { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); padding: 24px; display: grid; gap: 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+.handle { font: 700 clamp(1.6rem, 5vw, 2.4rem)/1.1 var(--f-mono); overflow-wrap: anywhere; letter-spacing: -.02em; }
+.handle .at { color: var(--muted); font-weight: 500; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--muted); font-size: .88rem; }
+.how { display: grid; gap: 6px; padding: 12px 14px; background: var(--sunken); border-radius: 10px; font-size: .88rem; color: var(--muted); }
+.how b { color: var(--ink); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.actions .btn.primary { flex: 1 1 260px; padding: 14px 18px; font-size: 1rem; }
+.keys { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .8rem; color: var(--muted); }
+.limit-note { padding: 12px 14px; border-radius: 10px; background: var(--warn-soft); color: var(--warn); font-size: .9rem; display: grid; gap: 4px; }
+.demo { position: relative; opacity: .9; }
+.demo-tag { position: absolute; top: -10px; right: 18px; background: var(--warn-soft); color: var(--warn); font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; }
+.rail { display: grid; gap: 16px; min-width: 0; }
+.next-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.next-list li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); min-width: 0; }
+.next-list li:first-child { border-top: 0; }
+.next-list .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.steps { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+.inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.inline input[type="number"] { width: 90px; }
+
+/* lists */
+.rows { display: grid; }
+.row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; gap: 8px 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.row:first-child { border-top: 0; }
+.row .who { display: grid; gap: 2px; min-width: 0; }
+.row .who a { font: 600 .98rem var(--f-mono); text-decoration: none; overflow-wrap: anywhere; color: var(--ink); }
+.row .who a:hover { color: var(--accent); text-decoration: underline; }
+.row .tags { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.row .ops { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+@media (max-width: 640px) { .row { grid-template-columns: minmax(0, 1fr); } .row .ops { justify-content: flex-start; } }
+.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; background: var(--sunken); padding: 4px; border-radius: 10px; }
+.seg button { appearance: none; border: 0; background: none; font: 600 .82rem var(--f-body); color: var(--muted); padding: 6px 10px; border-radius: 7px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+.seg button:focus-visible { outline: 2px solid var(--accent); }
+.filters select { width: auto; max-width: 100%; padding: 7px 10px; font-size: .88rem; }
+.empty { text-align: center; padding: 28px 12px; color: var(--muted); display: grid; gap: 10px; justify-items: center; }
+.two { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 820px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.result { padding: 12px 14px; border-radius: 10px; background: var(--accent-soft); color: var(--ink); font-size: .9rem; display: grid; gap: 4px; }
+.result .bad { color: var(--bad); }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 8px 10px; border-top: 1px solid var(--line); white-space: nowrap; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-top: 0; }
+td.n { font-family: var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; }
+th.n { text-align: right; }
+.bar { display: inline-block; vertical-align: middle; width: 80px; height: 6px; border-radius: 3px; background: var(--sunken); overflow: hidden; margin-right: 8px; }
+.bar span { display: block; height: 100%; background: var(--good); }
+.drop { border: 1.5px dashed var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 8px; justify-items: start; }
+.drop.over { border-color: var(--accent); background: var(--accent-soft); }
+
+/* toast */
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  background: var(--ink); color: var(--bg); padding: 10px 12px 10px 16px; border-radius: 12px;
+  display: flex; gap: 12px; align-items: center; box-shadow: var(--shadow); font-size: .9rem; z-index: 20;
+  max-width: calc(100% - 32px);
+}
+.toast button { appearance: none; border: 0; background: var(--accent); color: var(--accent-ink); font: 600 .85rem var(--f-body); padding: 6px 10px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.foot { color: var(--muted); font-size: .82rem; max-width: 70ch; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Volgwachtrij</h1>
+      <p class="lede">Verzamel accounts uit je niche, keur ze één voor één goed en volg ze zelf op Instagram. Deze pagina klikt nooit iets namens jou en vraagt nooit om je wachtwoord.</p>
+    </div>
+    <span class="status" id="status" data-s="local"><i></i><span id="status-text">Laden…</span></span>
+  </header>
+
+  <section class="stats" aria-label="Overzicht">
+    <div class="stat">
+      <span class="label">Vandaag gevolgd</span>
+      <b class="num" id="st-today">0<small> / 20</small></b>
+      <div class="meter" id="st-meter"><span style="width:0%"></span></div>
+    </div>
+    <div class="stat"><span class="label">In de wachtrij</span><b class="num" id="st-queue">0</b></div>
+    <div class="stat"><span class="label">Totaal gevolgd</span><b class="num" id="st-followed">0</b></div>
+    <div class="stat"><span class="label">Volgt terug</span><b class="num" id="st-fb">–</b></div>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Onderdelen">
+    <button role="tab" id="tab-review" data-tab="review" aria-selected="true">Beoordelen<span class="count" id="c-review"></span></button>
+    <button role="tab" id="tab-add" data-tab="add" aria-selected="false">Toevoegen</button>
+    <button role="tab" id="tab-followed" data-tab="followed" aria-selected="false">Gevolgd<span class="count" id="c-followed"></span></button>
+    <button role="tab" id="tab-skipped" data-tab="skipped" aria-selected="false">Overgeslagen<span class="count" id="c-skipped"></span></button>
+    <button role="tab" id="tab-back" data-tab="back" aria-selected="false">Volgt terug?</button>
+  </nav>
+
+  <!-- BEOORDELEN -->
+  <section class="panel" id="p-review" role="tabpanel" aria-labelledby="tab-review">
+    <div class="review">
+      <div id="review-main"></div>
+      <aside class="rail">
+        <div class="box">
+          <div class="filters" style="justify-content:flex-start">
+            <label for="src-filter" class="label">Bron</label>
+            <select id="src-filter"></select>
+          </div>
+          <h3>Hierna in de rij</h3>
+          <ul class="next-list" id="next-list"></ul>
+        </div>
+        <div class="box">
+          <h3>Daglimiet</h3>
+          <div class="inline">
+            <input type="number" id="limit" min="1" max="200" step="1" value="20" aria-label="Maximaal aantal accounts per dag">
+            <span class="muted small">accounts per dag</span>
+          </div>
+          <p class="muted small">Wie in korte tijd veel mensen volgt, krijgt van Instagram een tijdelijke blokkade, ook als je alles met de hand doet. Rond de 20 tot 30 per dag oogt normaal; begin bij een nieuw account lager.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- TOEVOEGEN -->
+  <section class="panel" id="p-add" role="tabpanel" aria-labelledby="tab-add" hidden>
+    <div class="two">
+      <form class="box" id="add-form">
+        <h2>Accounts toevoegen</h2>
+        <div class="field">
+          <label for="add-text">Gebruikersnamen of profiellinks</label>
+          <textarea id="add-text" placeholder="@bakkerij_de_korenbloem&#10;https://www.instagram.com/fietsenmaker.utrecht/&#10;koffiebar.oost" spellcheck="false" autocapitalize="off"></textarea>
+          <span class="muted small">Eén per regel. Een @ of een volledige link mag ook. Regels met spaties (zoals een volledige naam) worden overgeslagen.</span>
+        </div>
+        <div class="field">
+          <label for="add-src">Waar heb je ze gevonden?</label>
+          <input type="text" id="add-src" placeholder="#bakkerijutrecht, of: reageerde bij @concurrent" maxlength="60">
+          <span class="muted small">Optioneel. Later zie je per bron hoeveel mensen je terugvolgen.</span>
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="submit">Aan wachtrij toevoegen</button>
+        </div>
+        <div id="add-result" hidden></div>
+      </form>
+      <div class="box">
+        <h3>Waar vind je goede accounts?</h3>
+        <ul class="steps">
+          <li>Mensen die <b>reageren</b> onder posts van accounts in jouw niche. Reageren betekent dat ze actief zijn.</li>
+          <li>Recente posts onder een <b>specifieke hashtag</b> of locatie, zoals <span class="mono">#bakkerijutrecht</span>. Hoe specifieker, hoe beter.</li>
+          <li>Accounts die een <b>vergelijkbaar profiel</b> als jij volgen of taggen.</li>
+        </ul>
+        <p class="muted small">Kopieer de gebruikersnamen die je tegenkomt en plak ze hiernaast. Dubbele namen en namen die al in je lijsten staan, worden automatisch overgeslagen.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- GEVOLGD -->
+  <section class="panel" id="p-followed" role="tabpanel" aria-labelledby="tab-followed" hidden>
+    <div class="box">
+      <div class="filters">
+        <div class="seg" role="group" aria-label="Filter op terugvolgen" id="fb-seg">
+          <button type="button" data-fb="all" aria-pressed="true">Alle</button>
+          <button type="button" data-fb="yes" aria-pressed="false">Volgt terug</button>
+          <button type="button" data-fb="no" aria-pressed="false">Volgt niet terug</button>
+          <button type="button" data-fb="unknown" aria-pressed="false">Nog niet gecontroleerd</button>
+        </div>
+        <div class="inline">
+          <select id="followed-src" aria-label="Filter op bron"></select>
+          <button class="btn small" type="button" id="export-csv" hidden>Exporteer CSV</button>
+        </div>
+      </div>
+      <div class="rows" id="followed-rows"></div>
+    </div>
+  </section>
+
+  <!-- OVERGESLAGEN -->
+  <section class="panel" id="p-skipped" role="tabpanel" aria-labelledby="tab-skipped" hidden>
+    <div class="box">
+      <div class="rows" id="skipped-rows"></div>
+    </div>
+  </section>
+
+  <!-- VOLGT TERUG -->
+  <section class="panel" id="p-back" role="tabpanel" aria-labelledby="tab-back" hidden>
+    <div class="two">
+      <div class="box">
+        <h2>Wie volgt je terug?</h2>
+        <p class="muted">Vraag bij Instagram een kopie van je gegevens aan en laad hier je volgerslijst. De pagina vergelijkt die met de accounts die je via de wachtrij volgde.</p>
+        <ol class="steps small">
+          <li>Open in de app <b>Accountcentrum</b> en ga naar <b>Je informatie en machtigingen</b>, dan <b>Je informatie downloaden</b>.</li>
+          <li>Kies alleen <b>Volgers en gevolgd</b>, formaat <b>JSON</b>. Je krijgt na een tijdje een zip-bestand.</li>
+          <li>Pak de zip uit en kies hieronder <span class="mono">followers_1.json</span> (en eventueel <span class="mono">followers_2.json</span> enzovoort).</li>
+        </ol>
+        <div class="drop" id="drop">
+          <label for="fb-file">Volgersbestand</label>
+          <input type="file" id="fb-file" accept=".json,.html,.htm,.txt" multiple>
+          <span class="muted small">Het bestand wordt alleen in je browser gelezen. Er wordt per gevolgd account alleen "volgt terug: ja of nee" bewaard.</span>
+        </div>
+        <details>
+          <summary class="small">Of plak een lijst met je volgers</summary>
+          <div class="field" style="margin-top:10px">
+            <textarea id="fb-paste" aria-label="Gebruikersnamen van je volgers" placeholder="Eén gebruikersnaam per regel" spellcheck="false" autocapitalize="off"></textarea>
+            <div><button class="btn small" type="button" id="fb-paste-go">Vergelijk met geplakte lijst</button></div>
+          </div>
+        </details>
+        <div id="fb-result" hidden></div>
+      </div>
+      <div class="box">
+        <h3>Terugvolgen per bron</h3>
+        <p class="muted small" id="fb-when">Nog geen volgerslijst geladen.</p>
+        <div class="table-wrap"><table id="src-table"></table></div>
+        <p class="muted small">Gebruik dit om te zien welke bronnen echt geïnteresseerde volgers opleveren. Zoek daar meer accounts en laat de rest liggen.</p>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">Volgwachtrij is een eigen hulpmiddel en hoort niet bij Instagram of Meta. Alles wat je op Instagram doet, doe je zelf in je eigen app of browser.</p>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-text"></span><button type="button" id="toast-undo">Ongedaan maken</button></div>
+
+<script>
+(() => {
+  "use strict";
+  const LS_KEY = "volgwachtrij.v1";
+  const DOC_NAME = "volgwachtrij";
+  const STOP = new Set(["follow","following","followers","volgen","volgend","gevolgd","volgers","verwijderen","remove","message","bericht","verified","geverifieerd","terugvolgen","follow back"]);
+  const RESERVED = new Set(["p","reel","reels","explore","stories","accounts","direct","tv","about","legal","developer","_u"]);
+
+  // ---------- state ----------
+  // accounts[username] = { s: "q"|"f"|"s"|"u", src, a: added, o: queue order, ft: followed at, t: status changed, fb: true|false }
+  const fresh = () => ({ v: 1, accounts: {}, limit: 20, fbAt: null, fbCount: 0 });
+  let state = fresh();
+  let docRef = null;
+  let downloads = null;
+  let saveTimer = null, saving = false, dirty = false;
+  const undoStack = [];
+  const ui = { tab: "review", srcFilter: "", fbFilter: "all", followedSrc: "" };
+
+  try { const raw = localStorage.getItem(LS_KEY); if (raw) state = Object.assign(fresh(), JSON.parse(raw)); } catch (e) {}
+  try { const t = localStorage.getItem(LS_KEY + ".tab"); if (t) ui.tab = t; } catch (e) {}
+
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, attrs = {}, ...kids) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === "class") n.className = v;
+      else if (k === "text") n.textContent = v;
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of kids.flat()) if (c != null) n.append(c);
+    return n;
+  };
+  const dayKey = (ts) => new Date(ts).toLocaleDateString("sv-SE");
+  const today = () => dayKey(Date.now());
+  const fmtDate = (ts) => ts ? new Date(ts).toLocaleDateString("nl-NL", { day: "numeric", month: "short" }) : "–";
+  const profileUrl = (u) => "https://www.instagram.com/" + encodeURIComponent(u) + "/";
+  const entries = () => Object.entries(state.accounts);
+  const byStatus = (...s) => entries().filter(([, r]) => s.includes(r.s));
+  const queue = () => byStatus("q").filter(([, r]) => !ui.srcFilter || (r.src || "") === ui.srcFilter).sort((a, b) => a[1].o - b[1].o);
+  const followedToday = () => entries().filter(([, r]) => r.ft && dayKey(r.ft) === today()).length;
+  const limit = () => Math.max(1, Math.min(200, Number(state.limit) || 20));
+  const sources = (rows) => [...new Set(rows.map(([, r]) => r.src || ""))].sort((a, b) => a.localeCompare(b, "nl"));
+
+  // ---------- saving ----------
+  function setStatus(s, text) { $("status").dataset.s = s; $("status-text").textContent = text; }
+  function saveLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
+  function commit() {
+    saveLocal();
+    if (docRef) { setStatus("saving", "Opslaan…"); clearTimeout(saveTimer); saveTimer = setTimeout(flush, 600); }
+    render();
+  }
+  async function flush(retried) {
+    saveTimer = null;
+    if (!docRef) return;
+    if (saving) { dirty = true; return; }
+    saving = true;
+    try {
+      await docRef.set(JSON.parse(JSON.stringify(state)));
+      setStatus("saved", "Opgeslagen in je account");
+    } catch (e) {
+      const code = e && e.code;
+      if (code === "unavailable" && !retried) { saving = false; setTimeout(() => flush(true), 800 + Math.random() * 800); return; }
+      if (code === "quota_exceeded") setStatus("error", "Opslag vol: verwijder overgeslagen accounts");
+      else if (code === "resource_exhausted" || code === "unavailable") { setStatus("error", "Niet opgeslagen, probeert opnieuw bij je volgende actie"); }
+      else { docRef = null; setStatus("local", "Alleen opgeslagen in deze browser"); }
+    } finally {
+      saving = false;
+      if (dirty && docRef) { dirty = false; flush(); }
+    }
+  }
+  function connect() {
+    const c = window.claude;
+    if (!c || typeof c.use !== "function") { setStatus("local", "Alleen opgeslagen in deze browser"); return; }
+    c.use("downloads").then((d) => { downloads = d; render(); }).catch(() => {});
+    Promise.all([c.use("db"), c.use("user")]).then(async ([db, user]) => {
+      const uid = user ? await user.id() : null;
+      if (!db || !uid) { setStatus("local", "Alleen opgeslagen in deze browser"); return; }
+      docRef = db.doc("data/users/" + uid + "/" + DOC_NAME);
+      setStatus("saving", "Verbinden…");
+      let first = true;
+      docRef.onSnapshot((snap) => {
+        if (snap.exists) {
+          if (saveTimer || saving) return; // own edits still on their way; they win
+          state = Object.assign(fresh(), JSON.parse(JSON.stringify(snap.data())));
+          saveLocal(); render();
+          setStatus("saved", "Opgeslagen in je account");
+        } else if (first) {
+          if (Object.keys(state.accounts).length) flush(); // move what this browser had into the account
+          else setStatus("saved", "Opgeslagen in je account");
+        }
+        first = false;
+      }, () => { docRef = null; setStatus("local", "Alleen opgeslagen in deze browser"); });
+    }).catch(() => setStatus("local", "Alleen opgeslagen in deze browser"));
+  }
+
+  // ---------- actions ----------
+  function change(u, next, label) {
+    const prev = state.accounts[u] ? { ...state.accounts[u] } : null;
+    undoStack.push({ u, prev });
+    if (undoStack.length > 30) undoStack.shift();
+    if (next === null) delete state.accounts[u]; else state.accounts[u] = next;
+    commit();
+    if (label) toast(label);
+  }
+  function undo() {
+    const last = undoStack.pop();
+    if (!last) return;
+    if (last.prev) state.accounts[last.u] = last.prev; else delete state.accounts[last.u];
+    commit();
+    toast("Teruggezet: @" + last.u, false);
+  }
+  const maxOrder = () => entries().reduce((m, [, r]) => Math.max(m, r.o || 0), 0);
+  function approve(u) {
+    const r = state.accounts[u]; if (!r || r.s !== "q") return;
+    if (followedToday() >= limit()) return;
+    change(u, { ...r, s: "f", ft: Date.now(), t: Date.now() }, "Gevolgd: @" + u + ". Tik op Instagram zelf op Volgen.");
+  }
+  function later(u) { const r = state.accounts[u]; if (r) change(u, { ...r, o: maxOrder() + 1 }, "@" + u + " achteraan gezet"); }
+  function skip(u) { const r = state.accounts[u]; if (r) change(u, { ...r, s: "s", t: Date.now() }, "Overgeslagen: @" + u); }
+  function requeue(u) { const r = state.accounts[u]; if (r) { const n = { ...r, s: "q", o: maxOrder() + 1, t: Date.now() }; delete n.ft; delete n.fb; change(u, n, "@" + u + " staat weer in de wachtrij"); } }
+  function unfollowed(u) { const r = state.accounts[u]; if (r) change(u, { ...r, s: r.s === "u" ? "f" : "u", t: Date.now() }, r.s === "u" ? "@" + u + " weer als gevolgd gemarkeerd" : "@" + u + " gemarkeerd als ontvolgd"); }
+  function remove(u) { change(u, null, "Verwijderd: @" + u); }
+
+  let toastTimer = null;
+  function toast(text, withUndo = true) {
+    $("toast-text").textContent = text;
+    $("toast-undo").hidden = !withUndo;
+    $("toast").hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { $("toast").hidden = true; }, 5000);
+  }
+  $("toast-undo").addEventListener("click", () => { $("toast").hidden = true; undo(); });
+
+  // ---------- parsing ----------
+  function validHandle(h) {
+    return h.length >= 1 && h.length <= 30 && /^[a-z0-9._]+$/.test(h) && !h.startsWith(".") && !h.endsWith(".") && !h.includes("..");
+  }
+  function handlesFromLine(line) {
+    const out = [];
+    const urlRe = /instagram\.com\/(?:_u\/)?([A-Za-z0-9._]{1,30})/g;
+    let m, found = false;
+    while ((m = urlRe.exec(line))) { found = true; const h = m[1].toLowerCase(); if (!RESERVED.has(h)) out.push(h); }
+    if (found) return out;
+    const ats = line.match(/@[A-Za-z0-9._]{1,30}/g);
+    if (ats) return ats.map((a) => a.slice(1).toLowerCase());
+    const t = line.trim();
+    if (!t || /\s/.test(t)) return null;
+    if (STOP.has(t.toLowerCase())) return [];
+    return [t.toLowerCase()];
+  }
+  function parseList(text) {
+    const ok = [], bad = [];
+    for (const raw of text.split(/[\n,;]+/)) {
+      const line = raw.trim();
+      if (!line) continue;
+      const hs = handlesFromLine(line);
+      if (hs === null) { bad.push(line); continue; }
+      for (const h of hs) (validHandle(h) ? ok : bad).push(h);
+    }
+    return { ok: [...new Set(ok)], bad };
+  }
+  function followersFromFile(text) {
+    const set = new Set();
+    const walk = (v) => {
+      if (Array.isArray(v)) v.forEach(walk);
+      else if (v && typeof v === "object") {
+        if (Array.isArray(v.string_list_data)) {
+          for (const s of v.string_list_data) {
+            if (s && typeof s.value === "string") set.add(s.value.toLowerCase());
+            else if (s && typeof s.href === "string") { const h = handlesFromLine(s.href); if (h) h.forEach((x) => set.add(x)); }
+          }
+          if (typeof v.title === "string" && validHandle(v.title.toLowerCase())) set.add(v.title.toLowerCase());
+        }
+        Object.values(v).forEach(walk);
+      }
+    };
+    try { walk(JSON.parse(text)); } catch (e) {
+      const re = /instagram\.com\/(?:_u\/)?([A-Za-z0-9._]{1,30})/g; let m;
+      while ((m = re.exec(text))) { const h = m[1].toLowerCase(); if (!RESERVED.has(h)) set.add(h); }
+    }
+    return set;
+  }
+  function applyFollowers(set, sourceLabel) {
+    const box = $("fb-result");
+    box.hidden = false; box.className = "result"; box.replaceChildren();
+    if (!set.size) {
+      box.append(el("span", { class: "bad", text: "Geen gebruikersnamen gevonden in " + sourceLabel + ". Kies followers_1.json uit je Instagram-export (formaat JSON)." }));
+      return;
+    }
+    let yes = 0, n = 0;
+    for (const [u, r] of entries()) {
+      if (r.s !== "f" && r.s !== "u") continue;
+      n++; r.fb = set.has(u); if (r.fb) yes++;
+    }
+    state.fbAt = Date.now(); state.fbCount = set.size;
+    commit();
+    box.append(
+      el("b", { text: `Vergeleken met ${set.size.toLocaleString("nl-NL")} volgers.` }),
+      el("span", { text: n ? `Van de ${n} accounts die je via de wachtrij volgde, volgen er ${yes} je terug.` : "Je hebt nog geen accounts gevolgd via de wachtrij." })
+    );
+  }
+
+  // ---------- render ----------
+  function render() {
+    const q = byStatus("q"), f = byStatus("f", "u"), s = byStatus("s");
+    const t = followedToday(), L = limit();
+    $("st-today").replaceChildren(String(t), el("small", { text: " / " + L }));
+    $("st-meter").classList.toggle("full", t >= L);
+    $("st-meter").firstElementChild.style.width = Math.min(100, (t / L) * 100) + "%";
+    $("st-queue").textContent = q.length;
+    $("st-followed").textContent = f.length;
+    const checked = f.filter(([, r]) => typeof r.fb === "boolean");
+    $("st-fb").textContent = checked.length ? Math.round((checked.filter(([, r]) => r.fb).length / checked.length) * 100) + "%" : "–";
+    $("c-review").textContent = q.length || "";
+    $("c-followed").textContent = f.length || "";
+    $("c-skipped").textContent = s.length || "";
+    if (document.activeElement !== $("limit")) $("limit").value = L;
+
+    for (const b of document.querySelectorAll(".tabs button")) {
+      const on = b.dataset.tab === ui.tab;
+      b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1;
+      $("p-" + b.dataset.tab).hidden = !on;
+    }
+    if (ui.tab === "review") renderReview(q);
+    if (ui.tab === "followed") renderFollowed(f);
+    if (ui.tab === "skipped") renderSkipped(s);
+    if (ui.tab === "back") renderBack(f);
+  }
+
+  function fillSelect(sel, rows, current, allLabel) {
+    const opts = sources(rows);
+    if (current && !opts.includes(current)) current = "";
+    sel.replaceChildren(el("option", { value: "", text: allLabel }), ...opts.map((o) => el("option", { value: o, text: o || "(geen bron)" })));
+    sel.value = current;
+    return current;
+  }
+
+  function renderReview(qAll) {
+    ui.srcFilter = fillSelect($("src-filter"), qAll, ui.srcFilter, "Alle bronnen");
+    const q = queue();
+    const main = $("review-main");
+    const next = $("next-list");
+    next.replaceChildren();
+    if (!qAll.length) {
+      main.replaceChildren(emptyReview());
+      next.append(el("li", { class: "muted small", text: "Nog niets in de rij." }));
+      return;
+    }
+    const [u, r] = q[0];
+    const atLimit = followedToday() >= limit();
+    const approveBtn = atLimit
+      ? el("span", { class: "btn primary", "aria-disabled": "true", text: "Goedkeuren en profiel openen ↗" })
+      : el("a", { class: "btn primary", id: "approve", href: profileUrl(u), target: "_blank", rel: "noopener noreferrer", onclick: () => setTimeout(() => approve(u), 0) }, "Goedkeuren en profiel openen ↗");
+    main.replaceChildren(el("article", { class: "card", "aria-label": "Account om te beoordelen" },
+      el("div", { class: "card-head" },
+        el("span", { class: "label num", text: `Nummer 1 van ${q.length}` + (ui.srcFilter ? " in deze bron" : "") }),
+        r.src ? el("span", { class: "chip accent", text: r.src }) : null),
+      el("div", { class: "handle" }, el("span", { class: "at", text: "@" }), u),
+      el("div", { class: "meta" },
+        el("span", { text: "Toegevoegd " + fmtDate(r.a) }),
+        el("a", { href: profileUrl(u), target: "_blank", rel: "noopener noreferrer", text: "Eerst alleen bekijken ↗" })),
+      atLimit ? el("div", { class: "limit-note" },
+        el("b", { text: `Je daglimiet van ${limit()} is bereikt.` }),
+        el("span", { text: "Morgen verder. Zo blijft je account natuurlijk en voorkom je een tijdelijke blokkade. De limiet pas je aan in de rail hiernaast." }))
+        : el("div", { class: "how" },
+          el("span", {}, el("b", { text: "Goedkeuren" }), " opent het profiel in een nieuw tabblad en zet het account bij Gevolgd."),
+          el("span", { text: "Tik daar zelf op Volgen. Toch niet gevolgd? Maak het ongedaan of zet het terug vanuit Gevolgd." })),
+      el("div", { class: "actions" },
+        approveBtn,
+        el("button", { class: "btn", type: "button", onclick: () => later(u) }, "Later"),
+        el("button", { class: "btn", type: "button", onclick: () => skip(u) }, "Overslaan")),
+      el("div", { class: "keys" },
+        el("span", {}, el("kbd", { text: "Enter" }), " goedkeuren"),
+        el("span", {}, el("kbd", { text: "L" }), " later"),
+        el("span", {}, el("kbd", { text: "S" }), " overslaan"),
+        el("span", {}, el("kbd", { text: "Z" }), " ongedaan maken"))
+    ));
+    const rest = q.slice(1, 7);
+    if (!rest.length) next.append(el("li", { class: "muted small", text: "Dit is de laatste." }));
+    for (const [nu, nr] of rest) next.append(el("li", {}, el("span", { class: "mono small", text: "@" + nu }), el("span", { class: "muted small", text: nr.src || "" })));
+    if (q.length > 7) next.append(el("li", { class: "muted small", text: `en nog ${q.length - 7}` }));
+  }
+
+  function emptyReview() {
+    const hasAny = entries().length > 0;
+    return el("div", { class: "rail" },
+      el("div", { class: "box" },
+        el("h2", { text: hasAny ? "De wachtrij is leeg" : "Zo werkt het" }),
+        el("ol", { class: "steps" },
+          el("li", {}, el("b", { text: "Toevoegen. " }), "Plak gebruikersnamen die je in je niche tegenkomt en noteer waar je ze vond."),
+          el("li", {}, el("b", { text: "Beoordelen. " }), "Je krijgt ze één voor één te zien. Goedkeuren, later of overslaan."),
+          el("li", {}, el("b", { text: "Zelf volgen. " }), "Goedkeuren opent het profiel; jij tikt op Volgen."),
+          el("li", {}, el("b", { text: "Terugkijken. " }), "Laad later je volgerslijst en zie welke bronnen werken.")),
+        el("div", {}, el("button", { class: "btn primary", type: "button", onclick: () => setTab("add") }, "Accounts toevoegen"))),
+      el("div", { class: "card demo", "aria-hidden": "true" },
+        el("span", { class: "demo-tag", text: "Voorbeeld" }),
+        el("div", { class: "card-head" }, el("span", { class: "label", text: "Nummer 1 van 24" }), el("span", { class: "chip accent", text: "#bakkerijutrecht" })),
+        el("div", { class: "handle" }, el("span", { class: "at", text: "@" }), "voorbeeld.bakkerij"),
+        el("div", { class: "actions" },
+          el("span", { class: "btn primary", text: "Goedkeuren en profiel openen ↗" }),
+          el("span", { class: "btn", text: "Later" }), el("span", { class: "btn", text: "Overslaan" }))));
+  }
+
+  function fbChip(r) {
+    if (r.s === "u") return el("span", { class: "chip", text: "Ontvolgd" });
+    if (r.fb === true) return el("span", { class: "chip good", text: "Volgt terug" });
+    if (r.fb === false) return el("span", { class: "chip bad", text: "Volgt niet terug" });
+    return el("span", { class: "chip", text: "Nog niet gecontroleerd" });
+  }
+  function renderFollowed(all) {
+    ui.followedSrc = fillSelect($("followed-src"), all, ui.followedSrc, "Alle bronnen");
+    for (const b of $("fb-seg").children) b.setAttribute("aria-pressed", b.dataset.fb === ui.fbFilter);
+    $("export-csv").hidden = !downloads || !all.length;
+    const rows = all
+      .filter(([, r]) => !ui.followedSrc || (r.src || "") === ui.followedSrc)
+      .filter(([, r]) => ui.fbFilter === "all" || (ui.fbFilter === "yes" && r.fb === true) || (ui.fbFilter === "no" && r.fb === false) || (ui.fbFilter === "unknown" && typeof r.fb !== "boolean"))
+      .sort((a, b) => (b[1].ft || 0) - (a[1].ft || 0));
+    const box = $("followed-rows");
+    if (!rows.length) {
+      box.replaceChildren(el("div", { class: "empty" }, el("p", { text: all.length ? "Geen accounts met dit filter." : "Je hebt nog niemand via de wachtrij gevolgd." })));
+      return;
+    }
+    box.replaceChildren(...rows.map(([u, r]) => el("div", { class: "row" },
+      el("div", { class: "who" },
+        el("a", { href: profileUrl(u), target: "_blank", rel: "noopener noreferrer", text: "@" + u }),
+        el("span", { class: "muted small num", text: "Gevolgd " + fmtDate(r.ft) })),
+      el("div", { class: "tags" }, fbChip(r), r.src ? el("span", { class: "chip", text: r.src }) : null),
+      el("div", { class: "ops" },
+        el("button", { class: "btn small ghost", type: "button", onclick: () => unfollowed(u) }, r.s === "u" ? "Toch gevolgd" : "Ontvolgd"),
+        el("button", { class: "btn small ghost", type: "button", onclick: () => requeue(u) }, "Terug naar wachtrij"),
+        el("button", { class: "btn small ghost", type: "button", onclick: () => remove(u) }, "Verwijderen")))));
+  }
+
+  function renderSkipped(all) {
+    const box = $("skipped-rows");
+    if (!all.length) { box.replaceChildren(el("div", { class: "empty" }, el("p", { text: "Niets overgeslagen." }))); return; }
+    box.replaceChildren(...all.sort((a, b) => (b[1].t || 0) - (a[1].t || 0)).map(([u, r]) => el("div", { class: "row" },
+      el("div", { class: "who" },
+        el("a", { href: profileUrl(u), target: "_blank", rel: "noopener noreferrer", text: "@" + u }),
+        el("span", { class: "muted small num", text: "Overgeslagen " + fmtDate(r.t) })),
+      el("div", { class: "tags" }, r.src ? el("span", { class: "chip", text: r.src }) : null),
+      el("div", { class: "ops" },
+        el("button", { class: "btn small ghost", type: "button", onclick: () => requeue(u) }, "Terug naar wachtrij"),
+        el("button", { class: "btn small ghost", type: "button", onclick: () => remove(u) }, "Verwijderen")))));
+  }
+
+  function renderBack(all) {
+    $("fb-when").textContent = state.fbAt
+      ? `Laatst vergeleken op ${new Date(state.fbAt).toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}, met ${Number(state.fbCount || 0).toLocaleString("nl-NL")} volgers.`
+      : "Nog geen volgerslijst geladen.";
+    const groups = new Map();
+    for (const [, r] of all) {
+      const k = r.src || "(geen bron)";
+      const g = groups.get(k) || { n: 0, checked: 0, yes: 0 };
+      g.n++; if (typeof r.fb === "boolean") { g.checked++; if (r.fb) g.yes++; }
+      groups.set(k, g);
+    }
+    const tbl = $("src-table");
+    if (!groups.size) { tbl.replaceChildren(el("tbody", {}, el("tr", {}, el("td", { class: "muted", text: "Nog geen gevolgde accounts." })))); return; }
+    const rows = [...groups.entries()].sort((a, b) => b[1].n - a[1].n);
+    tbl.replaceChildren(
+      el("thead", {}, el("tr", {}, el("th", { text: "Bron" }), el("th", { class: "n", text: "Gevolgd" }), el("th", { class: "n", text: "Terug" }), el("th", { text: "Percentage" }))),
+      el("tbody", {}, ...rows.map(([k, g]) => {
+        const pct = g.checked ? Math.round((g.yes / g.checked) * 100) : null;
+        return el("tr", {},
+          el("td", { text: k }),
+          el("td", { class: "n", text: String(g.n) }),
+          el("td", { class: "n", text: g.checked ? String(g.yes) : "–" }),
+          el("td", { class: "num" }, pct === null ? el("span", { class: "muted", text: "nog niet gecontroleerd" }) : [el("span", { class: "bar" }, el("span", { style: `width:${pct}%` })), pct + "%"]));
+      })));
+  }
+
+  // ---------- events ----------
+  function setTab(t) { ui.tab = t; try { localStorage.setItem(LS_KEY + ".tab", t); } catch (e) {} render(); }
+  const tabs = [...document.querySelectorAll(".tabs button")];
+  tabs.forEach((b, i) => {
+    b.addEventListener("click", () => setTab(b.dataset.tab));
+    b.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      const n = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+      setTab(n.dataset.tab); n.focus();
+    });
+  });
+  $("src-filter").addEventListener("change", (e) => { ui.srcFilter = e.target.value; render(); });
+  $("followed-src").addEventListener("change", (e) => { ui.followedSrc = e.target.value; render(); });
+  $("fb-seg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { ui.fbFilter = b.dataset.fb; render(); } });
+  $("limit").addEventListener("change", (e) => {
+    const v = Math.round(Number(e.target.value));
+    if (v >= 1 && v <= 200 && v !== state.limit) { state.limit = v; commit(); } else e.target.value = limit();
+  });
+
+  $("add-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const { ok, bad } = parseList($("add-text").value);
+    const src = $("add-src").value.trim().slice(0, 60);
+    let added = 0, dup = 0, o = maxOrder();
+    const now = Date.now();
+    for (const u of ok) {
+      if (state.accounts[u]) { dup++; continue; }
+      state.accounts[u] = { s: "q", src, a: now, o: ++o };
+      added++;
+    }
+    if (added) commit();
+    const box = $("add-result");
+    box.hidden = false; box.className = "result";
+    box.replaceChildren(el("b", { text: added ? `${added} toegevoegd aan de wachtrij.` : "Niets nieuws toegevoegd." }));
+    if (dup) box.append(el("span", { text: `${dup} stond${dup === 1 ? "" : "en"} al in een van je lijsten.` }));
+    if (bad.length) box.append(el("span", { class: "bad", text: `${bad.length} overgeslagen omdat het geen geldige gebruikersnaam is: ` + bad.slice(0, 4).join(", ") + (bad.length > 4 ? " …" : "") }));
+    if (added) { $("add-text").value = ""; box.append(el("div", {}, el("button", { class: "btn small", type: "button", onclick: () => setTab("review") }, "Naar beoordelen"))); }
+  });
+
+  async function readFiles(files) {
+    const set = new Set();
+    for (const f of files) { const text = await f.text(); for (const h of followersFromFile(text)) set.add(h); }
+    applyFollowers(set, files.length === 1 ? files[0].name : "deze bestanden");
+  }
+  $("fb-file").addEventListener("change", (e) => { if (e.target.files.length) readFiles([...e.target.files]); e.target.value = ""; });
+  const drop = $("drop");
+  drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+  drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files.length) readFiles([...e.dataTransfer.files]); });
+  $("fb-paste-go").addEventListener("click", () => applyFollowers(new Set(parseList($("fb-paste").value).ok), "de geplakte lijst"));
+
+  $("export-csv").addEventListener("click", async () => {
+    if (!downloads) return;
+    const esc = (v) => /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+    const lines = [["gebruikersnaam", "bron", "gevolgd_op", "status", "volgt_terug"].join(",")];
+    for (const [u, r] of byStatus("f", "u")) {
+      lines.push([u, esc(r.src || ""), r.ft ? new Date(r.ft).toISOString().slice(0, 10) : "", r.s === "u" ? "ontvolgd" : "gevolgd", r.fb === true ? "ja" : r.fb === false ? "nee" : ""].join(","));
+    }
+    try { await downloads.save({ filename: "volgwachtrij-gevolgd.csv", data: lines.join("\n") + "\n" }); }
+    catch (err) { if (err && err.code !== "declined") toast("Exporteren lukte niet in deze weergave.", false); }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target.closest("input, textarea, select")) return;
+    const k = e.key.toLowerCase();
+    if (k === "z") { e.preventDefault(); undo(); return; }
+    if (ui.tab !== "review") return;
+    const q = queue(); if (!q.length) return;
+    const u = q[0][0];
+    if (k === "enter" && !e.target.closest("button, a")) { const a = $("approve"); if (a) { e.preventDefault(); a.click(); } }
+    else if (k === "l") { e.preventDefault(); later(u); }
+    else if (k === "s") { e.preventDefault(); skip(u); }
+  });
+
+  render();
+  connect();
+})();
+</script>
