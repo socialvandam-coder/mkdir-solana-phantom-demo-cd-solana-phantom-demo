@@ -4,23 +4,23 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <style>
-/* Layout: werkbank in drie kolommen — briefing | afwerken | live LinkedIn-voorbeeld dat meeschuift.
+/* Layout: werkbank in drie kolommen — briefing | afwerken | live Instagram-voorbeeld dat meeschuift.
    Huisstijl van de ScaleLink-site: indigo op crème, Plus Jakarta Sans, ronde pill-knoppen. */
 :root{
   --bg:#FAF8F2; --surface:#FFFFFF; --surface-2:#FAF8F2; --ink:#1B211E; --muted:#5E6960; --line:#E9E4D6;
   --brand:#5B4FE8; --brand-hover:#4539C9; --brand-light:#EEECFF; --brand-ink:#FFFFFF; --brand-text:#4539C9;
   --focus:#5B4FE8; --good:#1C7A4B; --warn:#9A5800; --bad:#B42318;
-  --li-bg:#FFFFFF; --li-ink:rgba(0,0,0,.9); --li-muted:rgba(0,0,0,.6); --li-link:#0A66C2; --li-line:#E3E3E3;
+  --ig-bg:#FFFFFF; --ig-ink:#0C1014; --ig-muted:#737373; --ig-line:#DBDBDB; --ig-link:#00376B; --ig-blue:#0095F6; --ig-dot:#C7C7C7;
   --shadow:0 1px 2px rgba(27,33,30,.05),0 18px 40px -30px rgba(69,57,201,.45);
   --font:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  --font-li:-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-ig:-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#12161C; --surface:#1B212B; --surface-2:#161B23; --ink:#F2F0EA; --muted:#A8B0BC; --line:rgba(255,255,255,.12);
     --brand:#6F63F5; --brand-hover:#5B4FE8; --brand-light:#1F1D38; --brand-ink:#FFFFFF; --brand-text:#A89FFF;
     --focus:#A89FFF; --good:#5BC48C; --warn:#E8A33D; --bad:#F2877D;
-    --li-bg:#1B1F23; --li-ink:rgba(255,255,255,.9); --li-muted:rgba(255,255,255,.6); --li-link:#70B5F9; --li-line:#38434F;
+    --ig-bg:#000000; --ig-ink:#F5F5F5; --ig-muted:#A8A8A8; --ig-line:#262626; --ig-link:#E0F1FF; --ig-blue:#0095F6; --ig-dot:#555555;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 18px 40px -30px rgba(0,0,0,.7);
     color-scheme:dark;
   }
@@ -29,7 +29,7 @@
   --bg:#12161C; --surface:#1B212B; --surface-2:#161B23; --ink:#F2F0EA; --muted:#A8B0BC; --line:rgba(255,255,255,.12);
   --brand:#6F63F5; --brand-hover:#5B4FE8; --brand-light:#1F1D38; --brand-ink:#FFFFFF; --brand-text:#A89FFF;
   --focus:#A89FFF; --good:#5BC48C; --warn:#E8A33D; --bad:#F2877D;
-  --li-bg:#1B1F23; --li-ink:rgba(255,255,255,.9); --li-muted:rgba(255,255,255,.6); --li-link:#70B5F9; --li-line:#38434F;
+  --ig-bg:#000000; --ig-ink:#F5F5F5; --ig-muted:#A8A8A8; --ig-line:#262626; --ig-link:#E0F1FF; --ig-blue:#0095F6; --ig-dot:#555555;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 18px 40px -30px rgba(0,0,0,.7);
   color-scheme:dark;
 }
@@ -54,10 +54,10 @@ h1 span{color:var(--brand-text)}
 .status[data-state="off"]{color:var(--warn)}
 
 /* Raster */
-.grid{display:grid;gap:20px;align-items:start;grid-template-columns:minmax(0,360px) minmax(0,1fr) minmax(0,410px)}
+.grid{display:grid;gap:20px;align-items:start;grid-template-columns:minmax(0,360px) minmax(0,1fr) minmax(0,400px)}
 .col{display:grid;gap:20px;min-width:0}
 @media (max-width:1240px){
-  .grid{grid-template-columns:minmax(0,1fr) minmax(0,390px)}
+  .grid{grid-template-columns:minmax(0,1fr) minmax(0,380px)}
   .col-brief{grid-column:1;grid-row:1}
   .col-edit{grid-column:1;grid-row:2}
   .col-preview{grid-column:2;grid-row:1 / span 2}
@@ -82,7 +82,6 @@ h3{font-size:14px;font-weight:800;letter-spacing:0}
 .note{margin:0;color:var(--muted);font-size:13.5px;min-height:1.5em}
 .note.is-error{color:var(--bad)}
 .note.is-good{color:var(--good)}
-.num{font-variant-numeric:tabular-nums}
 
 /* Velden */
 .field{display:grid;gap:6px;min-width:0}
@@ -164,7 +163,7 @@ details.profile[open]>summary{margin-bottom:16px}
 .hook{text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);cursor:pointer;font-size:14px;line-height:1.4}
 .hook:hover{border-color:var(--brand)}
 .hook small{display:block;color:var(--muted);font-size:11.5px;font-weight:600;margin-top:2px}
-#postText{min-height:340px;font-size:15px;line-height:1.6;background:var(--surface)}
+#postText{min-height:320px;font-size:15px;line-height:1.6;background:var(--surface)}
 .meta-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px}
 .count{font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
 .count.is-warn{color:var(--warn)} .count.is-bad{color:var(--bad)}
@@ -174,28 +173,55 @@ details.profile[open]>summary{margin-bottom:16px}
 
 /* Afbeelding-tab */
 .thumb-mobile{display:none}
-@media (max-width:820px){.thumb-mobile{display:block;width:100%;max-width:340px;height:auto;border-radius:14px;border:1px solid var(--line)}}
+@media (max-width:820px){.thumb-mobile{display:block;width:100%;max-width:300px;height:auto;border-radius:14px;border:1px solid var(--line)}}
+.slide-list{display:grid;gap:10px}
+.slide-row{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--surface-2)}
+.slide-row.is-current{border-color:var(--brand)}
+.slide-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.slide-head b{font-size:13.5px;font-weight:800;margin-right:auto}
+.slide-row input[type="text"],.slide-row textarea{background:var(--surface)}
 
-/* LinkedIn-voorbeeld */
+/* Instagram-voorbeeld */
 .prev-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.li{background:var(--li-bg);color:var(--li-ink);border:1px solid var(--li-line);border-radius:10px;font:14px/1.43 var(--font-li);overflow:hidden;box-shadow:var(--shadow);transition:opacity .2s}
-.li.is-busy{opacity:.55}
-.li-head{display:flex;gap:9px;padding:12px 16px 0;align-items:flex-start}
-.li-avatar{width:48px;height:48px;border-radius:4px;background:#5B4FE8;color:#FFFFFF;display:grid;place-items:center;overflow:hidden;flex:none}
-.li-avatar img{width:100%;height:100%;object-fit:contain;background:#FFFFFF}
-.li-avatar svg{width:26px;height:26px}
-.li-who{min-width:0;display:grid}
-.li-name{font-weight:600;font-size:14px;line-height:1.3;overflow-wrap:anywhere}
-.li-sub,.li-time{color:var(--li-muted);font-size:12px;line-height:1.35;overflow-wrap:anywhere}
-.li-follow{margin-left:auto;color:var(--li-link);font-weight:600;font-size:14px;white-space:nowrap}
-.li-text{padding:10px 16px 10px;white-space:pre-wrap;overflow-wrap:anywhere;min-height:3em}
-.li-tag{color:var(--li-link);font-weight:600}
-.li-more{background:none;border:0;padding:0;color:var(--li-muted);font:inherit;cursor:pointer}
-.li-more:hover{color:var(--li-link);text-decoration:underline}
-.li-img{display:block;width:100%;height:auto;max-width:100%;background:var(--surface-2)}
-.li-stats{display:flex;justify-content:space-between;padding:8px 16px;color:var(--li-muted);font-size:12px;border-bottom:1px solid var(--li-line)}
-.li-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:2px 6px}
-.li-actions span{text-align:center;padding:10px 2px;color:var(--li-muted);font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ig{background:var(--ig-bg);color:var(--ig-ink);border:1px solid var(--ig-line);border-radius:12px;font:14px/1.4 var(--font-ig);overflow:hidden;box-shadow:var(--shadow);transition:opacity .2s}
+.ig.is-busy{opacity:.55}
+.ig.is-story{max-width:330px;width:100%;margin-inline:auto}
+.ig-head{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.ig-ring{width:38px;height:38px;border-radius:50%;padding:2px;background:conic-gradient(from 210deg,#5B4FE8,#C4BDFF,#4539C9,#8C82FF,#5B4FE8);flex:none}
+.ig-avatar{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:#5B4FE8;color:#FFFFFF;border:2px solid var(--ig-bg);overflow:hidden}
+.ig-avatar svg{width:15px;height:15px}
+.ig-avatar img{width:100%;height:100%;object-fit:cover;background:#FFFFFF}
+.ig-who{display:grid;min-width:0;line-height:1.25}
+.ig-who b{font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.ig-who span{font-size:12px;overflow-wrap:anywhere}
+.ig-dots3{margin-left:auto;font-weight:700;letter-spacing:1px}
+.ig-media{position:relative;background:var(--surface-2)}
+.ig-media img{display:block;width:100%;height:auto;max-width:100%}
+.ig-count{position:absolute;top:12px;right:12px;background:rgba(18,18,18,.7);color:#FFFFFF;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px}
+.ig-nav{position:absolute;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:#262626;font:600 20px/1 var(--font-ig);cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.25);padding:0 0 2px}
+.ig-nav.prev{left:10px}.ig-nav.next{right:10px}
+.ig-story{display:none}
+.ig.is-story .ig-story{display:grid;gap:10px;position:absolute;left:0;right:0;top:0;padding:10px 12px 26px;background:linear-gradient(rgba(0,0,0,.4),transparent)}
+.ig-bar{height:2px;border-radius:2px;background:rgba(255,255,255,.95)}
+.ig-story-who{display:flex;align-items:center;gap:8px;color:#FFFFFF;font-weight:600;font-size:13px}
+.ig-story-who .ig-ring{width:30px;height:30px}
+.ig-story-who small{font-weight:400;opacity:.8}
+.ig.is-story .ig-head,.ig.is-story .ig-actions,.ig.is-story .ig-likes,.ig.is-story .ig-caption,.ig.is-story .ig-comments,.ig.is-story .ig-time{display:none}
+.ig-actions{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:8px 12px 4px}
+.ig-icons{display:flex;gap:14px}
+.ig-icons svg,.ig-save svg{width:24px;height:24px;stroke:var(--ig-ink);fill:none;stroke-width:1.9;stroke-linejoin:round;stroke-linecap:round}
+.ig-dots{display:flex;gap:4px;justify-content:center}
+.ig-dots i{width:6px;height:6px;border-radius:50%;background:var(--ig-dot)}
+.ig-dots i.on{background:var(--ig-blue)}
+.ig-save{justify-self:end;display:flex}
+.ig-likes{padding:2px 12px;font-weight:600}
+.ig-caption{padding:4px 12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.ig-caption b{font-weight:600}
+.ig-tag{color:var(--ig-link)}
+.ig-more{background:none;border:0;padding:0;font:inherit;color:var(--ig-muted);cursor:pointer}
+.ig-more:hover{text-decoration:underline}
+.ig-comments{padding:4px 12px;color:var(--ig-muted)}
+.ig-time{padding:2px 12px 12px;color:var(--ig-muted);font-size:10.5px;letter-spacing:.03em;text-transform:uppercase}
 
 /* Checklist */
 .checklist ul{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:11px}
@@ -214,7 +240,7 @@ details.profile[open]>summary{margin-bottom:16px}
       </div>
       <div>
         <h1>ScaleLink <span>Postmaker</span></h1>
-        <p>Van idee tot klaar om te posten: tekst, afbeelding en checklist in één keer.</p>
+        <p>Instagram-posts en carrousels, van idee tot klaar om te posten.</p>
       </div>
     </div>
     <span id="aiStatus" class="status" data-state="pending" title="Of Claude in deze weergave teksten kan schrijven">Claude verbinden…</span>
@@ -226,19 +252,20 @@ details.profile[open]>summary{margin-bottom:16px}
       <div class="panel stack">
         <h2 id="h-brief"><span class="step">1</span>Wat wil je posten?</h2>
         <div id="profileTip" class="tipbox" hidden>
-          <span>Het merkprofiel is nog een voorbeeld. <button type="button" class="btn-link" id="btnOpenProfile">Vul het in</button>, dan schrijft Claude precies over jouw aanbod.</span>
+          <span>Het merkprofiel komt van je site. <button type="button" class="btn-link" id="btnOpenProfile">Controleer het</button> en vul je Instagram-naam in.</span>
         </div>
         <label class="field"><span>Onderwerp</span>
           <textarea id="topic" rows="2" data-bind="brief.topic" placeholder="Bijv. waarom volgers kopen je account in gevaar brengt"></textarea>
         </label>
         <label class="field"><span>Feiten, cijfers of verhaal <em>(optioneel)</em></span>
-          <textarea id="details" rows="3" data-bind="brief.details" placeholder="Bijv. recruitmentbureau uit Utrecht: van 1.200 naar 2.050 volgers in 3 maanden. Claude gebruikt alleen wat hier en in je merkprofiel staat als feit."></textarea>
+          <textarea id="details" rows="3" data-bind="brief.details" placeholder="Bijv. kapsalon uit Utrecht: van 1.200 naar 2.050 volgers in 3 maanden. Claude gebruikt alleen wat hier en in je merkprofiel staat als feit."></textarea>
         </label>
+        <fieldset><legend class="legend">Vorm</legend><div class="seg-row" id="modeRow"></div></fieldset>
         <fieldset><legend class="legend">Soort post</legend><div class="chip-row" id="typeRow"></div></fieldset>
         <fieldset><legend class="legend">Doel</legend><div class="chip-row" id="goalRow"></div></fieldset>
         <fieldset><legend class="legend">Toon</legend><div class="chip-row" id="toneRow"></div></fieldset>
         <div class="row2">
-          <fieldset><legend class="legend">Lengte</legend><div class="seg-row" id="lengthRow"></div></fieldset>
+          <fieldset><legend class="legend">Lengte caption</legend><div class="seg-row" id="lengthRow"></div></fieldset>
           <fieldset><legend class="legend">Taal</legend><div class="seg-row" id="langRow"></div></fieldset>
         </div>
         <label class="check"><input type="checkbox" id="emoji" data-bind="brief.emoji"> Een paar emoji gebruiken</label>
@@ -252,31 +279,30 @@ details.profile[open]>summary{margin-bottom:16px}
       </div>
 
       <details class="panel profile" id="profilePanel">
-        <summary><h2>Merkprofiel</h2><span id="profileBadge" class="pill pill-warn">Voorbeeld, pas aan</span></summary>
+        <summary><h2>Merkprofiel</h2><span id="profileBadge" class="pill pill-warn">Van je site, controleer</span></summary>
         <div class="stack">
-          <label class="field"><span>Bedrijfsnaam</span><input type="text" id="pName" data-bind="profile.name"></label>
-          <label class="field"><span>Wat doet je bedrijf?</span><textarea id="pWhat" rows="4" data-bind="profile.what"></textarea></label>
+          <div class="row2">
+            <label class="field"><span>Bedrijfsnaam</span><input type="text" id="pName" data-bind="profile.name"></label>
+            <label class="field"><span>Instagram-naam</span><input type="text" id="pHandle" data-bind="profile.handle" placeholder="bijv. scalelink" autocomplete="off"></label>
+          </div>
+          <label class="field"><span>Wat doet je bedrijf?</span><textarea id="pWhat" rows="5" data-bind="profile.what"></textarea></label>
           <label class="field"><span>Voor wie?</span><textarea id="pAudience" rows="2" data-bind="profile.audience"></textarea></label>
           <label class="field"><span>Sterke punten <em>(één per regel)</em></span><textarea id="pUsps" rows="4" data-bind="profile.usps"></textarea></label>
           <label class="field"><span>Feiten en cijfers die altijd mogen <em>(één per regel)</em></span><textarea id="pFacts" rows="4" data-bind="profile.facts"></textarea><small>Claude gebruikt alleen cijfers die hier of bij de briefing staan.</small></label>
-          <label class="field"><span>Standaard call-to-action</span><input type="text" id="pCta" data-bind="profile.cta"></label>
-          <label class="field"><span>Website <em>(komt op de afbeelding)</em></span><input type="text" id="pSite" data-bind="profile.website" placeholder="bijv. jouwdomein.nl" autocomplete="url"></label>
-          <label class="field"><span>Vaste hashtags</span><input type="text" id="pTags" data-bind="profile.hashtags"></label>
-          <div class="row2">
-            <label class="field"><span>Afzender</span><input type="text" id="pSender" data-bind="profile.sender"></label>
-            <label class="field"><span>Ondertitel</span><input type="text" id="pSenderSub" data-bind="profile.senderSub"></label>
-          </div>
-          <div class="field"><span class="legend">Merkkleuren <em>(voor het thema Eigen kleuren)</em></span>
+          <label class="field"><span>Standaard call-to-action</span><input type="text" id="pCta" data-bind="profile.cta"><small>In de caption verwijst Claude naar de link in je bio.</small></label>
+          <label class="field"><span>Vaste hashtags <em>(maximaal 5)</em></span><input type="text" id="pTags" data-bind="profile.hashtags"></label>
+          <label class="field"><span>Regel onder je naam in het voorbeeld <em>(optioneel, bijv. een locatie)</em></span><input type="text" id="pSub" data-bind="profile.subline"></label>
+          <div class="field"><span class="legend">Merkkleuren <em>(voor het thema Eigen)</em></span>
             <div class="colors">
               <label><input type="color" id="cBg" data-bind="profile.colors.bg"> Achtergrond</label>
               <label><input type="color" id="cFg" data-bind="profile.colors.fg"> Tekst</label>
               <label><input type="color" id="cAc" data-bind="profile.colors.accent"> Accent</label>
             </div>
           </div>
-          <div class="field"><span class="legend">Logo <em>(PNG of SVG, vervangt het standaardlogo)</em></span>
+          <div class="field"><span class="legend">Logo <em>(PNG of JPG, vervangt het standaardlogo)</em></span>
             <div class="actions"><input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp,image/svg+xml"><button type="button" class="btn btn-sm" id="btnLogoRemove" hidden>Verwijder logo</button></div>
           </div>
-          <div class="actions"><button type="button" class="btn btn-sm" id="btnResetProfile">Herstel voorbeeldprofiel</button></div>
+          <div class="actions"><button type="button" class="btn btn-sm" id="btnResetProfile">Herstel profiel van de site</button></div>
           <p class="note">Je profiel wordt bewaard in deze browser.</p>
         </div>
       </details>
@@ -288,8 +314,8 @@ details.profile[open]>summary{margin-bottom:16px}
         <div class="panel-head">
           <h2 id="h-edit"><span class="step">2</span>Werk je post af</h2>
           <div class="tabs" role="tablist" aria-label="Onderdeel">
-            <button type="button" class="tab" role="tab" id="tabBtn-text" aria-controls="tab-text" aria-selected="true">Tekst</button>
-            <button type="button" class="tab" role="tab" id="tabBtn-image" aria-controls="tab-image" aria-selected="false">Afbeelding</button>
+            <button type="button" class="tab" role="tab" id="tabBtn-text" aria-controls="tab-text" aria-selected="true">Caption</button>
+            <button type="button" class="tab" role="tab" id="tabBtn-image" aria-controls="tab-image" aria-selected="false">Beeld</button>
           </div>
         </div>
 
@@ -299,12 +325,12 @@ details.profile[open]>summary{margin-bottom:16px}
             <div class="hook-list" id="hookList"></div>
           </div>
           <div class="field">
-            <div class="label-row"><label for="postText" class="legend" style="margin:0">Posttekst</label><span id="hookCount" class="count"></span></div>
+            <div class="label-row"><label for="postText" class="legend" style="margin:0">Caption</label><span id="hookCount" class="count"></span></div>
             <textarea id="postText" data-bind="post.text" spellcheck="true"></textarea>
             <div class="meta-row"><span id="charCount" class="count"></span><span class="count">eerste regel = je hook</span></div>
           </div>
-          <div class="tools" aria-label="Tekst bewerken">
-            <button type="button" class="btn btn-sm" id="btnBold" title="Zet geselecteerde tekst in vette letters die LinkedIn toont">Maak selectie vet</button>
+          <div class="tools" aria-label="Caption bewerken">
+            <button type="button" class="btn btn-sm" id="btnBold" title="Zet geselecteerde tekst in vette letters die Instagram toont">Maak selectie vet</button>
             <span class="sep" aria-hidden="true"></span>
             <span id="rewriteTools" class="tools" hidden>
               <button type="button" class="btn btn-sm" data-rewrite="kort">Korter</button>
@@ -315,15 +341,15 @@ details.profile[open]>summary{margin-bottom:16px}
             </span>
             <button type="button" class="btn btn-sm" id="btnUndo" disabled>Ongedaan maken</button>
           </div>
-          <label class="field"><span>Hashtags</span><input type="text" id="hashtags" data-bind="post.hashtags"></label>
-          <label class="field"><span>Eerste reactie <em>(plaats hier je link)</em></span><textarea id="firstComment" rows="2" data-bind="post.firstComment"></textarea></label>
+          <label class="field"><span>Hashtags <em>(Instagram telt er maximaal 5)</em></span><input type="text" id="hashtags" data-bind="post.hashtags"></label>
+          <label class="field"><span>Storytekst <em>(om de post in je story te delen, met een linksticker)</em></span><textarea id="storyText" rows="2" data-bind="post.storyText"></textarea></label>
           <div class="field">
-            <div class="label-row"><label for="altText" class="legend" style="margin:0">Alt-tekst afbeelding</label><button type="button" class="btn-link" id="btnAltFromImage">Vul in vanuit afbeelding</button></div>
+            <div class="label-row"><label for="altText" class="legend" style="margin:0">Alt-tekst</label><button type="button" class="btn-link" id="btnAltFromImage">Vul in vanuit beeld</button></div>
             <textarea id="altText" rows="2" data-bind="post.altText"></textarea>
           </div>
           <div class="actions">
-            <button type="button" class="btn btn-primary" id="btnCopyAll">Kopieer post + hashtags</button>
-            <button type="button" class="btn" id="btnCopyComment">Kopieer eerste reactie</button>
+            <button type="button" class="btn btn-primary" id="btnCopyAll">Kopieer caption + hashtags</button>
+            <button type="button" class="btn" id="btnCopyStory">Kopieer storytekst</button>
             <button type="button" class="btn" id="btnCopyAlt">Kopieer alt-tekst</button>
           </div>
           <p id="textStatus" class="note" role="status" aria-live="polite"></p>
@@ -331,27 +357,35 @@ details.profile[open]>summary{margin-bottom:16px}
 
         <div id="tab-image" role="tabpanel" aria-labelledby="tabBtn-image" class="stack" hidden>
           <img id="imgThumb" class="thumb-mobile" alt="">
-          <fieldset><legend class="legend">Sjabloon</legend><div class="seg-row" id="tplRow"></div></fieldset>
+          <fieldset><legend class="legend">Vorm</legend><div class="seg-row" id="modeRow2"></div></fieldset>
+          <fieldset class="img-field" data-for="statement cijfer lijst quote foto"><legend class="legend">Sjabloon</legend><div class="seg-row" id="tplRow"></div></fieldset>
           <fieldset><legend class="legend">Formaat</legend><div class="seg-row" id="fmtRow"></div></fieldset>
           <fieldset><legend class="legend">Kleuren</legend><div class="swatch-row" id="themeRow"></div></fieldset>
           <label class="field"><span>Label bovenaan <em>(leeg = geen label)</em></span><input type="text" id="iLabel" data-bind="image.label" maxlength="28"></label>
-          <label class="field img-field" data-for="statement lijst foto"><span>Kop</span><textarea id="iHeadline" rows="2" data-bind="image.headline"></textarea></label>
-          <label class="field img-field" data-for="statement lijst foto quote"><span>Accent <em>(woord of woorden uit de kop of het citaat)</em></span><input type="text" id="iHighlight" data-bind="image.highlight"></label>
+          <label class="field img-field" data-for="statement lijst foto carousel"><span class="cover-name">Kop</span><textarea id="iHeadline" rows="2" data-bind="image.headline" data-slide="0"></textarea></label>
+          <label class="field img-field" data-for="statement lijst foto quote carousel"><span>Accent <em>(woord of woorden uit de kop of het citaat)</em></span><input type="text" id="iHighlight" data-bind="image.highlight" data-slide="0"></label>
           <div class="row2 img-field" data-for="cijfer">
-            <label class="field"><span>Cijfer</span><input type="text" id="iStat" data-bind="image.stat" placeholder="bijv. 3×"></label>
+            <label class="field"><span>Cijfer</span><input type="text" id="iStat" data-bind="image.stat" placeholder="bijv. €0,75"></label>
             <label class="field"><span>Wat betekent het?</span><input type="text" id="iStatLabel" data-bind="image.statLabel"></label>
           </div>
           <label class="field img-field" data-for="lijst"><span>Punten <em>(één per regel, max. 5)</em></span><textarea id="iPoints" rows="4" data-bind="image.points"></textarea></label>
           <label class="field img-field" data-for="quote"><span>Citaat</span><textarea id="iQuote" rows="3" data-bind="image.quote"></textarea></label>
           <label class="field img-field" data-for="quote"><span>Van wie?</span><input type="text" id="iQuoteBy" data-bind="image.quoteBy"></label>
-          <label class="field img-field" data-for="statement cijfer foto"><span>Subregel</span><textarea id="iSub" rows="2" data-bind="image.sub"></textarea></label>
+          <label class="field img-field" data-for="statement cijfer foto carousel"><span>Subregel</span><textarea id="iSub" rows="2" data-bind="image.sub" data-slide="0"></textarea></label>
+          <div class="field img-field" data-for="carousel">
+            <span class="legend">Slides</span>
+            <div class="slide-list" id="slideList"></div>
+            <div class="actions"><button type="button" class="btn btn-sm" id="btnAddSlide">Slide toevoegen</button></div>
+          </div>
+          <label class="field img-field" data-for="carousel"><span>Laatste slide <em>(vraag of oproep; je call-to-action en "Link in bio" komen eronder)</em></span><input type="text" id="iCtaTitle" data-bind="image.ctaTitle" data-slide="last"></label>
           <div class="field img-field" data-for="foto"><span class="legend">Foto</span>
             <input type="file" id="photoFile" accept="image/png,image/jpeg,image/webp">
             <small>Je foto blijft op dit apparaat en wordt niet bewaard na herladen.</small>
           </div>
-          <label class="check"><input type="checkbox" id="iShowSite" data-bind="image.showSite"> Website tonen onderaan</label>
+          <label class="check"><input type="checkbox" id="iShowHandle" data-bind="image.showHandle"> Instagram-naam onderaan tonen <span class="count" id="handleHint"></span></label>
           <div class="actions">
             <button type="button" class="btn btn-primary" id="btnDownload">Download afbeelding</button>
+            <button type="button" class="btn" id="btnDownloadOne" hidden>Download deze slide</button>
             <button type="button" class="btn" id="btnCopyImg">Kopieer afbeelding</button>
           </div>
           <p id="imgStatus" class="note" role="status" aria-live="polite"></p>
@@ -363,20 +397,35 @@ details.profile[open]>summary{margin-bottom:16px}
     <aside class="col col-preview" aria-labelledby="h-prev">
       <div class="sticky">
         <div class="prev-head"><h2 id="h-prev"><span class="step">3</span>Zo ziet het eruit</h2><span id="examplePill" class="pill pill-muted">Voorbeeldpost</span></div>
-        <article class="li" id="liCard" aria-label="Voorbeeld van je LinkedIn-post">
-          <div class="li-head">
-            <div class="li-avatar" id="liAvatar"></div>
-            <div class="li-who">
-              <span class="li-name" id="liName"></span>
-              <span class="li-sub" id="liSub"></span>
-              <span class="li-time">Nu · Openbaar</span>
-            </div>
-            <span class="li-follow" aria-hidden="true">+ Volgen</span>
+        <article class="ig" id="igCard" aria-label="Voorbeeld van je Instagram-post">
+          <div class="ig-head">
+            <span class="ig-ring"><span class="ig-avatar" data-avatar></span></span>
+            <span class="ig-who"><b id="igName"></b><span id="igSub"></span></span>
+            <span class="ig-dots3" aria-hidden="true">···</span>
           </div>
-          <div class="li-text" id="liText"></div>
-          <img class="li-img" id="liImg" alt="">
-          <div class="li-stats"><span>Nog geen reacties</span><span>0 reposts</span></div>
-          <div class="li-actions" aria-hidden="true"><span>Interessant</span><span>Reageren</span><span>Repost</span><span>Versturen</span></div>
+          <div class="ig-media">
+            <img id="igImg" alt="">
+            <span class="ig-count" id="igCount" hidden></span>
+            <button type="button" class="ig-nav prev" id="igPrev" aria-label="Vorige slide" hidden>‹</button>
+            <button type="button" class="ig-nav next" id="igNext" aria-label="Volgende slide" hidden>›</button>
+            <div class="ig-story" aria-hidden="true">
+              <div class="ig-bar"></div>
+              <div class="ig-story-who"><span class="ig-ring"><span class="ig-avatar" data-avatar></span></span><span id="igStoryName"></span><small>1 m</small></div>
+            </div>
+          </div>
+          <div class="ig-actions" aria-hidden="true">
+            <span class="ig-icons">
+              <svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.7 3.9 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.3 0 5.6 3.2 4.4 6.6-1.7 4.8-9.2 9.4-9.2 9.4z"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M20.5 11.8a8.3 8.3 0 0 1-12.4 7.2L3.5 20.5l1.6-4.4a8.3 8.3 0 1 1 15.4-4.3z"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M21.5 3.5 10.6 13.4M21.5 3.5l-6.9 17-4-7.1-7.1-4z"/></svg>
+            </span>
+            <span class="ig-dots" id="igDots"></span>
+            <span class="ig-save"><svg viewBox="0 0 24 24"><path d="M19 21.5 12 15.6l-7 5.9V3.5h14z"/></svg></span>
+          </div>
+          <div class="ig-likes">Nog geen vind-ik-leuks</div>
+          <div class="ig-caption" id="igCaption"></div>
+          <div class="ig-comments">Reacties bekijken</div>
+          <div class="ig-time">Zojuist</div>
         </article>
         <div class="panel checklist">
           <h3>Klaar om te posten?</h3>
@@ -391,7 +440,7 @@ details.profile[open]>summary{margin-bottom:16px}
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
-  const KEY = 'scalelink-postmaker:v1';
+  const KEY = 'scalelink-postmaker:instagram-v1';
   const LOGO_KEY = 'scalelink-postmaker:logo';
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -401,18 +450,18 @@ details.profile[open]>summary{margin-bottom:16px}
 
   // ---------- Keuzes ----------
   const TYPES = {
-    tip:      { label: 'Tip / how-to',       brief: 'een praktische waardepost met concrete tips over zichtbaarheid en netwerkgroei op LinkedIn', tag: 'LinkedIn-tip' },
-    mythe:    { label: 'Mythe vs. feit',     brief: 'een post die een veelgehoorde misvatting over LinkedIn-groei ontkracht', tag: 'Mythe' },
-    case:     { label: 'Resultaat',          brief: 'het verhaal en resultaat van een klant, uitsluitend op basis van de aangeleverde feiten', tag: 'Resultaat' },
-    verhaal:  { label: 'Zo werken we',       brief: 'een kijkje in hoe het team werkt: doelgroep bepalen, targeting, maandrapport', tag: 'Zo werken we' },
-    aanbod:   { label: 'Dienst promoten',    brief: 'een post die laat zien wat het bedrijf biedt en voor wie, met een duidelijke call-to-action', tag: 'ScaleLink' },
-    stelling: { label: 'Stelling',           brief: 'een prikkelende mening die tot discussie uitnodigt', tag: 'Stelling' },
-    nieuws:   { label: 'Aankondiging',       brief: 'een aankondiging van nieuws, een lancering, event of mijlpaal', tag: 'Nieuw' },
+    tip:      { label: 'Tip / how-to',    brief: 'een praktische waardepost met concrete tips over zichtbaarheid en groei op Instagram', tag: 'Instagram-tip' },
+    mythe:    { label: 'Mythe vs. feit',  brief: 'een post die een veelgehoorde misvatting over Instagram-groei ontkracht', tag: 'Mythe' },
+    case:     { label: 'Resultaat',       brief: 'het verhaal en resultaat van een klant, uitsluitend op basis van de aangeleverde feiten', tag: 'Resultaat' },
+    verhaal:  { label: 'Zo werken we',    brief: 'een kijkje in hoe het team werkt: doelgroep bepalen, targeting op interesses en locatie, het maandoverzicht', tag: 'Zo werken we' },
+    aanbod:   { label: 'Dienst promoten', brief: 'een post die laat zien wat het bedrijf biedt en voor wie, met een duidelijke call-to-action', tag: 'ScaleLink' },
+    stelling: { label: 'Stelling',        brief: 'een prikkelende mening die tot reacties uitnodigt', tag: 'Stelling' },
+    nieuws:   { label: 'Aankondiging',    brief: 'een aankondiging van nieuws, een actie of een mijlpaal', tag: 'Nieuw' },
   };
   const GOALS = {
-    leads:      { label: 'Leads & gesprekken', brief: 'gesprekken en aanvragen opleveren bij de doelgroep' },
-    bereik:     { label: 'Bereik',             brief: 'zoveel mogelijk relevante mensen bereiken en reacties uitlokken' },
-    vertrouwen: { label: 'Vertrouwen',         brief: 'expertise en betrouwbaarheid laten zien' },
+    leads:      { label: 'Aanvragen & DM\'s', brief: 'aanvragen, DM\'s en kennismakingsgesprekken opleveren' },
+    bereik:     { label: 'Bereik',            brief: 'zoveel mogelijk relevante mensen bereiken, opslaan en delen uitlokken' },
+    vertrouwen: { label: 'Vertrouwen',        brief: 'laten zien dat de aanpak eerlijk en veilig is en echt werkt' },
   };
   const TONES = {
     zakelijk:    { label: 'Zakelijk',    brief: 'zakelijk en helder, zonder stijf te worden' },
@@ -420,13 +469,15 @@ details.profile[open]>summary{margin-bottom:16px}
     prikkelend:  { label: 'Prikkelend',  brief: 'uitgesproken en prikkelend, met een duidelijke mening' },
     luchtig:     { label: 'Luchtig',     brief: 'luchtig en toegankelijk, met een knipoog' },
   };
-  const LENGTHS = { kort: { label: 'Kort', words: 80 }, middel: { label: 'Middel', words: 150 }, lang: { label: 'Lang', words: 230 } };
+  const LENGTHS = { kort: { label: 'Kort', words: 50 }, middel: { label: 'Middel', words: 110 }, lang: { label: 'Lang', words: 190 } };
   const LANGS = { nl: { label: 'Nederlands' }, en: { label: 'Engels' } };
+  const MODES = { carousel: { label: 'Carrousel' }, single: { label: 'Eén afbeelding' } };
   const TEMPLATES = { statement: { label: 'Statement' }, cijfer: { label: 'Cijfer' }, lijst: { label: 'Lijst' }, quote: { label: 'Quote' }, foto: { label: 'Foto' } };
+  // safeTop/safeBottom houden tekst weg onder de balken van Instagram in stories.
   const FORMATS = {
-    portrait:  { label: 'Staand 4:5', w: 1080, h: 1350 },
-    square:    { label: 'Vierkant',   w: 1080, h: 1080 },
-    landscape: { label: 'Liggend',    w: 1200, h: 627 },
+    portrait: { label: 'Staand 4:5',   w: 1080, h: 1350 },
+    square:   { label: 'Vierkant 1:1', w: 1080, h: 1080 },
+    story:    { label: 'Story 9:16',   w: 1080, h: 1920, safeTop: 250, safeBottom: 320 },
   };
   // De vier huisstijlthema's komen van de ScaleLink-site; hiText is de tekstkleur op de accentmarkering.
   const THEMES = {
@@ -436,53 +487,62 @@ details.profile[open]>summary{margin-bottom:16px}
     nacht:    { label: 'Nacht',    alt: 'Donkere',          bg: '#12161C', fg: '#F2F0EA', accent: '#6F63F5', hiText: '#FFFFFF', tileBg: '#6F63F5', tileFg: '#FFFFFF' },
     eigen:    { label: 'Eigen',    alt: 'Gekleurde' },
   };
+  const MAX_SLIDES = 8;
 
   const DEFAULTS = {
     profile: {
       name: 'ScaleLink',
-      what: 'ScaleLink laat je zakelijke netwerk op LinkedIn gericht en structureel groeien, bij de juiste beslissers. We selecteren relevante profielen op functie, sector en regio. Zo ontstaan echte volgers, connecties en uiteindelijk gesprekken. Je logt één keer in en post daarna gewoon zoals je gewend bent; de groei loopt op de achtergrond. Je content maak je zelf, wij zorgen dat die bij meer van de juiste mensen terechtkomt.',
-      audience: 'Bedrijven en MKB, consultants, recruiters en B2B-founders die zichtbaar willen zijn bij de juiste beslissers, zonder er elke dag tijd in te steken.',
-      usps: 'Uitsluitend echte profielen: geen nepvolgers, geen bots en geen advertenties\nGerichte targeting op functie, sector en regio\nGroei op de achtergrond: één keer inloggen, verder niets veranderen\nElke maand een overzichtelijk rapport, plus updates via WhatsApp of e-mail\nDe controle over je account blijft bij jou\nMaandelijks opzegbaar, geen langlopend contract',
-      facts: 'Via LinkedIn-advertenties betaal je gemiddeld zo\'n €10 tot €12 per nieuwe volger\nBij ScaleLink betaal je gemiddeld €0,75 tot €2 per volger, vanaf €400 per maand (excl. btw)\nDe meeste zakelijke profielen groeien met zo\'n 150 tot 400+ relevante volgers per maand\nOpzegtermijn van één maand',
+      handle: '',
+      what: 'ScaleLink laat je Instagram gericht en structureel groeien, met echte volgers die bij je merk passen. Onze software selecteert relevante profielen op interesses, locatie en vergelijkbare accounts. Je logt één keer in en post daarna gewoon zoals je gewend bent; de groei loopt op de achtergrond. Je content maak je zelf, wij zorgen dat die bij meer van de juiste mensen terechtkomt.',
+      audience: 'Lokale bedrijven (zoals een kapper, restaurant of sportschool), webshops en merken, creators en influencers, en coaches en personal brands.',
+      usps: 'Uitsluitend echte profielen: geen nepvolgers, geen bots en geen advertenties\nGerichte targeting op interesses, locatie en vergelijkbare accounts\nGroei op de achtergrond: één keer inloggen, verder niets veranderen\nElke maand een overzicht: nieuwe volgers, hun interesses en nieuwe DM-gesprekken\nDe controle over je account blijft bij jou\nMaandelijks opzegbaar, geen jaarcontract',
+      facts: 'Via Instagram-advertenties ben je al snel €8 tot €10 kwijt per echt geïnteresseerde volger\nBij ScaleLink betaal je gemiddeld €0,75 tot €2 per volger, vanaf €300 per maand (excl. btw)\nDe meeste zakelijke accounts groeien met zo\'n 150 tot 400+ relevante volgers per maand\nOpzegtermijn van één maand',
       cta: 'Plan een vrijblijvende kennismaking',
-      website: '',
-      hashtags: '#LinkedIn #LinkedInGroei #B2B #Zichtbaarheid #Netwerken',
-      sender: 'ScaleLink',
-      senderSub: 'Van nieuwe volger tot nieuwe klant',
+      hashtags: '#instagramgroei #ondernemen #lokaalondernemen #socialmedia',
+      subline: '',
       colors: { bg: '#5B4FE8', fg: '#FFFFFF', accent: '#EEECFF' },
       edited: false,
     },
-    brief: { topic: 'Waarom je volgersaantal de eerste indruk bij prospects bepaalt', details: '', type: 'aanbod', goal: 'leads', tone: 'zakelijk', length: 'middel', lang: 'nl', emoji: true },
+    brief: { topic: 'Waarom je volgersaantal de eerste indruk bij nieuwe klanten bepaalt', details: '', type: 'aanbod', goal: 'leads', tone: 'zakelijk', length: 'middel', lang: 'nl', emoji: true },
     post: {
-      text: 'Je bedrijf is sterker dan je volgersaantal doet vermoeden.\n\nToch is dat getal vaak het eerste wat een prospect ziet. En daar baseren ze hun eerste oordeel op.\n\nAdverteren voor volgers is duur: via LinkedIn-advertenties betaal je al snel €10 tot €12 per nieuwe volger.\n\nVolgers kopen is nog erger. Nepaccounts worden nooit klant, en LinkedIn grijpt in zodra groei er verdacht uitziet.\n\nBij ScaleLink pakken we het anders aan:\n\n→ We bepalen samen je doelgroep op functie, sector en regio\n→ Je netwerk groeit op de achtergrond, met uitsluitend echte profielen\n→ Elke maand zie je in een rapport wie er bij is gekomen\n\nDe meeste zakelijke profielen groeien zo met 150 tot 400+ relevante volgers per maand. Mensen die je content zien, en soms je volgende klant worden.\n\nHoeveel van jouw volgers zijn eigenlijk beslissers?\n\n👉 Benieuwd wat dit voor jouw profiel kan doen? Plan een vrijblijvende kennismaking. De link staat in de eerste reactie.',
+      text: 'Je bedrijf is sterker dan je volgersaantal doet vermoeden. 👀\n\nToch is dat getal vaak het eerste wat nieuwe klanten zien. En daar baseren ze hun oordeel op.\n\nAdverteren voor volgers? Voor één echt geïnteresseerde volger ben je via Instagram-ads al snel €8 tot €10 kwijt.\n\nVolgers kopen? Nepaccounts worden nooit klant, en Instagram grijpt in zodra groei er verdacht uitziet.\n\nBij ScaleLink pakken we het anders aan:\n✓ Alleen echte profielen die bij je merk passen\n✓ Gericht op interesses, locatie en vergelijkbare accounts\n✓ Groei op de achtergrond: jij post gewoon zoals je gewend bent\n\nDe meeste zakelijke accounts groeien zo met 150 tot 400+ relevante volgers per maand.\n\nBenieuwd wat dat voor jouw account betekent? Plan een vrijblijvende kennismaking via de link in onze bio. 💜',
       hooks: [
-        '€10 tot €12 per volger. Dat betaal je gemiddeld via LinkedIn-advertenties.',
-        'Prospects zien je volgersaantal voordat ze je bericht lezen.',
+        '€8 tot €10 per volger. Dat kost adverteren op Instagram je al snel.',
+        'Nieuwe klanten zien eerst je volgersaantal. Pas daarna je werk.',
         'Volgers kopen is makkelijk. Klanten krijgen niet.',
       ],
-      hashtags: '#LinkedIn #LinkedInGroei #B2B #Zichtbaarheid',
-      firstComment: 'Plan je vrijblijvende kennismaking hier: [link]',
-      altText: 'Indigo afbeelding van ScaleLink met de tekst "Van nieuwe volger tot nieuwe klant." Daaronder: gerichte groei van je LinkedIn-netwerk, bij de juiste beslissers.',
-      postTime: 'Dinsdag tot en met donderdag tussen 08:00 en 09:30, voordat beslissers aan hun eerste afspraak beginnen.',
+      hashtags: '#instagramgroei #ondernemen #lokaalondernemen #socialmedia',
+      storyText: 'Waarom je volgersaantal je eerste indruk is 👀 Swipe door de nieuwe post.',
+      altText: 'Carrousel van 7 slides van ScaleLink. Cover: "Van nieuwe volger tot nieuwe klant." Daarna: Je volgersaantal is je etalage; Adverteren is duur; Volgers kopen is riskant; Zo doet ScaleLink het; 150 tot 400+ per maand. Laatste slide: Benieuwd wat dit voor jouw account doet?',
+      postTime: 'Doordeweeks tussen 11:00 en 13:00 of tussen 19:00 en 21:00, als ondernemers pauze nemen of \'s avonds scrollen.',
       example: true,
     },
     image: {
-      template: 'statement', format: 'portrait', theme: 'indigo', label: 'ScaleLink',
+      mode: 'carousel', template: 'statement', format: 'portrait', theme: 'indigo', label: 'ScaleLink',
       headline: 'Van nieuwe volger tot nieuwe klant.', highlight: 'nieuwe klant.',
-      sub: 'Gerichte groei van je LinkedIn-netwerk, bij de juiste beslissers.',
-      stat: '€0,75', statLabel: 'per volger, in plaats van €10 tot €12 via LinkedIn-ads',
-      points: 'Alleen echte profielen\nTargeting op functie, sector en regio\nMaandrapport met resultaten',
-      quote: '', quoteBy: '', showSite: true,
+      sub: 'Gerichte groei van je Instagram, met echte volgers die bij je merk passen.',
+      stat: '€0,75', statLabel: 'per volger, in plaats van €8 tot €10 via Instagram-ads',
+      points: 'Alleen echte profielen\nTargeting op interesses en locatie\nElke maand een overzicht',
+      quote: '', quoteBy: '', showHandle: true,
+      slides: [
+        { title: 'Je volgersaantal is je etalage', body: 'Nieuwe klanten zien dat getal als eerste. Daar baseren ze hun eerste oordeel op.' },
+        { title: 'Adverteren is duur', body: 'Voor één echt geïnteresseerde volger ben je via Instagram-ads al snel €8 tot €10 kwijt.' },
+        { title: 'Volgers kopen is riskant', body: 'Nepaccounts worden nooit klant. En Instagram grijpt in zodra groei er verdacht uitziet.' },
+        { title: 'Zo doet ScaleLink het', body: 'Echte profielen, gekozen op interesses, locatie en vergelijkbare accounts. De groei loopt op de achtergrond.' },
+        { title: '150 tot 400+ per maand', body: 'Zoveel relevante volgers krijgen de meeste zakelijke accounts erbij. Elke maand zie je wie er bij is gekomen.' },
+      ],
+      ctaTitle: 'Benieuwd wat dit voor jouw account doet?',
     },
-    ui: { tab: 'text' },
+    ui: { tab: 'text', slide: 0 },
   };
   const STATIC_IDEAS = [
-    { title: 'Drie signalen dat je LinkedIn-netwerk niet bij je doelgroep past', type: 'tip', angle: 'Herkenbare signalen, met per signaal wat je eraan doet.' },
-    { title: 'Mythe: je volgersaantal maakt niet uit, alleen je content telt', type: 'mythe', angle: 'Prospects kijken wél naar dat getal.' },
-    { title: 'Wat 150 tot 400 relevante volgers per maand met je bereik doen', type: 'case', angle: 'Vul bij de feiten de cijfers van een echte klant in.' },
-    { title: 'Zo bepalen we samen je doelgroep: functie, sector en regio', type: 'verhaal', angle: 'Laat zien hoe de targeting werkt.' },
-    { title: 'Adverteren voor volgers kost €10 per volger. Dit is het alternatief.', type: 'aanbod', angle: 'Rekenvoorbeeld ads versus ScaleLink.' },
-    { title: 'Volgers kopen is zinloos. Gerichte groei niet.', type: 'stelling', angle: 'Een stelling die reacties uitlokt.' },
+    { title: 'Drie redenen waarom je Instagram niet groeit, terwijl je wel post', type: 'tip', angle: 'Herkenbaar, met per reden wat je eraan doet.' },
+    { title: 'Mythe: volgers kopen is een snelle start', type: 'mythe', angle: 'Nepaccounts worden nooit klant.' },
+    { title: 'Zo ziet een maand groei eruit: 150 tot 400+ echte volgers', type: 'case', angle: 'Vul bij de feiten de cijfers van een echte klant in.' },
+    { title: 'Zo bepalen we je doelgroep: interesses, locatie en vergelijkbare accounts', type: 'verhaal', angle: 'Laat zien hoe de targeting werkt.' },
+    { title: '€8 tot €10 per volger via ads, of €0,75 tot €2 bij ScaleLink', type: 'aanbod', angle: 'Rekenvoorbeeld ads versus ScaleLink.' },
+    { title: 'Voor de kapper, het restaurant en de sportschool: groei in je eigen regio', type: 'aanbod', angle: 'Spreek lokale ondernemers direct aan.' },
+    { title: 'Je volgersaantal is je etalage', type: 'stelling', angle: 'Een stelling die reacties uitlokt.' },
   ];
 
   const clone = (o) => JSON.parse(JSON.stringify(o));
@@ -501,13 +561,12 @@ details.profile[open]>summary{margin-bottom:16px}
     }
     state.profile.colors = Object.assign(clone(DEFAULTS.profile.colors), (saved.profile && saved.profile.colors) || {});
     if (!Array.isArray(state.post.hooks)) state.post.hooks = [];
-    // scalelink.io stond eerder als standaard ingevuld; haal het weg uit eerder bewaarde gegevens.
-    if (/^(https?:\/\/)?(www\.)?scalelink\.io\/?$/i.test(String(state.profile.website).trim())) state.profile.website = '';
-    state.post.firstComment = String(state.post.firstComment).replace(/ via scalelink\.io/gi, ' hier');
-    if (state.post.example) state.post = clone(DEFAULTS.post);
-    // De merknaam is ScaleLink; zet eerder bewaarde spelling "Scalelink" om.
-    for (const k of ['profile', 'post', 'image']) state[k] = JSON.parse(JSON.stringify(state[k]).replace(/Scale(l)ink/g, 'ScaleLink'));
-    if (!TYPES[state.brief.type]) state.brief.type = 'tip';
+    if (!Array.isArray(state.image.slides)) state.image.slides = clone(DEFAULTS.image.slides);
+    state.image.slides = state.image.slides.filter((x) => x && typeof x === 'object')
+      .map((x) => ({ title: String(x.title || ''), body: String(x.body || '') })).slice(0, MAX_SLIDES);
+    if (state.post.example) { state.post = clone(DEFAULTS.post); }
+    if (!TYPES[state.brief.type]) state.brief.type = 'aanbod';
+    if (!MODES[state.image.mode]) state.image.mode = 'carousel';
     if (!TEMPLATES[state.image.template]) state.image.template = 'statement';
     if (!FORMATS[state.image.format]) state.image.format = 'portrait';
     if (!THEMES[state.image.theme]) state.image.theme = 'indigo';
@@ -542,12 +601,11 @@ details.profile[open]>summary{margin-bottom:16px}
     el.textContent = sampleState === 'on' ? 'Claude schrijft mee' : sampleState === 'off' ? 'Sjabloonmodus' : 'Claude verbinden…';
     el.title = sampleState === 'off'
       ? 'Claude is hier niet beschikbaar. Je krijgt een sjabloon om zelf in te vullen. Open de pagina in Claude om de tekst te laten schrijven.'
-      : 'Claude schrijft de tekst en de afbeeldingstekst op basis van je merkprofiel.';
+      : 'Claude schrijft de caption en de teksten voor het beeld op basis van je merkprofiel.';
     $('rewriteTools').hidden = sampleState !== 'on';
   }
   function aiErrorCopy(e) {
-    const code = e && e.code;
-    switch (code) {
+    switch (e && e.code) {
       case 'not_granted': return 'Je hebt Claude niet toegestaan voor deze pagina. Je kunt verder in sjabloonmodus.';
       case 'sampling_disabled': case 'not_declared': case 'capability_disabled': case 'capability_removed':
         return 'Claude is in deze weergave niet beschikbaar. Je kunt verder in sjabloonmodus.';
@@ -584,6 +642,8 @@ details.profile[open]>summary{margin-bottom:16px}
     const h = state.post.hashtags.trim();
     return h ? t + '\n\n' + h : t;
   }
+  function handle() { return state.profile.handle.trim().replace(/^@+/, '').replace(/\s+/g, ''); }
+  function username() { return handle() || (state.profile.name || 'scalelink').toLowerCase().replace(/\s+/g, ''); }
   function slug(s) {
     return String(s || 'post').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'post';
@@ -595,6 +655,9 @@ details.profile[open]>summary{margin-bottom:16px}
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   }
   const rgba = (h, a) => { const [r, g, b] = hexToRgb(h); return `rgba(${r},${g},${b},${a})`; };
+  const isCarousel = () => state.image.mode === 'carousel';
+  const totalSlides = () => (isCarousel() ? state.image.slides.length + 2 : 1);
+  const effectiveFormat = () => (isCarousel() && state.image.format === 'story' ? 'portrait' : state.image.format);
 
   // ---------- Formulier opbouwen ----------
   function buildRadios(rowId, name, bind, options, cls) {
@@ -644,13 +707,19 @@ details.profile[open]>summary{margin-bottom:16px}
     const area = p.split('.')[0];
     if (area === 'profile') {
       state.profile.edited = true;
-      renderProfileBadge(); renderPreview(); paintSwatches(); scheduleImage();
+      renderProfileBadge(); renderPreview(); paintSwatches(); renderHandleHint(); scheduleImage();
     } else if (area === 'post') {
       state.post.example = false;
       renderPreview(); renderCounts(); renderChecklist();
     } else if (area === 'image') {
       flags.imageSaved = false;
-      if (p === 'image.template') renderImageFields();
+      if (p === 'image.mode') {
+        if (isCarousel() && state.image.format === 'story') state.image.format = 'portrait';
+        fillForm(); showSlide(0);
+      }
+      if (p === 'image.mode' || p === 'image.template' || p === 'image.format') { renderImageFields(); renderPreview(); }
+      if (el.dataset.slide === '0') showSlide(0);
+      else if (el.dataset.slide === 'last') showSlide(totalSlides() - 1);
       scheduleImage(); renderChecklist();
     } else if (area === 'brief' && p === 'brief.lang') {
       renderTranslateLabel();
@@ -662,68 +731,89 @@ details.profile[open]>summary{margin-bottom:16px}
   function renderProfileBadge() {
     const b = $('profileBadge');
     const edited = state.profile.edited;
-    b.textContent = edited ? 'Bewaard in deze browser' : 'Voorbeeld, pas aan';
-    b.className = 'pill ' + (edited ? 'pill-good' : 'pill-warn');
+    b.textContent = edited ? 'Bewaard in deze browser' : 'Van je site, controleer';
+    b.className = 'pill ' + (edited ? '' : 'pill-warn');
     $('profileTip').hidden = edited;
   }
   function markSvg() {
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="6" r="3"/><circle cx="17" cy="18" r="3"/><path d="M9.6 10.6l4.8-3.2M9.6 13.4l4.8 3.2"/></svg>';
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="6" r="3"/><circle cx="17" cy="18" r="3"/><path d="M9.6 10.6l4.8-3.2M9.6 13.4l4.8 3.2"/></svg>';
   }
   function appendWithTags(el, text) {
-    const parts = text.split(/(#[\p{L}\p{N}_]+)/u);
-    for (const part of parts) {
+    for (const part of text.split(/([#@][\p{L}\p{N}_]+(?:\.[\p{L}\p{N}_]+)*)/u)) {
       if (!part) continue;
-      if (part.startsWith('#') && part.length > 1) {
-        const s = document.createElement('span'); s.className = 'li-tag'; s.textContent = part; el.append(s);
+      if (/^[#@]./u.test(part)) {
+        const s = document.createElement('span'); s.className = 'ig-tag'; s.textContent = part; el.append(s);
       } else el.append(document.createTextNode(part));
     }
   }
-  function needsFold(s) { return s.split('\n').length > 3 || chars(s) > 210; }
+  // Instagram toont in de feed ongeveer twee regels (circa 125 tekens) vóór "meer".
+  function needsFold(s) { return s.split('\n').length > 2 || chars(s) > 125; }
   function foldText(s) {
-    let out = s.split('\n').slice(0, 3).join('\n');
-    if (chars(out) > 210) out = [...out].slice(0, 210).join('').replace(/\s+\S*$/, '');
+    let out = s.split('\n').slice(0, 2).join('\n');
+    if (chars(out) > 125) out = [...out].slice(0, 125).join('').replace(/\s+\S*$/, '');
     return out.replace(/\s+$/, '');
   }
   function renderPreview() {
-    const p = state.profile;
-    $('liName').textContent = p.sender || p.name || 'ScaleLink';
-    $('liSub').textContent = p.senderSub || '';
-    const av = $('liAvatar');
-    if (logoUrl) {
-      av.textContent = '';
-      const img = document.createElement('img'); img.src = logoUrl; img.alt = ''; av.append(img);
-    } else av.innerHTML = markSvg();
+    const name = username();
+    $('igName').textContent = name;
+    $('igStoryName').textContent = name;
+    $('igSub').textContent = state.profile.subline.trim();
+    $('igSub').hidden = !state.profile.subline.trim();
+    document.querySelectorAll('[data-avatar]').forEach((av) => {
+      if (logoUrl) {
+        av.textContent = '';
+        const img = document.createElement('img'); img.src = logoUrl; img.alt = ''; av.append(img);
+      } else av.innerHTML = markSvg();
+    });
+    const cap = $('igCaption'); cap.textContent = '';
+    const b = document.createElement('b'); b.textContent = name; cap.append(b, document.createTextNode(' '));
     const full = fullText();
-    const el = $('liText'); el.textContent = '';
     const fold = needsFold(full);
     if (fold && !flags.expanded) {
-      appendWithTags(el, foldText(full));
-      el.append(document.createTextNode('… '));
-      const more = document.createElement('button'); more.type = 'button'; more.className = 'li-more'; more.textContent = 'meer';
+      appendWithTags(cap, foldText(full));
+      cap.append(document.createTextNode('… '));
+      const more = document.createElement('button'); more.type = 'button'; more.className = 'ig-more'; more.textContent = 'meer';
       more.addEventListener('click', () => { flags.expanded = true; renderPreview(); });
-      el.append(more);
+      cap.append(more);
     } else {
-      appendWithTags(el, full || 'Je posttekst verschijnt hier.');
+      appendWithTags(cap, full || 'Je caption verschijnt hier.');
       if (fold) {
-        el.append(document.createTextNode(' '));
-        const less = document.createElement('button'); less.type = 'button'; less.className = 'li-more'; less.textContent = 'minder';
+        cap.append(document.createTextNode(' '));
+        const less = document.createElement('button'); less.type = 'button'; less.className = 'ig-more'; less.textContent = 'minder';
         less.addEventListener('click', () => { flags.expanded = false; renderPreview(); });
-        el.append(less);
+        cap.append(less);
       }
     }
-    $('liImg').alt = state.post.altText || '';
+    $('igCard').classList.toggle('is-story', effectiveFormat() === 'story');
+    $('igImg').alt = state.post.altText || '';
     $('examplePill').hidden = !state.post.example;
+    renderNav();
+  }
+  function renderNav() {
+    const car = isCarousel(), n = totalSlides();
+    state.ui.slide = Math.max(0, Math.min(n - 1, state.ui.slide || 0));
+    const i = state.ui.slide;
+    $('igPrev').hidden = !car || i === 0;
+    $('igNext').hidden = !car || i >= n - 1;
+    $('igCount').hidden = !car;
+    $('igCount').textContent = `${i + 1}/${n}`;
+    const dots = $('igDots'); dots.textContent = '';
+    if (car) for (let k = 0; k < n; k++) { const d = document.createElement('i'); if (k === i) d.className = 'on'; dots.append(d); }
+    document.querySelectorAll('.slide-row').forEach((row) => row.classList.toggle('is-current', Number(row.dataset.i) + 1 === i));
+  }
+  function showSlide(i) {
+    state.ui.slide = i;
+    renderNav(); scheduleImage(); save();
   }
   function renderCounts() {
     const total = chars(fullText());
     const cc = $('charCount');
-    cc.textContent = `${nf.format(total)} / 3.000 tekens`;
-    cc.className = 'count' + (total > 3000 ? ' is-bad' : total > 2600 ? ' is-warn' : '');
-    const hook = state.post.text.split('\n')[0] || '';
-    const hl = chars(hook);
+    cc.textContent = `${nf.format(total)} / 2.200 tekens`;
+    cc.className = 'count' + (total > 2200 ? ' is-bad' : total > 1900 ? ' is-warn' : '');
+    const hl = chars(state.post.text.split('\n')[0] || '');
     const hc = $('hookCount');
     hc.textContent = `hook: ${hl} tekens`;
-    hc.className = 'count' + (hl > 140 ? ' is-warn' : '');
+    hc.className = 'count' + (hl > 125 ? ' is-warn' : '');
   }
   function renderHooks() {
     const list = $('hookList'); list.textContent = '';
@@ -753,11 +843,48 @@ details.profile[open]>summary{margin-bottom:16px}
   function renderTranslateLabel() {
     $('btnTranslate').textContent = state.brief.lang === 'en' ? 'Naar Nederlands' : 'Naar Engels';
   }
+  function renderHandleHint() {
+    $('handleHint').textContent = handle() ? `(@${handle()})` : '(vul eerst je Instagram-naam in het merkprofiel in)';
+  }
   function renderImageFields() {
-    const tpl = state.image.template;
+    const key = isCarousel() ? 'carousel' : state.image.template;
     document.querySelectorAll('.img-field').forEach((el) => {
-      el.hidden = !el.dataset.for.split(' ').includes(tpl);
+      el.hidden = !el.dataset.for.split(' ').includes(key);
     });
+    const storyLab = $('fmt-story').parentElement;
+    storyLab.hidden = isCarousel();
+    document.querySelectorAll('.cover-name').forEach((el) => { el.textContent = isCarousel() ? 'Cover: kop' : 'Kop'; });
+    $('btnDownload').textContent = isCarousel() ? 'Download alle slides (ZIP)' : 'Download afbeelding';
+    $('btnDownloadOne').hidden = !isCarousel();
+    $('btnCopyImg').textContent = isCarousel() ? 'Kopieer deze slide' : 'Kopieer afbeelding';
+  }
+  function renderSlidesEditor() {
+    const box = $('slideList'); box.textContent = '';
+    state.image.slides.forEach((sl, i) => {
+      const row = document.createElement('div'); row.className = 'slide-row'; row.dataset.i = String(i);
+      const head = document.createElement('div'); head.className = 'slide-head';
+      const b = document.createElement('b'); b.textContent = `Slide ${i + 2}`;
+      const view = document.createElement('button'); view.type = 'button'; view.className = 'btn btn-sm'; view.textContent = 'Bekijk';
+      view.addEventListener('click', () => showSlide(i + 1));
+      const del = document.createElement('button'); del.type = 'button'; del.className = 'btn btn-sm'; del.textContent = 'Verwijder';
+      del.disabled = state.image.slides.length <= 1;
+      del.addEventListener('click', () => {
+        state.image.slides.splice(i, 1); flags.imageSaved = false;
+        renderSlidesEditor(); showSlide(Math.min(i + 1, totalSlides() - 1));
+      });
+      head.append(b, view, del);
+      const ti = document.createElement('input'); ti.type = 'text'; ti.id = 'slide-title-' + i; ti.value = sl.title; ti.placeholder = 'Titel (max. 6 woorden)';
+      ti.setAttribute('aria-label', `Titel slide ${i + 2}`);
+      const bo = document.createElement('textarea'); bo.id = 'slide-body-' + i; bo.rows = 2; bo.value = sl.body; bo.placeholder = 'Tekst (max. 25 woorden)';
+      bo.setAttribute('aria-label', `Tekst slide ${i + 2}`);
+      const edit = () => { sl.title = ti.value; sl.body = bo.value; flags.imageSaved = false; state.ui.slide = i + 1; renderNav(); scheduleImage(); save(); };
+      ti.addEventListener('input', edit); bo.addEventListener('input', edit);
+      ti.addEventListener('focus', () => { if (state.ui.slide !== i + 1) showSlide(i + 1); });
+      bo.addEventListener('focus', () => { if (state.ui.slide !== i + 1) showSlide(i + 1); });
+      row.append(head, ti, bo); box.append(row);
+    });
+    $('btnAddSlide').disabled = state.image.slides.length >= MAX_SLIDES;
+    renderNav();
   }
   function afterTextChange() {
     fillForm(); renderHooks(); renderPreview(); renderCounts(); renderChecklist(); save();
@@ -768,25 +895,27 @@ details.profile[open]>summary{margin-bottom:16px}
   function renderChecklist() {
     const post = state.post, text = post.text;
     const items = [];
-    const hook = text.split('\n')[0] || '';
-    const hl = chars(hook);
-    items.push(hl === 0 ? ['bad', 'Hook ontbreekt', 'De eerste regel bepaalt of mensen doorlezen.']
-      : hl <= 140 ? ['ok', 'Sterke, korte hook', `${hl} tekens: volledig zichtbaar op mobiel, vóór "meer".`]
-      : ['warn', 'Hook is lang', `${hl} tekens. Op mobiel valt het einde weg achter "meer". Mik op maximaal 140.`]);
+    const hl = chars(text.split('\n')[0] || '');
+    items.push(hl === 0 ? ['bad', 'Hook ontbreekt', 'De eerste regel bepaalt of mensen op "meer" tikken.']
+      : hl <= 125 ? ['ok', 'Sterke, korte hook', `${hl} tekens: volledig zichtbaar in de feed, vóór "meer".`]
+      : ['warn', 'Hook is lang', `${hl} tekens. In de feed valt het einde weg achter "meer". Mik op maximaal 125.`]);
     const total = chars(fullText());
-    items.push(total <= 3000 ? ['ok', 'Lengte past', `${nf.format(total)} van de 3.000 tekens die LinkedIn toestaat.`]
-      : ['bad', 'Te lang voor LinkedIn', `${nf.format(total)} tekens. LinkedIn knipt af bij 3.000.`]);
-    items.push(/https?:\/\/|www\./i.test(text) ? ['warn', 'Link in de post', 'Zet je link in de eerste reactie. Posts met een link krijgen vaak minder bereik.']
-      : ['ok', 'Link staat in de eerste reactie', 'Plak de eerste reactie direct na het plaatsen.']);
+    items.push(total <= 2200 ? ['ok', 'Lengte past', `${nf.format(total)} van de 2.200 tekens die Instagram toestaat.`]
+      : ['bad', 'Te lang voor Instagram', `${nf.format(total)} tekens. Een caption mag maximaal 2.200 tekens zijn.`]);
+    items.push(/https?:\/\/|www\.|\.(nl|com|io)\b/i.test(text)
+      ? ['warn', 'Link in de caption', 'Links in een caption zijn niet klikbaar. Verwijs naar de link in je bio.']
+      : ['ok', 'Verwijst naar de link in je bio', 'Zet je kennismakingslink in je bio of in een linksticker in je story.']);
     const tags = (post.hashtags.match(/#[\p{L}\p{N}_]+/gu) || []).length;
-    items.push(tags >= 3 && tags <= 5 ? ['ok', `${tags} hashtags`, 'Precies goed: relevant zonder spammy te ogen.']
-      : ['warn', tags ? `${tags} hashtags` : 'Geen hashtags', 'Gebruik er 3 tot 5 die je doelgroep echt volgt.']);
-    items.push(post.altText.trim() ? ['ok', 'Alt-tekst klaar', 'Voeg hem toe via "Alternatieve tekst" bij het uploaden.']
-      : ['warn', 'Alt-tekst ontbreekt', 'Klik bij de alt-tekst op "Vul in vanuit afbeelding".']);
-    items.push(flags.imageSaved ? ['ok', 'Afbeelding opgeslagen', 'Upload hem bij je post.']
-      : ['todo', 'Afbeelding nog opslaan', 'Ga naar Afbeelding en klik op Download.']);
-    items.push(['info', 'Beste moment', post.postTime || 'Dinsdag tot en met donderdag tussen 08:00 en 09:30.']);
-    items.push(['info', 'Na het plaatsen', 'Reageer het eerste uur op elke reactie. Dat geeft je post extra bereik.']);
+    items.push(tags > 5 ? ['bad', `${tags} hashtags`, 'Instagram staat maximaal 5 hashtags per post toe. Haal er een paar weg.']
+      : tags >= 3 ? ['ok', `${tags} hashtags`, 'Binnen de grens van 5 die Instagram hanteert.']
+      : ['warn', tags ? `${tags} hashtag${tags === 1 ? '' : 's'}` : 'Geen hashtags', 'Gebruik er 3 tot 5 die je doelgroep echt volgt.']);
+    items.push(post.altText.trim() ? ['ok', 'Alt-tekst klaar', 'Voeg hem toe bij het plaatsen, onder Geavanceerde instellingen.']
+      : ['warn', 'Alt-tekst ontbreekt', 'Klik bij de alt-tekst op "Vul in vanuit beeld".']);
+    const n = totalSlides();
+    items.push(flags.imageSaved ? ['ok', isCarousel() ? `${n} slides opgeslagen` : 'Afbeelding opgeslagen', 'Upload ze in deze volgorde in Instagram.']
+      : ['todo', isCarousel() ? `${n} slides nog opslaan` : 'Afbeelding nog opslaan', 'Ga naar Beeld en klik op Download.']);
+    items.push(['info', 'Beste moment', post.postTime || 'Doordeweeks tussen 11:00 en 13:00 of tussen 19:00 en 21:00.']);
+    items.push(['info', 'Na het plaatsen', 'Deel de post in je story met een linksticker, en reageer het eerste uur op reacties en DM\'s.']);
     const ul = $('checklist'); ul.textContent = '';
     const icons = { ok: '✓', warn: '!', bad: '×', todo: '', info: 'i' };
     for (const [kind, title, sub] of items) {
@@ -799,10 +928,9 @@ details.profile[open]>summary{margin-bottom:16px}
     }
   }
 
-  // ---------- Afbeelding tekenen ----------
+  // ---------- Beeld tekenen ----------
   const canvas = document.createElement('canvas');
   const FONT = '"Plus Jakarta Sans","Helvetica Neue",Arial,sans-serif';
-  const DISPLAY = FONT, BODY = FONT;
   const F_HEAD = (sz) => `800 ${sz}px ${FONT}`;
   const F_SUB = (sz) => `500 ${sz}px ${FONT}`;
   const F_LABEL2 = (sz) => `700 ${sz}px ${FONT}`;
@@ -821,7 +949,7 @@ details.profile[open]>summary{margin-bottom:16px}
 
   function tokenize(text, highlight) {
     const words = String(text || '').trim().split(/\s+/).filter(Boolean);
-    const norm = (w) => w.toLowerCase().replace(/[^\p{L}\p{N}%×+\-]/gu, '');
+    const norm = (w) => w.toLowerCase().replace(/[^\p{L}\p{N}%×+\-€]/gu, '');
     const hw = String(highlight || '').trim().split(/\s+/).map(norm).filter(Boolean);
     const hi = words.map(() => false);
     if (hw.length) {
@@ -886,7 +1014,7 @@ details.profile[open]>summary{margin-bottom:16px}
       ctx.font = o.font(L.size);
       let xx = x;
       for (const it of line.items) {
-        ctx.fillStyle = it.hi ? o.hiColor : o.color;
+        ctx.fillStyle = it.hi && o.hiColor ? o.hiColor : o.color;
         ctx.fillText(it.w, xx, yy);
         xx += it.width + L.space;
       }
@@ -910,9 +1038,9 @@ details.profile[open]>summary{margin-bottom:16px}
     const inner = size * 0.56;
     drawNet(ctx, x + (size - inner) / 2, y + (size - inner) / 2, inner, t.tileFg, inner / 12);
   }
-  function drawWatermark(ctx, W, H, t, s) {
+  function drawWatermark(ctx, W, H, t, s, top) {
     const size = 560 * s;
-    drawNet(ctx, W - size * 0.62, -size * 0.12, size, rgba(t.fg, t.glow ? 0.13 : 0.08), size / 18);
+    drawNet(ctx, W - size * 0.62, top - 84 * s - size * 0.12, size, rgba(t.fg, t.glow ? 0.13 : 0.08), size / 18);
   }
   function drawBackground(ctx, W, H, t, s) {
     if (t.glow) {
@@ -945,7 +1073,6 @@ details.profile[open]>summary{margin-bottom:16px}
   function drawSpaced(ctx, text, x, y, spacing) {
     let xx = x;
     for (const ch of text) { ctx.fillText(ch, xx, y); xx += ctx.measureText(ch).width + spacing; }
-    return xx - spacing - x;
   }
   function measureSpaced(ctx, text, spacing) {
     let w = 0; for (const ch of text) w += ctx.measureText(ch).width + spacing;
@@ -965,9 +1092,8 @@ details.profile[open]>summary{margin-bottom:16px}
     ctx.fillStyle = t.fg; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
     drawSpaced(ctx, text, x + padX + dot + gap, y + h / 2 + 1 * s, sp);
   }
-  function drawFooter(ctx, W, H, t, s, pad) {
+  function drawFooter(ctx, W, by, t, s, pad, right) {
     const p = state.profile;
-    const by = H - pad;
     if (logoImg) {
       const bh = 64 * s, maxW = 340 * s;
       const r = Math.min(maxW / logoImg.width, bh / logoImg.height);
@@ -978,9 +1104,9 @@ details.profile[open]>summary{margin-bottom:16px}
       ctx.font = `800 ${38 * s}px ${FONT}`; ctx.fillStyle = t.fg; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
       ctx.fillText(p.name || 'ScaleLink', pad + m + 16 * s, by - m / 2 + 1 * s);
     }
-    if (state.image.showSite && p.website.trim()) {
-      ctx.font = `600 ${27 * s}px ${FONT}`; ctx.fillStyle = rgba(t.fg, 0.82); ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
-      ctx.fillText(p.website.trim().replace(/^https?:\/\//, '').replace(/\/$/, ''), W - pad, by - 30 * s);
+    if (right) {
+      ctx.font = `700 ${27 * s}px ${FONT}`; ctx.fillStyle = rgba(t.fg, 0.85); ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
+      ctx.fillText(right, W - pad, by - 30 * s);
       ctx.textAlign = 'left';
     }
   }
@@ -999,7 +1125,7 @@ details.profile[open]>summary{margin-bottom:16px}
     const total = hh + (sub ? gap + sh : 0);
     const y = bottom ? box.y + box.h - total : box.y + Math.max(0, (box.h - total) * 0.45);
     drawLines(ctx, head, box.x, y, 1.04, { font: F_HEAD, color: t.fg, hiColor: t.hiText, marker: t.accent });
-    if (sub) drawLines(ctx, sub, box.x, y + hh + gap, 1.3, { font: F_SUB, color: rgba(t.fg, 0.8) });
+    if (sub) drawLines(ctx, sub, box.x, y + hh + gap, 1.3, { font: F_SUB, color: rgba(t.fg, 0.82) });
   }
   function tplCijfer(ctx, box, t, s, im) {
     const stat = fit(ctx, [{ w: im.stat.trim() || '0', hi: false }], F_HEAD, box.w, box.h * 0.5, 400 * s, 80 * s, 1, 1);
@@ -1012,7 +1138,7 @@ details.profile[open]>summary{margin-bottom:16px}
     drawLines(ctx, stat, box.x - stat.size * 0.04, y, 0.98, { font: F_HEAD, color: t.accent });
     y += sh;
     if (lab) { y += g1; y += drawLines(ctx, lab, box.x, y, 1.1, { font: F_LABEL2, color: t.fg }); }
-    if (sub) { y += g2; drawLines(ctx, sub, box.x, y, 1.3, { font: F_SUB, color: rgba(t.fg, 0.8) }); }
+    if (sub) { y += g2; drawLines(ctx, sub, box.x, y, 1.3, { font: F_SUB, color: rgba(t.fg, 0.82) }); }
   }
   function tplLijst(ctx, box, t, s, im) {
     const head = fit(ctx, tokenize(im.headline || ' ', im.highlight), F_HEAD, box.w, box.h * 0.34, 104 * s, 40 * s, 1.04, 3);
@@ -1021,7 +1147,7 @@ details.profile[open]>summary{margin-bottom:16px}
     const gapHead = 46 * s, rowGap = 26 * s;
     const avail = box.h - hh - gapHead;
     let size = 46 * s, ls = [], tot = 0, d = 0;
-    while (true) {
+    for (;;) {
       d = size * 1.45;
       const tw = box.w - d - 26 * s;
       ls = pts.map((p) => layout(ctx, tokenize(p), F_POINT, size, tw));
@@ -1033,15 +1159,14 @@ details.profile[open]>summary{margin-bottom:16px}
     drawLines(ctx, head, box.x, y, 1.04, { font: F_HEAD, color: t.fg, hiColor: t.hiText, marker: t.accent });
     y += hh + gapHead;
     ls.forEach((L, i) => {
-      const rowH = Math.max(blockH(L, 1.25), d);
+      const th = blockH(L, 1.25);
       ctx.fillStyle = t.accent;
       ctx.beginPath(); ctx.arc(box.x + d / 2, y + d / 2, d / 2, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = t.hiText; ctx.font = `800 ${size * 0.78}px ${DISPLAY}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = t.hiText; ctx.font = `800 ${size * 0.78}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(String(i + 1), box.x + d / 2, y + d / 2 + size * 0.03);
-      const th = blockH(L, 1.25);
       const ty = L.lines.length === 1 ? y + (d - size * 1.25) / 2 + size * 0.06 : y;
       drawLines(ctx, L, box.x + d + 26 * s, ty, 1.25, { font: F_POINT, color: t.fg });
-      y += Math.max(rowH, th) + rowGap;
+      y += Math.max(d, th) + rowGap;
     });
   }
   function tplQuote(ctx, box, t, s, im) {
@@ -1049,28 +1174,61 @@ details.profile[open]>summary{margin-bottom:16px}
     const q = fit(ctx, tokenize(im.quote || im.headline || ' ', im.highlight), F_QUOTE, box.w, box.h * 0.66, 84 * s, 32 * s, 1.16, 8);
     const by = im.quoteBy.trim();
     const qh = blockH(q, 1.16), byH = by ? 30 * s * 1.3 + 30 * s : 0, markH = markSize * 0.5;
-    const total = markH + qh + byH;
-    let y = box.y + Math.max(0, (box.h - total) * 0.45);
-    ctx.font = `800 ${markSize}px ${DISPLAY}`; ctx.fillStyle = t.accent; ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+    let y = box.y + Math.max(0, (box.h - (markH + qh + byH)) * 0.45);
+    ctx.font = `800 ${markSize}px ${FONT}`; ctx.fillStyle = t.accent; ctx.textBaseline = 'top'; ctx.textAlign = 'left';
     ctx.fillText('“', box.x - 8 * s, y - markSize * 0.12);
     y += markH;
     y += drawLines(ctx, q, box.x, y, 1.16, { font: F_QUOTE, color: t.fg, hiColor: t.accent });
     if (by) {
-      ctx.font = `600 ${30 * s}px ${BODY}`; ctx.fillStyle = rgba(t.fg, 0.75); ctx.textBaseline = 'top';
+      ctx.font = `600 ${30 * s}px ${FONT}`; ctx.fillStyle = rgba(t.fg, 0.75); ctx.textBaseline = 'top';
       ctx.fillText('— ' + by, box.x, y + 30 * s);
     }
   }
+  function tplSlide(ctx, box, t, s, sl) {
+    const title = fit(ctx, tokenize(sl.title || ' '), F_HEAD, box.w, box.h * 0.46, 104 * s, 40 * s, 1.06, 4);
+    const bodyT = String(sl.body || '').trim();
+    const body = bodyT ? fit(ctx, tokenize(bodyT), F_SUB, box.w, box.h * 0.42, 46 * s, 24 * s, 1.38, 9) : null;
+    const bar = 10 * s, gBar = 40 * s, gap = 34 * s;
+    const th = blockH(title, 1.06), bh = body ? blockH(body, 1.38) : 0;
+    const total = bar + gBar + th + (body ? gap + bh : 0);
+    let y = box.y + Math.max(0, (box.h - total) * 0.42);
+    rr(ctx, box.x, y, 64 * s, bar, bar / 2); ctx.fillStyle = t.accent; ctx.fill();
+    y += bar + gBar;
+    y += drawLines(ctx, title, box.x, y, 1.06, { font: F_HEAD, color: t.fg });
+    if (body) drawLines(ctx, body, box.x, y + gap, 1.38, { font: F_SUB, color: rgba(t.fg, 0.85) });
+  }
+  function tplCta(ctx, box, t, s, titleText, ctaText) {
+    const title = fit(ctx, tokenize(titleText || ' '), F_HEAD, box.w, box.h * 0.5, 124 * s, 44 * s, 1.04, 5);
+    const sub = ctaText ? fit(ctx, tokenize(ctaText), F_SUB, box.w, box.h * 0.2, 42 * s, 24 * s, 1.3, 3) : null;
+    const pillH = 88 * s, pillText = 'Link in bio';
+    const th = blockH(title, 1.04), sh = sub ? blockH(sub, 1.3) : 0;
+    const total = th + (sub ? 30 * s + sh : 0) + 48 * s + pillH;
+    let y = box.y + Math.max(0, (box.h - total) * 0.45);
+    y += drawLines(ctx, title, box.x, y, 1.04, { font: F_HEAD, color: t.fg });
+    if (sub) { y += 30 * s; y += drawLines(ctx, sub, box.x, y, 1.3, { font: F_SUB, color: rgba(t.fg, 0.85) }); }
+    y += 48 * s;
+    ctx.font = `800 ${32 * s}px ${FONT}`;
+    const pw = ctx.measureText(pillText).width + 92 * s;
+    rr(ctx, box.x, y, pw, pillH, pillH / 2); ctx.fillStyle = t.accent; ctx.fill();
+    ctx.fillStyle = t.hiText; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    ctx.fillText(pillText, box.x + pw / 2, y + pillH / 2 + 1 * s);
+    ctx.textAlign = 'left';
+  }
 
-  function renderImage() {
-    const f = FORMATS[state.image.format] || FORMATS.portrait;
+  // Tekent slide `idx` (0 bij één afbeelding) op canvas `c`.
+  function paint(c, idx) {
+    const f = FORMATS[effectiveFormat()] || FORMATS.portrait;
     const W = f.w, H = f.h;
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext('2d');
+    c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
     const t = themeFor(state.image.theme);
     const s = Math.min(W, H) / 1080;
     const pad = Math.round(84 * s);
+    const padTop = f.safeTop || pad, padBottom = f.safeBottom || pad;
     const im = state.image;
-    const usePhoto = im.template === 'foto' && photoImg;
+    const n = totalSlides();
+    const kind = !isCarousel() ? 'single' : idx === 0 ? 'cover' : idx === n - 1 ? 'cta' : 'content';
+    const usePhoto = kind === 'single' && im.template === 'foto' && photoImg;
 
     drawBackground(ctx, W, H, t, s);
     if (usePhoto) {
@@ -1081,25 +1239,76 @@ details.profile[open]>summary{margin-bottom:16px}
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     } else {
       drawGrid(ctx, W, H, t, s);
-      drawWatermark(ctx, W, H, t, s);
+      drawWatermark(ctx, W, H, t, s, padTop);
     }
     const label = im.label.trim().toUpperCase();
-    if (label) drawLabel(ctx, label, pad, pad, t, s);
+    if (label) drawLabel(ctx, label, pad, padTop, t, s);
+    if (kind === 'content') {
+      ctx.font = `700 ${26 * s}px ${FONT}`; ctx.fillStyle = rgba(t.fg, 0.75); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(`${idx + 1}/${n}`, W - pad, padTop + 26 * s);
+      ctx.textAlign = 'left';
+    }
 
-    const top = pad + 172 * s, footerTop = H - pad - 64 * s;
+    const top = padTop + 172 * s, by = H - padBottom, footerTop = by - 64 * s;
     const box = { x: pad, y: top, w: W - pad * 2, h: footerTop - 44 * s - top };
-    if (im.template === 'cijfer') tplCijfer(ctx, box, t, s, im);
+    if (kind === 'cover') tplStatement(ctx, box, t, s, im, false);
+    else if (kind === 'content') tplSlide(ctx, box, t, s, im.slides[idx - 1] || {});
+    else if (kind === 'cta') tplCta(ctx, box, t, s, im.ctaTitle.trim() || 'Benieuwd wat dit voor jou betekent?', state.profile.cta.trim());
+    else if (im.template === 'cijfer') tplCijfer(ctx, box, t, s, im);
     else if (im.template === 'lijst') tplLijst(ctx, box, t, s, im);
     else if (im.template === 'quote') tplQuote(ctx, box, t, s, im);
     else tplStatement(ctx, box, t, s, im, im.template === 'foto');
-    drawFooter(ctx, W, H, t, s, pad);
 
+    const h = handle();
+    const right = (kind === 'cover' || kind === 'content') ? 'Swipe →' : (im.showHandle && h ? '@' + h : '');
+    drawFooter(ctx, W, by, t, s, pad, right);
+  }
+  const toBlob = (c) => new Promise((resolve) => c.toBlob((b) => resolve(b), 'image/png'));
+
+  // Minimale ZIP-schrijver zonder compressie (PNG's zijn al gecomprimeerd).
+  const CRC_TABLE = (() => {
+    const t = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+    return t;
+  })();
+  function crc32(buf) {
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 255] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  async function makeZip(files) {
+    const enc = new TextEncoder();
+    const parts = [], central = [];
+    let offset = 0;
+    for (const f of files) {
+      const data = new Uint8Array(await f.blob.arrayBuffer());
+      const name = enc.encode(f.name), crc = crc32(data);
+      const h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(12, 0x21, true);
+      h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true);
+      h.setUint16(26, name.length, true);
+      parts.push(h.buffer, name, data);
+      const c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(14, 0x21, true);
+      c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true);
+      c.setUint16(28, name.length, true); c.setUint32(42, offset, true);
+      central.push(c.buffer, name);
+      offset += 30 + name.length + data.length;
+    }
+    const size = central.reduce((a, b) => a + b.byteLength, 0);
+    const e = new DataView(new ArrayBuffer(22));
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true);
+    e.setUint32(12, size, true); e.setUint32(16, offset, true);
+    return new Blob([...parts, ...central, e.buffer], { type: 'application/zip' });
+  }
+  function renderImage() {
+    paint(canvas, isCarousel() ? state.ui.slide : 0);
     const seq = ++renderSeq;
     canvas.toBlob((blob) => {
       if (!blob || seq !== renderSeq) return;
       lastBlob = blob;
       const url = URL.createObjectURL(blob);
-      $('liImg').src = url; $('imgThumb').src = url;
+      $('igImg').src = url; $('imgThumb').src = url;
       if (lastUrl) URL.revokeObjectURL(lastUrl);
       lastUrl = url;
     }, 'image/png');
@@ -1141,20 +1350,33 @@ details.profile[open]>summary{margin-bottom:16px}
     const p = state.profile;
     return [
       `Bedrijf: ${p.name}`,
+      handle() ? `Instagram-account: @${handle()}` : '',
       `Wat het bedrijf doet: ${p.what}`,
       `Doelgroep: ${p.audience}`,
       `Sterke punten:\n${lines(p.usps).map((u) => '- ' + u).join('\n')}`,
       lines(p.facts).length ? `Vaste feiten en cijfers:\n${lines(p.facts).map((u) => '- ' + u).join('\n')}` : '',
       `Standaard call-to-action: ${p.cta}`,
-      p.website.trim() ? `Website: ${p.website.trim()}` : '',
       `Vaste hashtags: ${p.hashtags}`,
-      `De post wordt geplaatst door: ${p.sender || p.name}`,
     ].filter(Boolean).join('\n');
   }
   function buildPostPrompt() {
     const b = state.brief, p = state.profile, ty = TYPES[b.type];
-    const en = b.lang === 'en';
-    return `Je bent de vaste LinkedIn-copywriter van ${p.name}. Schrijf één LinkedIn-post die ${p.name} promoot, plus de tekst voor een bijbehorende afbeelding.
+    const en = b.lang === 'en', car = isCarousel();
+    const visual = car
+      ? `CARROUSEL
+Maak een carrousel van 5 tot 7 slides in totaal:
+- De cover gebruikt image.label (1 of 2 woorden), image.headline (maximaal 7 woorden, maakt nieuwsgierig om te swipen), image.highlight en image.sub (maximaal 12 woorden).
+- Daarna 3 tot 5 inhoudsslides in "slides", elk met title (maximaal 6 woorden) en body (maximaal 25 woorden). Eén gedachte per slide; samen vertellen ze één verhaal dat logisch naar de laatste slide toewerkt.
+- De laatste slide is de call-to-action: ctaTitle is een vraag of oproep van maximaal 8 woorden. De app zet de standaard call-to-action en "Link in bio" eronder.
+Laat image.template op "statement" staan.`
+      : `AFBEELDING
+Kies het sjabloon dat het best bij de post past:
+- "statement": headline van maximaal 8 woorden en sub van maximaal 14 woorden.
+- "cijfer": alleen als het merkprofiel of de extra feiten een echt cijfer bevatten dat bij de post past. stat is dat cijfer kort genoteerd (zoals "3×" of "€0,75"), statLabel maximaal 8 woorden, sub mag.
+- "lijst": headline van maximaal 6 woorden en 3 of 4 points van elk maximaal 6 woorden.
+- "quote": alleen als de feiten een citaat bevatten. quote maximaal 20 woorden, quoteBy is van wie het citaat is.
+label is 1 of 2 woorden die het soort post aanduiden, zoals "Instagram-tip" of "Resultaat". Laat "slides" leeg en ctaTitle leeg.`;
+    return `Je bent de vaste Instagram-copywriter van ${p.name}. Schrijf één Instagram-post die ${p.name} promoot: de caption en de teksten voor ${car ? 'een carrousel' : 'één afbeelding'}.
 
 MERKPROFIEL
 ${profileBlock()}
@@ -1164,56 +1386,51 @@ Onderwerp: ${b.topic.trim() || 'kies zelf een sterk onderwerp dat past bij het m
 Soort post: ${ty.label}: ${ty.brief}
 Doel: ${GOALS[b.goal].brief}
 Toon: ${TONES[b.tone].brief}
-Lengte: ongeveer ${LENGTHS[b.length].words} woorden
-Emoji: ${b.emoji ? 'hooguit 2 of 3, alleen waar ze iets toevoegen' : 'geen emoji'}
-Taal: ${en ? 'Engels. Schrijf alle tekst in het Engels, ook de afbeelding.' : 'Nederlands. Schrijf alle tekst in het Nederlands, ook de afbeelding.'}
+Lengte van de caption: ongeveer ${LENGTHS[b.length].words} woorden
+Emoji: ${b.emoji ? 'een paar, alleen waar ze iets toevoegen' : 'geen emoji'}
+Taal: ${en ? 'Engels. Schrijf alle tekst in het Engels, ook het beeld.' : 'Nederlands. Schrijf alle tekst in het Nederlands, ook het beeld.'}
 Extra feiten voor deze post: ${b.details.trim() || 'geen extra feiten aangeleverd'}
 
-SCHRIJFREGELS
-- De eerste regel is de hook: maximaal 120 tekens, maakt nieuwsgierig en staat op zichzelf. Dit is het enige wat mensen zien vóór "meer weergeven".
-- Korte alinea's van één of twee zinnen, met een witregel ertussen. Een opsomming mag.
+SCHRIJFREGELS VOOR DE CAPTION
+- De eerste regel is de hook: maximaal 110 tekens en maakt nieuwsgierig. Instagram toont in de feed alleen het begin, vóór "meer".
+- Korte alinea's van één of twee zinnen, met een witregel ertussen. Een korte opsomming mag.
 - Geen markdown: geen sterretjes, geen #-koppen.
 - Verzin geen cijfers, percentages, prijzen, klantnamen, citaten of resultaten. Gebruik alleen wat in het merkprofiel of bij de extra feiten staat.
 - Beloof niets wat het merkprofiel niet zegt.
-- Geen URL in de post. Verwijs naar de link in de eerste reactie.
-- Zet geen hashtags in de posttekst; die komen apart.
-- Eindig met een vraag aan de lezer of met de call-to-action.
+- Links in een caption zijn niet klikbaar. Zet geen URL in de caption; verwijs voor de call-to-action naar de link in de bio, of nodig uit om een DM te sturen.
+- Zet geen hashtags in de caption; die komen apart.
+- Eindig met de call-to-action of met een vraag aan de lezer.
 - Schrijf de bedrijfsnaam altijd precies zo: ${p.name}.
-- Schrijf zoals een ervaren ondernemer praat. Vermijd clichés als "in de snel veranderende wereld van vandaag", "game changer", "laten we eerlijk zijn" en "de sleutel tot succes".
+- Schrijf zoals een ondernemer praat. Vermijd clichés als "in de snel veranderende wereld van vandaag", "game changer", "laten we eerlijk zijn" en "de sleutel tot succes".
 
-AFBEELDING
-Kies het sjabloon dat het best bij de post past:
-- "statement": headline van maximaal 8 woorden en sub van maximaal 14 woorden.
-- "cijfer": alleen als het merkprofiel of de extra feiten een echt cijfer bevatten dat bij de post past. stat is dat cijfer kort genoteerd (zoals "3×" of "42%"), statLabel maximaal 8 woorden, sub mag.
-- "lijst": headline van maximaal 6 woorden en 3 of 4 points van elk maximaal 6 woorden.
-- "quote": alleen als de feiten een citaat bevatten. quote maximaal 20 woorden, quoteBy is van wie het citaat is.
-label is 1 of 2 woorden die het soort post aanduiden, zoals "LinkedIn-tip" of "Resultaat". highlight is één woord of een korte woordgroep die letterlijk in headline (of in quote) staat en het accent krijgt.
+${visual}
+highlight is één woord of een korte woordgroep die letterlijk in headline (of in quote) staat en het accent krijgt.
 
 Antwoord met alleen dit JSON-object, zonder uitleg:
-{"hooks":["drie alternatieve hooks, elk maximaal 120 tekens"],"post":"de volledige posttekst, beginnend met je beste hook; regeleinden als \\n","hashtags":["3 tot 5 hashtags die met # beginnen; gebruik de vaste hashtags waar ze passen"],"firstComment":"tekst voor de eerste reactie, met [link] op de plek van de link","image":{"template":"statement","label":"","headline":"","highlight":"","sub":"","stat":"","statLabel":"","points":[],"quote":"","quoteBy":""},"altText":"beschrijving van de afbeelding voor screenreaders, maximaal 2 zinnen","postTime":"beste moment om te posten voor deze doelgroep, met één korte zin waarom"}`;
+{"hooks":["drie alternatieve hooks, elk maximaal 110 tekens"],"post":"de volledige caption, beginnend met je beste hook; regeleinden als \\n","hashtags":["3 tot 5 hashtags die met # beginnen; Instagram staat er maximaal 5 toe; gebruik de vaste hashtags waar ze passen"],"storyText":"korte tekst van maximaal 12 woorden om de post in de story te delen","image":{"template":"statement","label":"","headline":"","highlight":"","sub":"","stat":"","statLabel":"","points":[],"quote":"","quoteBy":""},"slides":[{"title":"","body":""}],"ctaTitle":"","altText":"beschrijving van het beeld voor screenreaders, maximaal 3 zinnen","postTime":"beste moment om te posten voor deze doelgroep, met één korte zin waarom"}`;
   }
   const REWRITES = {
-    kort: 'Maak de post ongeveer 40% korter. Behoud de hook, de kern en de call-to-action.',
-    hook: 'Herschrijf alleen de eerste regel tot een sterkere hook van maximaal 120 tekens die nieuwsgierig maakt. Laat de rest van de post precies zoals hij is.',
-    persoonlijk: 'Maak de post persoonlijker: ik-vorm, een herkenbaar moment uit de praktijk, een warmere toon. Verzin geen feiten.',
-    verkoop: 'Maak de call-to-action aan het einde duidelijker en concreter, zonder opdringerig te worden. Laat de rest grotendeels zoals hij is.',
-    vertaalEn: 'Vertaal de post naar natuurlijk, idiomatisch Engels voor een zakelijk publiek. Behoud opmaak en witregels.',
-    vertaalNl: 'Vertaal de post naar natuurlijk, idiomatisch Nederlands voor een zakelijk publiek. Behoud opmaak en witregels.',
+    kort: 'Maak de caption ongeveer 40% korter. Behoud de hook, de kern en de call-to-action.',
+    hook: 'Herschrijf alleen de eerste regel tot een sterkere hook van maximaal 110 tekens die nieuwsgierig maakt. Laat de rest van de caption precies zoals hij is.',
+    persoonlijk: 'Maak de caption persoonlijker: ik- of wij-vorm, een herkenbaar moment uit de praktijk, een warmere toon. Verzin geen feiten.',
+    verkoop: 'Maak de call-to-action aan het einde duidelijker en concreter, met een verwijzing naar de link in de bio of een uitnodiging om een DM te sturen. Laat de rest grotendeels zoals hij is.',
+    vertaalEn: 'Vertaal de caption naar natuurlijk, idiomatisch Engels voor Instagram. Behoud opmaak, witregels en emoji.',
+    vertaalNl: 'Vertaal de caption naar natuurlijk, idiomatisch Nederlands voor Instagram. Behoud opmaak, witregels en emoji.',
   };
   function buildRewritePrompt(kind) {
     const p = state.profile;
-    return `Je redigeert een LinkedIn-post voor ${p.name}. Over het bedrijf: ${p.what}
+    return `Je redigeert een Instagram-caption voor ${p.name}. Over het bedrijf: ${p.what}
 
 Opdracht: ${REWRITES[kind]}
 
-Regels: geen markdown, geen hashtags, geen URL's, verzin geen nieuwe feiten of cijfers, korte alinea's met een witregel ertussen. Antwoord met alleen de nieuwe posttekst, zonder inleiding, toelichting of aanhalingstekens.
+Regels: geen markdown, geen hashtags, geen URL's, verzin geen nieuwe feiten of cijfers, korte alinea's met een witregel ertussen, schrijf de bedrijfsnaam precies zo: ${p.name}. Antwoord met alleen de nieuwe caption, zonder inleiding, toelichting of aanhalingstekens.
 
-POST:
+CAPTION:
 ${state.post.text}`;
   }
   function buildIdeasPrompt() {
     const b = state.brief, p = state.profile;
-    return `Bedenk 6 sterke, concrete LinkedIn-postideeën om ${p.name} te promoten. Wissel de soorten posts af en maak elk idee specifiek genoeg om meteen over te schrijven.
+    return `Bedenk 6 sterke, concrete ideeën voor Instagram-posts en carrousels om ${p.name} te promoten. Wissel de soorten posts af en maak elk idee specifiek genoeg om meteen over te schrijven.
 
 MERKPROFIEL
 ${profileBlock()}
@@ -1230,12 +1447,12 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
     if (!d || typeof d !== 'object' || !str(d.post)) throw { code: 'invalid_json' };
     const post = state.post, img = state.image;
     pushUndo();
-    post.text = str(d.post, 3500).replace(/\r\n/g, '\n');
+    post.text = str(d.post, 2600).replace(/\r\n/g, '\n');
     post.hooks = Array.isArray(d.hooks) ? d.hooks.map((h) => str(h, 220)).filter(Boolean).slice(0, 4) : [];
     const tags = Array.isArray(d.hashtags) ? d.hashtags : String(d.hashtags || '').split(/\s+/);
-    post.hashtags = tags.map((x) => '#' + String(x).trim().replace(/^#+/, '').replace(/\s+/g, '')).filter((x) => x.length > 1).slice(0, 6).join(' ');
-    post.firstComment = str(d.firstComment, 600) || `${state.profile.cta}: [link]`;
-    post.altText = str(d.altText, 400);
+    post.hashtags = tags.map((x) => '#' + String(x).trim().replace(/^#+/, '').replace(/\s+/g, '')).filter((x) => x.length > 1).slice(0, 5).join(' ');
+    post.storyText = str(d.storyText, 200);
+    post.altText = str(d.altText, 500);
     post.postTime = str(d.postTime, 260);
     post.example = false;
     const im = (d.image && typeof d.image === 'object') ? d.image : {};
@@ -1247,36 +1464,48 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
     if (tpl === 'lijst' && points.length < 2) tpl = 'statement';
     if (img.template === 'foto' && photoImg) tpl = 'foto';
     Object.assign(img, {
-      template: tpl, label: str(im.label, 28), headline: str(im.headline, 140), highlight: str(im.highlight, 70),
-      sub: str(im.sub, 180), stat: str(im.stat, 14), statLabel: str(im.statLabel, 90), points: points.join('\n'),
-      quote: str(im.quote, 220), quoteBy: str(im.quoteBy, 70),
+      label: str(im.label, 28), headline: str(im.headline, 140), highlight: str(im.highlight, 70), sub: str(im.sub, 180),
     });
+    if (!isCarousel()) {
+      Object.assign(img, {
+        template: tpl, stat: str(im.stat, 14), statLabel: str(im.statLabel, 90), points: points.join('\n'),
+        quote: str(im.quote, 220), quoteBy: str(im.quoteBy, 70),
+      });
+    } else {
+      const slides = Array.isArray(d.slides)
+        ? d.slides.filter((x) => x && typeof x === 'object').map((x) => ({ title: str(x.title, 90), body: str(x.body, 260) }))
+          .filter((x) => x.title || x.body).slice(0, MAX_SLIDES)
+        : [];
+      if (slides.length) img.slides = slides;
+      img.ctaTitle = str(d.ctaTitle, 90) || img.ctaTitle;
+    }
     if (!img.headline) img.headline = (post.text.split('\n')[0] || '').slice(0, 90);
     if (!post.altText) post.altText = altFromImage();
   }
 
   const FALLBACK = {
-    tip: '{topic}: zo pak je het aan.\n\nBij {name} zien we het steeds opnieuw. Wie dit goed doet, valt op. Wie het overslaat, blijft onzichtbaar.\n\nDrie dingen die werken:\n\n1. [Eerste tip in één zin]\n\n2. [Tweede tip in één zin]\n\n3. [Derde tip in één zin]\n\n{details}\n\nWelke van de drie pak jij als eerste op?\n\n{cta}',
-    mythe: '"{topic}". Dat hoor ik vaak. Het klopt niet.\n\n[Waarom deze mythe zo hardnekkig is, in één zin.]\n\nWat wel klopt: [het feit, in één zin].\n\n{details}\n\nWelke LinkedIn-mythe kom jij het vaakst tegen?\n\n{cta}',
-    case: 'Van [startsituatie] naar [resultaat]. Zo pakten we het aan: {topicLow}.\n\nDe uitdaging: [wat er speelde bij de klant].\n\nWat we deden:\n→ [stap 1]\n→ [stap 2]\n→ [stap 3]\n\nHet resultaat: {detailsOr}\n\nHerken je dezelfde uitdaging?\n\n{cta}',
-    verhaal: 'Een kijkje achter de schermen bij {name}: {topicLow}.\n\n[Wat er gebeurde, in twee zinnen.]\n\nWat ik ervan leerde: [de les in één zin].\n\n{details}\n\nHerkenbaar?\n\n{cta}',
-    aanbod: '{topic}.\n\n[Het probleem dat je klant herkent, in één zin.]\n\nDaar helpt {name} bij. Concreet:\n\n{usps}\n\n{details}\n\nVoor wie? {audience}\n\n{cta}',
-    stelling: '{topic}.\n\nDaar krijg ik vast tegenwind op. Toch blijf ik erbij.\n\n[Je belangrijkste argument.]\n\n[Een voorbeeld uit de praktijk.]\n\n{details}\n\nEens of oneens? Ik ben benieuwd.\n\n{cta}',
-    nieuws: 'Nieuws bij {name}: {topicLow}.\n\n[Wat er nieuw is, in één zin.]\n\nWat het voor jou betekent: [het voordeel voor de klant].\n\n{details}\n\n{cta}',
+    tip: '{topic}: zo pak je het aan.\n\nBij {name} zien we het steeds opnieuw. Wie dit goed doet, valt op. Wie het overslaat, blijft onzichtbaar.\n\nDrie dingen die werken:\n1. [Eerste tip in één zin]\n2. [Tweede tip in één zin]\n3. [Derde tip in één zin]\n\n{details}\n\nWelke pak jij als eerste op?\n\n{cta}',
+    mythe: '"{topic}". Dat horen we vaak. Het klopt niet.\n\n[Waarom deze mythe zo hardnekkig is, in één zin.]\n\nWat wel klopt: [het feit, in één zin].\n\n{details}\n\nWelke Instagram-mythe kom jij het vaakst tegen?\n\n{cta}',
+    case: 'Van [startsituatie] naar [resultaat]. Zo pakten we het aan: {topicLow}.\n\nDe uitdaging: [wat er speelde bij de klant].\n\nWat we deden:\n→ [stap 1]\n→ [stap 2]\n→ [stap 3]\n\nHet resultaat: {detailsOr}\n\nHerken je dit?\n\n{cta}',
+    verhaal: 'Een kijkje achter de schermen bij {name}: {topicLow}.\n\n[Wat er gebeurt, in twee zinnen.]\n\nWaarom we het zo doen: [de reden in één zin].\n\n{details}\n\n{cta}',
+    aanbod: '{topic}.\n\n[Het probleem dat je klant herkent, in één zin.]\n\nDaar helpt {name} bij:\n{usps}\n\n{details}\n\nVoor wie? {audience}\n\n{cta}',
+    stelling: '{topic}.\n\nDaar krijgen we vast reacties op. Toch blijven we erbij.\n\n[Je belangrijkste argument.]\n\n[Een voorbeeld uit de praktijk.]\n\n{details}\n\nEens of oneens? Laat het weten in de reacties.\n\n{cta}',
+    nieuws: 'Nieuw bij {name}: {topicLow}.\n\n[Wat er nieuw is, in één zin.]\n\nWat het voor jou betekent: [het voordeel voor de klant].\n\n{details}\n\n{cta}',
   };
-  function lowerFirst(t) { return /^[A-Z][a-zà-ÿ]/.test(t) && !/^LinkedIn/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t; }
+  function lowerFirst(t) { return /^[A-Z][a-zà-ÿ]/.test(t) && !/^(Instagram|ScaleLink)/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t; }
+  const upperFirst = (t) => t.charAt(0).toUpperCase() + t.slice(1);
   function applyTemplate() {
     const b = state.brief, p = state.profile, post = state.post, img = state.image;
-    const topic = (b.topic.trim() || 'Gerichte groei van je LinkedIn-netwerk').replace(/[.?!]+$/, '');
+    const topic = (b.topic.trim() || 'Gerichte groei van je Instagram').replace(/[.?!]+$/, '');
     const cta = (p.cta || '').replace(/[.!]+$/, '');
-    const ctaLine = cta ? `${b.emoji ? '👉 ' : ''}${cta}. De link staat in de eerste reactie.` : '';
+    const ctaLine = cta ? `${b.emoji ? '👉 ' : ''}${cta} via de link in onze bio.` : '';
     const details = b.details.trim();
     const text = FALLBACK[b.type]
-      .replace(/\{topic\}/g, topic.charAt(0).toUpperCase() + topic.slice(1))
+      .replace(/\{topic\}/g, upperFirst(topic))
       .replace(/\{topicLow\}/g, lowerFirst(topic))
       .replace(/\{name\}/g, p.name || 'ScaleLink')
       .replace(/\{audience\}/g, p.audience.trim())
-      .replace(/\{usps\}/g, lines(p.usps).map((u) => '✓ ' + u).join('\n'))
+      .replace(/\{usps\}/g, lines(p.usps).slice(0, 4).map((u) => '✓ ' + u).join('\n'))
       .replace(/\{detailsOr\}/g, details || '[concreet resultaat met cijfers]')
       .replace(/\{details\}/g, details)
       .replace(/\{cta\}/g, ctaLine)
@@ -1286,27 +1515,43 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
     const low = lowerFirst(topic);
     post.hooks = [
       `Iedereen heeft het over ${low}. Weinig bedrijven doen er echt iets mee.`,
-      `${topic.charAt(0).toUpperCase() + topic.slice(1)}? Hier begin je.`,
-      `Wat ik eerder had willen weten over ${low}.`,
+      `${upperFirst(topic)}? Hier begin je.`,
+      `Wat we eerder hadden willen weten over ${low}.`,
     ];
-    post.hashtags = p.hashtags.trim();
-    post.firstComment = cta ? `${cta}: [link]` : '[link]';
+    post.hashtags = (p.hashtags.match(/#[\p{L}\p{N}_]+/gu) || []).slice(0, 5).join(' ');
+    post.storyText = `Nieuwe post: ${low}${b.emoji ? ' 👀' : ''}`;
     post.postTime = '';
     post.example = false;
-    const num = details.match(/\d+(?:[.,]\d+)?\s?(?:%|×|x\b)?/);
-    let tpl = b.type === 'tip' ? 'lijst' : (b.type === 'case' && num) ? 'cijfer' : 'statement';
-    if (img.template === 'foto' && photoImg) tpl = 'foto';
-    Object.assign(img, {
-      template: tpl, label: TYPES[b.type].tag, headline: topic.charAt(0).toUpperCase() + topic.slice(1), highlight: '',
-      sub: cta, stat: num ? num[0].replace(/\s/g, '').replace(/x$/, '×') : '', statLabel: num ? topic : '',
-      points: tpl === 'lijst' ? '[Eerste tip]\n[Tweede tip]\n[Derde tip]' : img.points,
-    });
-    if (tpl === 'lijst') img.headline = img.headline.split(/\s+/).slice(0, 8).join(' ');
+    img.label = TYPES[b.type].tag;
+    img.headline = upperFirst(topic);
+    img.highlight = '';
+    img.sub = cta;
+    if (isCarousel()) {
+      img.slides = [
+        { title: '[Eerste punt]', body: '[Uitleg in één of twee zinnen.]' },
+        { title: '[Tweede punt]', body: '[Uitleg in één of twee zinnen.]' },
+        { title: '[Derde punt]', body: '[Uitleg in één of twee zinnen.]' },
+      ];
+      img.ctaTitle = 'Benieuwd wat dit voor jou betekent?';
+      img.sub = '';
+    } else {
+      const num = details.match(/€?\d+(?:[.,]\d+)?\s?(?:%|×|x\b)?/);
+      let tpl = b.type === 'tip' ? 'lijst' : (b.type === 'case' && num) ? 'cijfer' : 'statement';
+      if (img.template === 'foto' && photoImg) tpl = 'foto';
+      img.template = tpl;
+      img.stat = num ? num[0].replace(/\s/g, '').replace(/x$/, '×') : '';
+      img.statLabel = num ? topic : '';
+      if (tpl === 'lijst') { img.points = '[Eerste tip]\n[Tweede tip]\n[Derde tip]'; img.headline = img.headline.split(/\s+/).slice(0, 8).join(' '); }
+    }
     post.altText = altFromImage();
   }
   function altFromImage() {
     const im = state.image;
     const name = state.profile.name || 'ScaleLink';
+    if (isCarousel()) {
+      const titles = im.slides.map((x) => x.title.trim()).filter(Boolean).join('; ');
+      return `Carrousel van ${totalSlides()} slides van ${name}. Cover: "${im.headline}".${titles ? ' Daarna: ' + titles + '.' : ''} Laatste slide: ${im.ctaTitle || state.profile.cta}`.replace(/\.\./g, '.');
+    }
     const kind = im.template === 'foto' && photoImg ? 'Foto' : ((THEMES[im.theme] && THEMES[im.theme].alt) || 'Gekleurde') + ' afbeelding';
     let core;
     if (im.template === 'cijfer') core = `het cijfer ${im.stat}${im.statLabel ? ' en de tekst "' + im.statLabel + '"' : ''}`;
@@ -1324,11 +1569,11 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
     ['btnGenerate', 'btnIdeas', 'btnUndo'].forEach((id) => { $(id).disabled = on || (id === 'btnUndo' && undoText == null); });
     document.querySelectorAll('[data-rewrite]').forEach((b) => { b.disabled = on; });
     $('btnStop').hidden = !on;
-    $('liCard').classList.toggle('is-busy', on);
+    $('igCard').classList.toggle('is-busy', on);
     $('postText').readOnly = on;
     const gb = $('btnGenerate');
-    if (on) { gb.innerHTML = '<span class="busy-dot" aria-hidden="true"></span>Bezig…'; }
-    else { gb.textContent = state.post.example ? 'Maak mijn post' : 'Maak een nieuwe versie'; }
+    if (on) gb.innerHTML = '<span class="busy-dot" aria-hidden="true"></span>Bezig…';
+    else gb.textContent = state.post.example ? 'Maak mijn post' : 'Maak een nieuwe versie';
     if (msg != null) setNote('genStatus', msg);
   }
   async function whenSampleKnown() {
@@ -1346,9 +1591,8 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
       applyTemplate();
       setBusy(false);
       afterGenerate();
-      setNote('genStatus', state.brief.lang === 'en'
-        ? 'Sjabloon klaar (de sjablonen zijn Nederlandstalig). Vul de [haakjes] zelf in. Open deze pagina in Claude om de tekst te laten schrijven.'
-        : 'Sjabloon klaar. Vul de [haakjes] zelf in. Open deze pagina in Claude om de tekst te laten schrijven.', 'good');
+      setNote('genStatus', (state.brief.lang === 'en' ? 'Sjabloon klaar (de sjablonen zijn Nederlandstalig). ' : 'Sjabloon klaar. ')
+        + 'Vul de [haakjes] zelf in. Open deze pagina in Claude om de teksten te laten schrijven.', 'good');
       return;
     }
     ctl = new AbortController();
@@ -1361,7 +1605,7 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
       applyAI(data);
       setBusy(false);
       afterGenerate();
-      setNote('genStatus', 'Klaar. Lees hem na, pas aan wat je wilt en kopieer hem.', 'good');
+      setNote('genStatus', 'Klaar. Lees alles na, pas aan wat je wilt en kopieer het.', 'good');
     } catch (e) {
       setBusy(false);
       if (e && e.code === 'cancelled') { setNote('genStatus', 'Gestopt.'); return; }
@@ -1370,8 +1614,8 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
     } finally { ctl = null; }
   }
   function afterGenerate() {
-    flags.expanded = false; flags.imageSaved = false;
-    fillForm(); renderImageFields(); renderHooks(); renderPreview(); renderCounts(); renderChecklist(); scheduleImage(); save();
+    flags.expanded = false; flags.imageSaved = false; state.ui.slide = 0;
+    fillForm(); renderImageFields(); renderSlidesEditor(); renderHooks(); renderPreview(); renderCounts(); renderChecklist(); scheduleImage(); save();
     $('btnGenerate').textContent = 'Maak een nieuwe versie';
     $('btnUndo').disabled = undoText == null;
   }
@@ -1383,7 +1627,7 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
     const before = state.post.text;
     ctl = new AbortController();
     setBusy(true, null);
-    setNote('textStatus', 'Claude herschrijft je post…');
+    setNote('textStatus', 'Claude herschrijft je caption…');
     const ta = $('postText');
     try {
       const res = await sample(buildRewritePrompt(kind), {
@@ -1401,11 +1645,11 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
       }
       setBusy(false);
       afterTextChange();
-      setNote('textStatus', res.truncated ? 'Het antwoord is afgekapt. Controleer het einde van je post.' : 'Herschreven. Niet goed? Klik op Ongedaan maken.', res.truncated ? 'error' : 'good');
+      setNote('textStatus', res.truncated ? 'Het antwoord is afgekapt. Controleer het einde van je caption.' : 'Herschreven. Niet goed? Klik op Ongedaan maken.', res.truncated ? 'error' : 'good');
     } catch (e) {
       ta.value = before;
       setBusy(false);
-      if (e && e.code === 'cancelled') { setNote('textStatus', 'Gestopt. Je post is niet veranderd.'); return; }
+      if (e && e.code === 'cancelled') { setNote('textStatus', 'Gestopt. Je caption is niet veranderd.'); return; }
       if (e && AI_OFF_CODES.includes(e.code)) { disableAi(); setNote('textStatus', aiErrorCopy(e), 'error'); return; }
       setNote('textStatus', aiErrorCopy(e), 'error');
     } finally { ctl = null; }
@@ -1473,7 +1717,7 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
     const a = ta.selectionStart, b = ta.selectionEnd;
     if (a === b) { setNote('textStatus', 'Selecteer eerst de woorden die je vet wilt maken.', 'error'); return; }
     const sel = ta.value.slice(a, b);
-    const isBold = /[\u{1D5D4}-\u{1D5FF}\u{1D600}-\u{1D607}\u{1D7EC}-\u{1D7F5}]/u.test(sel);
+    const isBold = /[\u{1D5D4}-\u{1D607}\u{1D7EC}-\u{1D7F5}]/u.test(sel);
     const conv = [...sel].map((c) => {
       const n = c.codePointAt(0);
       if (!isBold) {
@@ -1494,45 +1738,70 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
     renderPreview(); renderCounts(); renderChecklist(); save();
     setNote('textStatus', isBold ? 'Vet weggehaald.' : 'Vetgedrukt. Gebruik het spaarzaam: schermlezers lezen deze letters slecht voor.', 'good');
   }
-  function imgFileName() {
-    const base = state.image.template === 'cijfer' ? state.image.stat + ' ' + state.image.statLabel : (state.image.headline || state.image.quote || state.brief.topic);
-    return `${slug(state.profile.name)}-${slug(base)}-${state.image.format}.png`;
+  function baseName() {
+    const im = state.image;
+    const base = !isCarousel() && im.template === 'cijfer' ? im.stat + ' ' + im.statLabel : (im.headline || im.quote || state.brief.topic);
+    return `${slug(state.profile.name)}-${slug(base)}`;
   }
-  function freshBlob() {
-    return new Promise((resolve) => {
-      clearTimeout(renderTimer); renderImage();
-      canvas.toBlob((b) => resolve(b), 'image/png');
-    });
-  }
-  async function download() {
-    setNote('imgStatus', 'Afbeelding klaarzetten…');
-    const blob = await freshBlob();
+  async function saveFile(filename, blob) {
     const dl = downloadsApi || await downloadsReady;
-    if (!dl || !blob) {
-      setNote('imgStatus', 'Downloaden kan in deze weergave niet. Klik met rechts op de afbeelding in het voorbeeld (of houd hem ingedrukt) en kies "Afbeelding opslaan".', 'error');
-      return;
+    if (!dl) {
+      setNote('imgStatus', 'Downloaden kan in deze weergave niet. Houd de afbeelding in het voorbeeld ingedrukt (of klik met rechts) en kies "Afbeelding opslaan".', 'error');
+      return false;
     }
     try {
-      await dl.save({ filename: imgFileName(), data: blob });
-      flags.imageSaved = true; renderChecklist();
-      setNote('imgStatus', 'Afbeelding opgeslagen.', 'good');
+      await dl.save({ filename, data: blob });
+      return true;
     } catch (e) {
       const c = e && e.code;
       if (c === 'declined') setNote('imgStatus', 'Opslaan geannuleerd.');
       else if (c === 'rate_limited') setNote('imgStatus', 'Er staat al een opslagvenster open. Rond dat eerst af.', 'error');
-      else setNote('imgStatus', 'Opslaan lukte niet. Klik met rechts op de afbeelding in het voorbeeld en kies "Afbeelding opslaan".', 'error');
+      else setNote('imgStatus', 'Opslaan lukte niet. Houd de afbeelding in het voorbeeld ingedrukt (of klik met rechts) en kies "Afbeelding opslaan".', 'error');
+      return false;
+    }
+  }
+  async function currentBlob() {
+    clearTimeout(renderTimer);
+    const c = document.createElement('canvas');
+    paint(c, isCarousel() ? state.ui.slide : 0);
+    return toBlob(c);
+  }
+  async function download() {
+    if (!isCarousel()) return downloadOne();
+    const n = totalSlides();
+    setNote('imgStatus', `${n} slides klaarzetten…`);
+    const files = [];
+    const c = document.createElement('canvas');
+    for (let i = 0; i < n; i++) {
+      paint(c, i);
+      const kind = i === 0 ? 'cover' : i === n - 1 ? 'afsluiter' : 'slide';
+      files.push({ name: `${String(i + 1).padStart(2, '0')}-${kind}.png`, blob: await toBlob(c) });
+    }
+    const zipBlob = await makeZip(files);
+    if (await saveFile(`${baseName()}-carrousel.zip`, zipBlob)) {
+      flags.imageSaved = true; renderChecklist();
+      setNote('imgStatus', `${n} slides opgeslagen als ZIP. Upload ze in Instagram in deze volgorde.`, 'good');
+    }
+  }
+  async function downloadOne() {
+    setNote('imgStatus', 'Afbeelding klaarzetten…');
+    const blob = await currentBlob();
+    const suffix = isCarousel() ? `-slide-${state.ui.slide + 1}` : '';
+    if (await saveFile(`${baseName()}${suffix}-${effectiveFormat()}.png`, blob)) {
+      if (!isCarousel()) { flags.imageSaved = true; renderChecklist(); }
+      setNote('imgStatus', isCarousel() ? `Slide ${state.ui.slide + 1} opgeslagen.` : 'Afbeelding opgeslagen.', 'good');
     }
   }
   function copyImage() {
     try {
       if (!window.ClipboardItem || !navigator.clipboard || !navigator.clipboard.write) throw new Error('nope');
-      const item = new ClipboardItem({ 'image/png': lastBlob ? Promise.resolve(lastBlob) : freshBlob() });
+      const item = new ClipboardItem({ 'image/png': lastBlob ? Promise.resolve(lastBlob) : currentBlob() });
       navigator.clipboard.write([item]).then(() => {
-        flags.imageSaved = true; renderChecklist();
-        setNote('imgStatus', 'Afbeelding gekopieerd. Plak hem direct in je LinkedIn-post.', 'good');
-      }, () => setNote('imgStatus', 'Kopiëren van afbeeldingen lukt hier niet. Gebruik Download afbeelding.', 'error'));
+        if (!isCarousel()) { flags.imageSaved = true; renderChecklist(); }
+        setNote('imgStatus', 'Afbeelding gekopieerd.', 'good');
+      }, () => setNote('imgStatus', 'Kopiëren van afbeeldingen lukt hier niet. Gebruik Download.', 'error'));
     } catch (e) {
-      setNote('imgStatus', 'Kopiëren van afbeeldingen lukt hier niet. Gebruik Download afbeelding.', 'error');
+      setNote('imgStatus', 'Kopiëren van afbeeldingen lukt hier niet. Gebruik Download.', 'error');
     }
   }
   function selectTab(tab) {
@@ -1548,6 +1817,8 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
   // ---------- Start ----------
   let resetArmed = 0;
   function init() {
+    buildRadios('modeRow', 'mode', 'image.mode', MODES, 'seg');
+    buildRadios('modeRow2', 'mode2', 'image.mode', MODES, 'seg');
     buildRadios('typeRow', 'type', 'brief.type', TYPES, 'chip');
     buildRadios('goalRow', 'goal', 'brief.goal', GOALS, 'chip');
     buildRadios('toneRow', 'tone', 'brief.tone', TONES, 'chip');
@@ -1562,7 +1833,7 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
     $('btnGenerate').addEventListener('click', generate);
     $('btnIdeas').addEventListener('click', ideas);
     $('btnStop').addEventListener('click', () => { if (ctl) ctl.abort(); });
-    $('btnOpenProfile').addEventListener('click', () => { const d = $('profilePanel'); d.open = true; $('pWhat').focus(); });
+    $('btnOpenProfile').addEventListener('click', () => { const d = $('profilePanel'); d.open = true; $('pHandle').focus(); });
     document.querySelectorAll('[data-rewrite]').forEach((b) => b.addEventListener('click', () => rewrite(b.dataset.rewrite)));
     $('btnUndo').addEventListener('click', () => {
       if (undoText == null) return;
@@ -1571,12 +1842,21 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
       setNote('textStatus', 'Vorige versie teruggezet. Klik nog eens om terug te gaan.');
     });
     $('btnBold').addEventListener('click', boldToggle);
-    $('btnCopyAll').addEventListener('click', () => copyText(fullText(), 'textStatus', 'Post en hashtags gekopieerd. Plak ze in LinkedIn.', $('postText')));
-    $('btnCopyComment').addEventListener('click', () => copyText(state.post.firstComment, 'textStatus', 'Eerste reactie gekopieerd. Vervang [link] door je link.', $('firstComment')));
+    $('btnCopyAll').addEventListener('click', () => copyText(fullText(), 'textStatus', 'Caption en hashtags gekopieerd. Plak ze in Instagram.', $('postText')));
+    $('btnCopyStory').addEventListener('click', () => copyText(state.post.storyText, 'textStatus', 'Storytekst gekopieerd.', $('storyText')));
     $('btnCopyAlt').addEventListener('click', () => copyText(state.post.altText, 'textStatus', 'Alt-tekst gekopieerd.', $('altText')));
     $('btnAltFromImage').addEventListener('click', () => { state.post.altText = altFromImage(); fillForm(); renderPreview(); renderChecklist(); save(); });
     $('btnDownload').addEventListener('click', download);
+    $('btnDownloadOne').addEventListener('click', downloadOne);
     $('btnCopyImg').addEventListener('click', copyImage);
+    $('igPrev').addEventListener('click', () => showSlide(state.ui.slide - 1));
+    $('igNext').addEventListener('click', () => showSlide(state.ui.slide + 1));
+    $('btnAddSlide').addEventListener('click', () => {
+      if (state.image.slides.length >= MAX_SLIDES) return;
+      state.image.slides.push({ title: '', body: '' }); flags.imageSaved = false;
+      renderSlidesEditor(); showSlide(state.image.slides.length);
+      const last = $('slide-title-' + (state.image.slides.length - 1)); if (last) last.focus();
+    });
     for (const k of ['text', 'image']) $('tabBtn-' + k).addEventListener('click', () => selectTab(k));
     $('tabBtn-text').parentElement.addEventListener('keydown', (e) => {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
@@ -1607,18 +1887,18 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
       const btn = e.currentTarget;
       if (Date.now() - resetArmed > 4000) {
         resetArmed = Date.now(); btn.textContent = 'Zeker weten? Klik nog een keer';
-        setTimeout(() => { if (Date.now() - resetArmed >= 4000) btn.textContent = 'Herstel voorbeeldprofiel'; }, 4100);
+        setTimeout(() => { if (Date.now() - resetArmed >= 4000) btn.textContent = 'Herstel profiel van de site'; }, 4100);
         return;
       }
-      resetArmed = 0; btn.textContent = 'Herstel voorbeeldprofiel';
+      resetArmed = 0; btn.textContent = 'Herstel profiel van de site';
       state.profile = clone(DEFAULTS.profile); store.del(LOGO_KEY); setLogo(null);
-      fillForm(); renderProfileBadge(); renderPreview(); paintSwatches(); scheduleImage(); save();
+      fillForm(); renderProfileBadge(); renderHandleHint(); renderPreview(); paintSwatches(); scheduleImage(); save();
     });
 
     const savedLogo = store.get(LOGO_KEY);
     if (savedLogo) setLogo(savedLogo);
     selectTab(state.ui.tab === 'image' ? 'image' : 'text');
-    renderAiState(); renderProfileBadge(); renderTranslateLabel(); renderImageFields(); renderHooks();
+    renderAiState(); renderProfileBadge(); renderTranslateLabel(); renderHandleHint(); renderImageFields(); renderSlidesEditor(); renderHooks();
     renderPreview(); renderCounts(); renderChecklist();
     $('btnGenerate').textContent = state.post.example ? 'Maak mijn post' : 'Maak een nieuwe versie';
     renderImage();
