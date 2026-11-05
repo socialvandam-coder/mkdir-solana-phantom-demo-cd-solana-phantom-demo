@@ -1,6 +1,6 @@
-# ScaleLink Postmaker
+# GrowthSourced Postmaker
 
-Een generator voor Instagram-posts in de huisstijl van ScaleLink (indigo `#5B4FE8`, crème, Plus Jakarta Sans, het netwerklogo).
+Een generator voor Instagram-posts in de huisstijl van GrowthSourced (indigo `#5B4FE8`, crème, Plus Jakarta Sans, het netwerklogo).
 Eén pagina zet alles klaar om te posten:
 
 - **Caption**: Claude schrijft de caption op basis van het merkprofiel, met drie alternatieve hooks, maximaal 5 hashtags, een storytekst, alt-tekst en het beste moment om te posten. Daarna kun je de caption laten herschrijven: korter, sterkere hook, persoonlijker, duidelijkere CTA of vertaald.

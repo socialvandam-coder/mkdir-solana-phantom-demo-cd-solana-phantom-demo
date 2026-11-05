@@ -1,13 +1,13 @@
-<title>ScaleLink Postmaker</title>
+<title>GrowthSourced Postmaker</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <style>
 /* Layout: werkbank in drie kolommen — briefing | afwerken | live Instagram-voorbeeld dat meeschuift.
-   Huisstijl van de ScaleLink-site: indigo op crème, Plus Jakarta Sans, ronde pill-knoppen. */
+   Huisstijl van de GrowthSourced-site: indigo op crème, Plus Jakarta Sans, ronde pill-knoppen. */
 :root{
-  --bg:#FAF8F2; --surface:#FFFFFF; --surface-2:#FAF8F2; --ink:#1B211E; --muted:#5E6960; --line:#E9E4D6;
+  --bg:#FAF8F2; --surface:#FFFFFF; --surface-2:#FAF8F2; --ink:#17152B; --muted:#5C5A72; --line:#E7E2EC;
   --brand:#5B4FE8; --brand-hover:#4539C9; --brand-light:#EEECFF; --brand-ink:#FFFFFF; --brand-text:#4539C9;
   --focus:#5B4FE8; --good:#1C7A4B; --warn:#9A5800; --bad:#B42318;
   --ig-bg:#FFFFFF; --ig-ink:#0C1014; --ig-muted:#737373; --ig-line:#DBDBDB; --ig-link:#00376B; --ig-blue:#0095F6; --ig-dot:#C7C7C7;
@@ -239,7 +239,7 @@ details.profile[open]>summary{margin-bottom:16px}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="6" r="3"/><circle cx="17" cy="18" r="3"/><path d="M9.6 10.6l4.8-3.2M9.6 13.4l4.8 3.2"/></svg>
       </div>
       <div>
-        <h1>ScaleLink <span>Postmaker</span></h1>
+        <h1>GrowthSourced <span>Postmaker</span></h1>
         <p>Instagram-posts en carrousels, van idee tot klaar om te posten.</p>
       </div>
     </div>
@@ -283,7 +283,7 @@ details.profile[open]>summary{margin-bottom:16px}
         <div class="stack">
           <div class="row2">
             <label class="field"><span>Bedrijfsnaam</span><input type="text" id="pName" data-bind="profile.name"></label>
-            <label class="field"><span>Instagram-naam</span><input type="text" id="pHandle" data-bind="profile.handle" placeholder="bijv. scalelink" autocomplete="off"></label>
+            <label class="field"><span>Instagram-naam</span><input type="text" id="pHandle" data-bind="profile.handle" placeholder="bijv. jouwaccount" autocomplete="off"></label>
           </div>
           <label class="field"><span>Wat doet je bedrijf?</span><textarea id="pWhat" rows="5" data-bind="profile.what"></textarea></label>
           <label class="field"><span>Voor wie?</span><textarea id="pAudience" rows="2" data-bind="profile.audience"></textarea></label>
@@ -365,7 +365,7 @@ details.profile[open]>summary{margin-bottom:16px}
           <label class="field img-field" data-for="statement lijst foto carousel"><span class="cover-name">Kop</span><textarea id="iHeadline" rows="2" data-bind="image.headline" data-slide="0"></textarea></label>
           <label class="field img-field" data-for="statement lijst foto quote carousel"><span>Accent <em>(woord of woorden uit de kop of het citaat)</em></span><input type="text" id="iHighlight" data-bind="image.highlight" data-slide="0"></label>
           <div class="row2 img-field" data-for="cijfer">
-            <label class="field"><span>Cijfer</span><input type="text" id="iStat" data-bind="image.stat" placeholder="bijv. €0,75"></label>
+            <label class="field"><span>Cijfer</span><input type="text" id="iStat" data-bind="image.stat" placeholder="bijv. 200–400+"></label>
             <label class="field"><span>Wat betekent het?</span><input type="text" id="iStatLabel" data-bind="image.statLabel"></label>
           </div>
           <label class="field img-field" data-for="lijst"><span>Punten <em>(één per regel, max. 5)</em></span><textarea id="iPoints" rows="4" data-bind="image.points"></textarea></label>
@@ -454,7 +454,7 @@ details.profile[open]>summary{margin-bottom:16px}
     mythe:    { label: 'Mythe vs. feit',  brief: 'een post die een veelgehoorde misvatting over Instagram-groei ontkracht', tag: 'Mythe' },
     case:     { label: 'Resultaat',       brief: 'het verhaal en resultaat van een klant, uitsluitend op basis van de aangeleverde feiten', tag: 'Resultaat' },
     verhaal:  { label: 'Zo werken we',    brief: 'een kijkje in hoe het team werkt: doelgroep bepalen, targeting op interesses en locatie, het maandoverzicht', tag: 'Zo werken we' },
-    aanbod:   { label: 'Dienst promoten', brief: 'een post die laat zien wat het bedrijf biedt en voor wie, met een duidelijke call-to-action', tag: 'ScaleLink' },
+    aanbod:   { label: 'Dienst promoten', brief: 'een post die laat zien wat het bedrijf biedt en voor wie, met een duidelijke call-to-action', tag: 'GrowthSourced' },
     stelling: { label: 'Stelling',        brief: 'een prikkelende mening die tot reacties uitnodigt', tag: 'Stelling' },
     nieuws:   { label: 'Aankondiging',    brief: 'een aankondiging van nieuws, een actie of een mijlpaal', tag: 'Nieuw' },
   };
@@ -479,11 +479,11 @@ details.profile[open]>summary{margin-bottom:16px}
     square:   { label: 'Vierkant 1:1', w: 1080, h: 1080 },
     story:    { label: 'Story 9:16',   w: 1080, h: 1920, safeTop: 250, safeBottom: 320 },
   };
-  // De vier huisstijlthema's komen van de ScaleLink-site; hiText is de tekstkleur op de accentmarkering.
+  // De vier huisstijlthema's komen van de GrowthSourced-site; hiText is de tekstkleur op de accentmarkering.
   const THEMES = {
     indigo:   { label: 'Indigo',   alt: 'Indigo',           bg: '#5B4FE8', glow: '#7C71F7', deep: '#4539C9', fg: '#FFFFFF', accent: '#FFFFFF', hiText: '#4539C9', tileBg: '#FFFFFF', tileFg: '#5B4FE8' },
-    creme:    { label: 'Crème',    alt: 'Crèmekleurige',    bg: '#FAF8F2', fg: '#1B211E', accent: '#5B4FE8', hiText: '#FFFFFF', tileBg: '#5B4FE8', tileFg: '#FFFFFF' },
-    lavendel: { label: 'Lavendel', alt: 'Lavendelkleurige', bg: '#EEECFF', fg: '#1B211E', accent: '#5B4FE8', hiText: '#FFFFFF', tileBg: '#5B4FE8', tileFg: '#FFFFFF' },
+    creme:    { label: 'Crème',    alt: 'Crèmekleurige',    bg: '#FAF8F2', fg: '#17152B', accent: '#5B4FE8', hiText: '#FFFFFF', tileBg: '#5B4FE8', tileFg: '#FFFFFF' },
+    lavendel: { label: 'Lavendel', alt: 'Lavendelkleurige', bg: '#EEECFF', fg: '#17152B', accent: '#5B4FE8', hiText: '#FFFFFF', tileBg: '#5B4FE8', tileFg: '#FFFFFF' },
     nacht:    { label: 'Nacht',    alt: 'Donkere',          bg: '#12161C', fg: '#F2F0EA', accent: '#6F63F5', hiText: '#FFFFFF', tileBg: '#6F63F5', tileFg: '#FFFFFF' },
     eigen:    { label: 'Eigen',    alt: 'Gekleurde' },
   };
@@ -491,12 +491,12 @@ details.profile[open]>summary{margin-bottom:16px}
 
   const DEFAULTS = {
     profile: {
-      name: 'ScaleLink',
+      name: 'GrowthSourced',
       handle: '',
-      what: 'ScaleLink laat je Instagram gericht en structureel groeien, met echte volgers die bij je merk passen. Onze software selecteert relevante profielen op interesses, locatie en vergelijkbare accounts. Je logt één keer in en post daarna gewoon zoals je gewend bent; de groei loopt op de achtergrond. Je content maak je zelf, wij zorgen dat die bij meer van de juiste mensen terechtkomt.',
+      what: 'GrowthSourced laat je Instagram organisch groeien: echte mensen uit je doelgroep kiezen er zelf voor om je te volgen, en ze passen bij je merk. Onze software selecteert relevante profielen op interesses, locatie en vergelijkbare accounts. Je logt één keer in en post daarna gewoon zoals je gewend bent; de groei loopt op de achtergrond. Je content maak je zelf, wij zorgen dat die bij meer van de juiste mensen terechtkomt.',
       audience: 'Lokale bedrijven (zoals een kapper, restaurant of sportschool), webshops en merken, creators en influencers, en coaches en personal brands.',
-      usps: 'Uitsluitend echte profielen: geen nepvolgers, geen bots en geen advertenties\nGerichte targeting op interesses, locatie en vergelijkbare accounts\nGroei op de achtergrond: één keer inloggen, verder niets veranderen\nElke maand een overzicht: nieuwe volgers, hun interesses en nieuwe DM-gesprekken\nDe controle over je account blijft bij jou\nMaandelijks opzegbaar, geen jaarcontract',
-      facts: 'Via Instagram-advertenties ben je al snel €8 tot €10 kwijt per echt geïnteresseerde volger\nBij ScaleLink betaal je gemiddeld €0,75 tot €2 per volger, vanaf €300 per maand (excl. btw)\nDe meeste zakelijke accounts groeien met zo\'n 150 tot 400+ relevante volgers per maand\nOpzegtermijn van één maand',
+      usps: 'Uitsluitend echte profielen: geen nepvolgers, geen bots en geen advertenties\nGerichte targeting op interesses, locatie en vergelijkbare accounts\nGroei op de achtergrond: één keer inloggen, verder niets veranderen\nElke maand een overzicht van je nieuwe volgers, je bereik en je interactie\nDe controle over je account blijft bij jou\nMaandelijks opzegbaar, geen jaarcontract',
+      facts: 'Via Instagram-advertenties ben je al snel €8 tot €10 kwijt per echt geïnteresseerde volger\nBij GrowthSourced betaal je een vaste €249,99 per maand, plus eenmalig €75 opstartkosten (excl. btw)\nDe meeste zakelijke accounts groeien met zo\'n 200 tot 400+ relevante volgers per maand\nOpzegtermijn van één maand, geen jaarcontract',
       cta: 'Plan een vrijblijvende kennismaking',
       hashtags: '#instagramgroei #ondernemen #lokaalondernemen #socialmedia',
       subline: '',
@@ -505,7 +505,7 @@ details.profile[open]>summary{margin-bottom:16px}
     },
     brief: { topic: 'Waarom je volgersaantal de eerste indruk bij nieuwe klanten bepaalt', details: '', type: 'aanbod', goal: 'leads', tone: 'zakelijk', length: 'middel', lang: 'nl', emoji: true },
     post: {
-      text: 'Je bedrijf is sterker dan je volgersaantal doet vermoeden. 👀\n\nToch is dat getal vaak het eerste wat nieuwe klanten zien. En daar baseren ze hun oordeel op.\n\nAdverteren voor volgers? Voor één echt geïnteresseerde volger ben je via Instagram-ads al snel €8 tot €10 kwijt.\n\nVolgers kopen? Nepaccounts worden nooit klant, en Instagram grijpt in zodra groei er verdacht uitziet.\n\nBij ScaleLink pakken we het anders aan:\n✓ Alleen echte profielen die bij je merk passen\n✓ Gericht op interesses, locatie en vergelijkbare accounts\n✓ Groei op de achtergrond: jij post gewoon zoals je gewend bent\n\nDe meeste zakelijke accounts groeien zo met 150 tot 400+ relevante volgers per maand.\n\nBenieuwd wat dat voor jouw account betekent? Plan een vrijblijvende kennismaking via de link in onze bio. 💜',
+      text: 'Je bedrijf is sterker dan je volgersaantal doet vermoeden. 👀\n\nToch is dat getal vaak het eerste wat nieuwe klanten zien. En daar baseren ze hun oordeel op.\n\nAdverteren voor volgers? Voor één echt geïnteresseerde volger ben je via Instagram-ads al snel €8 tot €10 kwijt.\n\nVolgers kopen? Nepaccounts worden nooit klant, en Instagram grijpt in zodra groei er verdacht uitziet.\n\nBij GrowthSourced pakken we het anders aan:\n✓ Alleen echte profielen die bij je merk passen\n✓ Gericht op interesses, locatie en vergelijkbare accounts\n✓ Groei op de achtergrond: jij post gewoon zoals je gewend bent\n\nDe meeste zakelijke accounts groeien zo met 200 tot 400+ relevante volgers per maand.\n\nBenieuwd wat dat voor jouw account betekent? Plan een vrijblijvende kennismaking via de link in onze bio. 💜',
       hooks: [
         '€8 tot €10 per volger. Dat kost adverteren op Instagram je al snel.',
         'Nieuwe klanten zien eerst je volgersaantal. Pas daarna je werk.',
@@ -513,23 +513,23 @@ details.profile[open]>summary{margin-bottom:16px}
       ],
       hashtags: '#instagramgroei #ondernemen #lokaalondernemen #socialmedia',
       storyText: 'Waarom je volgersaantal je eerste indruk is 👀 Swipe door de nieuwe post.',
-      altText: 'Carrousel van 7 slides van ScaleLink. Cover: "Van nieuwe volger tot nieuwe klant." Daarna: Je volgersaantal is je etalage; Adverteren is duur; Volgers kopen is riskant; Zo doet ScaleLink het; 150 tot 400+ per maand. Laatste slide: Benieuwd wat dit voor jouw account doet?',
+      altText: 'Carrousel van 7 slides van GrowthSourced. Cover: "Van nieuwe volger tot nieuwe klant." Daarna: Je volgersaantal is je etalage; Adverteren is duur; Volgers kopen is riskant; Zo doet GrowthSourced het; 200 tot 400+ per maand. Laatste slide: Benieuwd wat dit voor jouw account doet?',
       postTime: 'Doordeweeks tussen 11:00 en 13:00 of tussen 19:00 en 21:00, als ondernemers pauze nemen of \'s avonds scrollen.',
       example: true,
     },
     image: {
-      mode: 'carousel', template: 'statement', format: 'portrait', theme: 'indigo', label: 'ScaleLink',
+      mode: 'carousel', template: 'statement', format: 'portrait', theme: 'indigo', label: 'GrowthSourced',
       headline: 'Van nieuwe volger tot nieuwe klant.', highlight: 'nieuwe klant.',
       sub: 'Gerichte groei van je Instagram, met echte volgers die bij je merk passen.',
-      stat: '€0,75', statLabel: 'per volger, in plaats van €8 tot €10 via Instagram-ads',
+      stat: '200–400+', statLabel: 'relevante nieuwe volgers per maand voor de meeste zakelijke accounts',
       points: 'Alleen echte profielen\nTargeting op interesses en locatie\nElke maand een overzicht',
       quote: '', quoteBy: '', showHandle: true,
       slides: [
         { title: 'Je volgersaantal is je etalage', body: 'Nieuwe klanten zien dat getal als eerste. Daar baseren ze hun eerste oordeel op.' },
         { title: 'Adverteren is duur', body: 'Voor één echt geïnteresseerde volger ben je via Instagram-ads al snel €8 tot €10 kwijt.' },
         { title: 'Volgers kopen is riskant', body: 'Nepaccounts worden nooit klant. En Instagram grijpt in zodra groei er verdacht uitziet.' },
-        { title: 'Zo doet ScaleLink het', body: 'Echte profielen, gekozen op interesses, locatie en vergelijkbare accounts. De groei loopt op de achtergrond.' },
-        { title: '150 tot 400+ per maand', body: 'Zoveel relevante volgers krijgen de meeste zakelijke accounts erbij. Elke maand zie je wie er bij is gekomen.' },
+        { title: 'Zo doet GrowthSourced het', body: 'Echte profielen, gekozen op interesses, locatie en vergelijkbare accounts. De groei loopt op de achtergrond.' },
+        { title: '200 tot 400+ per maand', body: 'Zoveel relevante volgers krijgen de meeste zakelijke accounts erbij. Elke maand zie je wie er bij is gekomen.' },
       ],
       ctaTitle: 'Benieuwd wat dit voor jouw account doet?',
     },
@@ -538,9 +538,9 @@ details.profile[open]>summary{margin-bottom:16px}
   const STATIC_IDEAS = [
     { title: 'Drie redenen waarom je Instagram niet groeit, terwijl je wel post', type: 'tip', angle: 'Herkenbaar, met per reden wat je eraan doet.' },
     { title: 'Mythe: volgers kopen is een snelle start', type: 'mythe', angle: 'Nepaccounts worden nooit klant.' },
-    { title: 'Zo ziet een maand groei eruit: 150 tot 400+ echte volgers', type: 'case', angle: 'Vul bij de feiten de cijfers van een echte klant in.' },
+    { title: 'Zo ziet een maand groei eruit: 200 tot 400+ echte volgers', type: 'case', angle: 'Vul bij de feiten de cijfers van een echte klant in.' },
     { title: 'Zo bepalen we je doelgroep: interesses, locatie en vergelijkbare accounts', type: 'verhaal', angle: 'Laat zien hoe de targeting werkt.' },
-    { title: '€8 tot €10 per volger via ads, of €0,75 tot €2 bij ScaleLink', type: 'aanbod', angle: 'Rekenvoorbeeld ads versus ScaleLink.' },
+    { title: '€8 tot €10 per volger via ads, of een vaste prijs per maand bij GrowthSourced', type: 'aanbod', angle: 'Rekenvoorbeeld ads versus GrowthSourced.' },
     { title: 'Voor de kapper, het restaurant en de sportschool: groei in je eigen regio', type: 'aanbod', angle: 'Spreek lokale ondernemers direct aan.' },
     { title: 'Je volgersaantal is je etalage', type: 'stelling', angle: 'Een stelling die reacties uitlokt.' },
   ];
@@ -565,6 +565,20 @@ details.profile[open]>summary{margin-bottom:16px}
     state.image.slides = state.image.slides.filter((x) => x && typeof x === 'object')
       .map((x) => ({ title: String(x.title || ''), body: String(x.body || '') })).slice(0, MAX_SLIDES);
     if (state.post.example) { state.post = clone(DEFAULTS.post); }
+    // Het bedrijf heet nu GrowthSourced, met een vaste maandprijs: zet de oude naam en cijfers in bewaarde gegevens om.
+    const MIGRATE = [
+      [/Scale[Ll]ink/g, 'GrowthSourced'],
+      ['gemiddeld €0,75 tot €2 per volger, vanaf €300 per maand (excl. btw)', 'een vaste €249,99 per maand, plus eenmalig €75 opstartkosten (excl. btw)'],
+      ['150 tot 400+', '200 tot 400+'],
+      ['laat je Instagram gericht en structureel groeien, met echte volgers die bij je merk passen.', 'laat je Instagram organisch groeien: echte mensen uit je doelgroep kiezen er zelf voor om je te volgen, en ze passen bij je merk.'],
+      ['Elke maand een overzicht: nieuwe volgers, hun interesses en nieuwe DM-gesprekken', 'Elke maand een overzicht van je nieuwe volgers, je bereik en je interactie'],
+    ];
+    for (const k of ['profile', 'post', 'image']) {
+      let json = JSON.stringify(state[k]);
+      for (const [from, to] of MIGRATE) json = json.split(from).join(to);
+      state[k] = JSON.parse(json);
+    }
+    if (state.image.stat === '€0,75') { state.image.stat = DEFAULTS.image.stat; state.image.statLabel = DEFAULTS.image.statLabel; }
     if (!TYPES[state.brief.type]) state.brief.type = 'aanbod';
     if (!MODES[state.image.mode]) state.image.mode = 'carousel';
     if (!TEMPLATES[state.image.template]) state.image.template = 'statement';
@@ -643,7 +657,7 @@ details.profile[open]>summary{margin-bottom:16px}
     return h ? t + '\n\n' + h : t;
   }
   function handle() { return state.profile.handle.trim().replace(/^@+/, '').replace(/\s+/g, ''); }
-  function username() { return handle() || (state.profile.name || 'scalelink').toLowerCase().replace(/\s+/g, ''); }
+  function username() { return handle() || (state.profile.name || 'growthsourced').toLowerCase().replace(/\s+/g, ''); }
   function slug(s) {
     return String(s || 'post').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'post';
@@ -1022,7 +1036,7 @@ details.profile[open]>summary{margin-bottom:16px}
     }
     return blockH(L, lh);
   }
-  // Het ScaleLink-netwerkicoon (drie knooppunten), getekend in een vak van size × size.
+  // Het GrowthSourced-netwerkicoon (drie knooppunten), getekend in een vak van size × size.
   function drawNet(ctx, x, y, size, color, lw) {
     const k = size / 24;
     ctx.save(); ctx.translate(x, y); ctx.scale(k, k);
@@ -1054,7 +1068,7 @@ details.profile[open]>summary{margin-bottom:16px}
       ctx.fillStyle = t.bg; ctx.fillRect(0, 0, W, H);
     }
   }
-  // Rasterlijnen die naar onderen uitfaden, zoals de afsluitende band op de ScaleLink-site.
+  // Rasterlijnen die naar onderen uitfaden, zoals de afsluitende band op de GrowthSourced-site.
   function drawGrid(ctx, W, H, t, s) {
     const g = document.createElement('canvas'); g.width = W; g.height = H;
     const c = g.getContext('2d');
@@ -1102,7 +1116,7 @@ details.profile[open]>summary{margin-bottom:16px}
       const m = 60 * s;
       drawTile(ctx, pad, by - m, m, t);
       ctx.font = `800 ${38 * s}px ${FONT}`; ctx.fillStyle = t.fg; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-      ctx.fillText(p.name || 'ScaleLink', pad + m + 16 * s, by - m / 2 + 1 * s);
+      ctx.fillText(p.name || 'GrowthSourced', pad + m + 16 * s, by - m / 2 + 1 * s);
     }
     if (right) {
       ctx.font = `700 ${27 * s}px ${FONT}`; ctx.fillStyle = rgba(t.fg, 0.85); ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
@@ -1372,7 +1386,7 @@ Laat image.template op "statement" staan.`
       : `AFBEELDING
 Kies het sjabloon dat het best bij de post past:
 - "statement": headline van maximaal 8 woorden en sub van maximaal 14 woorden.
-- "cijfer": alleen als het merkprofiel of de extra feiten een echt cijfer bevatten dat bij de post past. stat is dat cijfer kort genoteerd (zoals "3×" of "€0,75"), statLabel maximaal 8 woorden, sub mag.
+- "cijfer": alleen als het merkprofiel of de extra feiten een echt cijfer bevatten dat bij de post past. stat is dat cijfer kort genoteerd (zoals "3×" of "200–400+"), statLabel maximaal 8 woorden, sub mag.
 - "lijst": headline van maximaal 6 woorden en 3 of 4 points van elk maximaal 6 woorden.
 - "quote": alleen als de feiten een citaat bevatten. quote maximaal 20 woorden, quoteBy is van wie het citaat is.
 label is 1 of 2 woorden die het soort post aanduiden, zoals "Instagram-tip" of "Resultaat". Laat "slides" leeg en ctaTitle leeg.`;
@@ -1492,7 +1506,7 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
     stelling: '{topic}.\n\nDaar krijgen we vast reacties op. Toch blijven we erbij.\n\n[Je belangrijkste argument.]\n\n[Een voorbeeld uit de praktijk.]\n\n{details}\n\nEens of oneens? Laat het weten in de reacties.\n\n{cta}',
     nieuws: 'Nieuw bij {name}: {topicLow}.\n\n[Wat er nieuw is, in één zin.]\n\nWat het voor jou betekent: [het voordeel voor de klant].\n\n{details}\n\n{cta}',
   };
-  function lowerFirst(t) { return /^[A-Z][a-zà-ÿ]/.test(t) && !/^(Instagram|ScaleLink)/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t; }
+  function lowerFirst(t) { return /^[A-Z][a-zà-ÿ]/.test(t) && !/^(Instagram|GrowthSourced)/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t; }
   const upperFirst = (t) => t.charAt(0).toUpperCase() + t.slice(1);
   function applyTemplate() {
     const b = state.brief, p = state.profile, post = state.post, img = state.image;
@@ -1503,7 +1517,7 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
     const text = FALLBACK[b.type]
       .replace(/\{topic\}/g, upperFirst(topic))
       .replace(/\{topicLow\}/g, lowerFirst(topic))
-      .replace(/\{name\}/g, p.name || 'ScaleLink')
+      .replace(/\{name\}/g, p.name || 'GrowthSourced')
       .replace(/\{audience\}/g, p.audience.trim())
       .replace(/\{usps\}/g, lines(p.usps).slice(0, 4).map((u) => '✓ ' + u).join('\n'))
       .replace(/\{detailsOr\}/g, details || '[concreet resultaat met cijfers]')
@@ -1547,7 +1561,7 @@ Antwoord met alleen een JSON-array van 6 objecten, bijvoorbeeld:
   }
   function altFromImage() {
     const im = state.image;
-    const name = state.profile.name || 'ScaleLink';
+    const name = state.profile.name || 'GrowthSourced';
     if (isCarousel()) {
       const titles = im.slides.map((x) => x.title.trim()).filter(Boolean).join('; ');
       return `Carrousel van ${totalSlides()} slides van ${name}. Cover: "${im.headline}".${titles ? ' Daarna: ' + titles + '.' : ''} Laatste slide: ${im.ctaTitle || state.profile.cta}`.replace(/\.\./g, '.');
