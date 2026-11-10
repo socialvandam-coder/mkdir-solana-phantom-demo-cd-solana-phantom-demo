@@ -1,7 +1,7 @@
 # GrowthSourced Instagram-video's: vaste kwaliteitsstandaard
 
 Goedgekeurd door de eigenaar op 10 november 2026 ("echt perfect, deze kwaliteit zoals bij Apple moet blijven").
-Elke nieuwe video voldoet hieraan. Het voorbeeld is advertentie 28 (`growthsourced-video/premium-template.html`).
+Elke nieuwe video voldoet hieraan. Voorbeelden: advertentie 28 (`growthsourced-video/premium-template.html`) en advertentie 29 (`growthsourced-video/premium-volger-tot-klant.html`, met een grote iPhone die onderaan buiten beeld loopt, schermovergangen en een chatgesprek).
 
 ## Formaat en techniek
 - Altijd postformaat 4:5: 1080 × 1350, MP4 (H.264 high, yuv420p, bt709), **60 fps**, stille AAC-track. Geen Stories of 9:16 meer.
