@@ -1,7 +1,7 @@
 # GrowthSourced Instagram-video's: vaste kwaliteitsstandaard
 
 Goedgekeurd door de eigenaar op 10 november 2026 ("echt perfect, deze kwaliteit zoals bij Apple moet blijven").
-Elke nieuwe video voldoet hieraan. Voorbeelden: advertentie 28 (`growthsourced-video/premium-template.html`) en advertentie 29 (`growthsourced-video/premium-volger-tot-klant.html`, met een grote iPhone die onderaan buiten beeld loopt, schermovergangen en een chatgesprek) en advertentie 30 (`growthsourced-video/premium-jouw-sleutels.html`, veiligheid: inlogscherm, een slot dat dichtklikt en een glazen instellingenkaart) en advertentie 31 (`growthsourced-video/premium-juiste-volgers.html`, targeting: een draaiende 3D-wolk van profielen, drie filters en profielen die naar jouw account stromen).
+Elke nieuwe video voldoet hieraan. Voorbeelden: advertentie 28 (`growthsourced-video/premium-template.html`) en advertentie 29 (`growthsourced-video/premium-volger-tot-klant.html`, met een grote iPhone die onderaan buiten beeld loopt, schermovergangen en een chatgesprek) en advertentie 30 (`growthsourced-video/premium-jouw-sleutels.html`, veiligheid: inlogscherm, een slot dat dichtklikt en een glazen instellingenkaart).
 
 ## Formaat en techniek
 - Altijd postformaat 4:5: 1080 × 1350, MP4 (H.264 high, yuv420p, bt709), **60 fps**, stille AAC-track. Geen Stories of 9:16 meer.
@@ -32,6 +32,7 @@ Elke nieuwe video voldoet hieraan. Voorbeelden: advertentie 28 (`growthsourced-v
 ## Afgewezen (niet meer maken)
 - TV-shopstijl, game/arcade, whiteboard, de plant-video, de feestdagenvideo en het teamfilmpje.
 - Afwijkende donkere stijlen en te snelle animaties.
+- Abstracte wolken van gekleurde bolletjes of confetti-achtige visuals (advertentie 31, "heel lelijk"). Blijf bij de goedgekeurde bouwstenen: realistische iPhone-schermen, glazen kaarten, grote typografie.
 
 ## Waar alles staat
 - Website (bron voor alle teksten): https://claude.ai/artifact/8EkPhdFe7GBM2dDcB5kKau
