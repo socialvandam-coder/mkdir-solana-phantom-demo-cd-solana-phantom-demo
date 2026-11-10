@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>GrowthSourced Ad 28</title>
+<style>
+@font-face{ font-family:'PJS'; src:url(fonts/pjs-latin.woff2) format('woff2'); font-weight:200 800; font-display:block;
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face{ font-family:'PJS'; src:url(fonts/pjs-latin-ext.woff2) format('woff2'); font-weight:200 800; font-display:block;
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+/* Premium, minimal product-film look: near-white canvas, big tight type, a 3D phone, glass cards, depth of field.
+   Brand colours from the GrowthSourced website (indigo #5B4FE8). */
+:root{ --bg:#FBFBFD; --ink:#1D1D1F; --ink2:#6E6E73; --ink3:#86868B; --brand:#5B4FE8; --brand-dark:#4539C9; --brand-light:#EEECFF; --violet:#8C82FF; }
+*{ box-sizing:border-box; }
+html,body{ margin:0; background:#000; }
+#stage{ position:relative; width:1080px; height:1350px; overflow:hidden; background:var(--bg); color:var(--ink);
+  font-family:'PJS', sans-serif; -webkit-font-smoothing:antialiased; }
+.layer{ position:absolute; inset:0; display:none; }
+.c{ position:absolute; left:60px; right:60px; text-align:center; }
+.h{ font-weight:700; letter-spacing:-0.045em; line-height:1.02; margin:0; }
+.grad{ background:linear-gradient(100deg, #4539C9 0%, #7C71F7 35%, #A79FFF 50%, #7C71F7 65%, #4539C9 100%); background-size:260% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent; }
+/* masked line reveal: the line slides up from behind its own edge */
+.ln{ display:block; overflow:hidden; padding:0.04em 0 0.22em; margin-bottom:-0.14em; }
+.ln > span{ display:inline-block; will-change:transform; }
+.sub{ font-weight:600; letter-spacing:-0.02em; color:var(--ink2); }
+
+/* ---------- the phone ---------- */
+#cam{ position:absolute; inset:0; perspective:2400px; perspective-origin:40% 45%; }
+#rig{ position:absolute; left:110px; top:330px; width:460px; height:940px; transform-style:preserve-3d; }
+#shadow{ position:absolute; left:50px; top:1210px; width:580px; height:90px; border-radius:50%; background:radial-gradient(closest-side, rgba(29,29,31,.32), rgba(29,29,31,0)); filter:blur(14px); }
+.phone{ position:absolute; inset:0; border-radius:78px; padding:15px;
+  background:linear-gradient(140deg,#4a4a50 0%,#232327 28%,#38383d 55%,#18181b 80%,#3c3c42 100%);
+  box-shadow:inset 0 0 0 2px #6d6d74, inset 0 0 0 7px #111113, 0 70px 120px -50px rgba(23,21,43,.55); }
+.btnr{ position:absolute; width:7px; border-radius:3px; background:linear-gradient(90deg,#2a2a2e,#55555b); }
+.screen{ position:relative; width:100%; height:100%; border-radius:64px; overflow:hidden; background:#fff; }
+.island{ position:absolute; left:50%; top:20px; width:132px; height:38px; margin-left:-66px; border-radius:20px; background:#000; z-index:3; }
+.sbar{ position:absolute; left:0; right:0; top:22px; padding:0 44px 0 52px; display:flex; justify-content:space-between; font-size:21px; font-weight:700; z-index:2; }
+.sbar i{ display:inline-block; width:30px; height:14px; border-radius:4px; border:2px solid #1d1d1f; position:relative; margin-left:6px; }
+.sbar i::after{ content:''; position:absolute; inset:2px; right:6px; background:#1d1d1f; border-radius:1px; }
+.app{ position:absolute; left:0; right:0; top:74px; bottom:0; padding:0 22px; }
+.nav{ display:flex; align-items:center; gap:8px; font-size:27px; font-weight:800; letter-spacing:-0.02em; height:56px; }
+.nav svg{ width:20px; height:20px; }
+.nav .r{ margin-left:auto; display:flex; gap:22px; }
+.nav .r svg{ width:28px; height:28px; stroke:#1d1d1f; stroke-width:2; fill:none; stroke-linecap:round; }
+.prow{ display:flex; align-items:center; gap:18px; margin-top:16px; }
+.ring{ width:118px; height:118px; border-radius:50%; padding:4px; background:conic-gradient(from 210deg,#4539C9,#8C82FF,#C4BDFF,#5B4FE8,#4539C9); flex:none; }
+.ring div{ width:100%; height:100%; border-radius:50%; border:4px solid #fff; background:linear-gradient(135deg,#7C71F7,#4539C9); color:#fff; font-weight:800; font-size:36px; display:flex; align-items:center; justify-content:center; }
+.st{ flex:1; display:grid; grid-template-columns:repeat(3,1fr); text-align:center; }
+.st b{ display:block; font-size:28px; font-weight:800; letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
+.st small{ font-size:18px; color:#3b3b40; font-weight:500; }
+.nm{ margin-top:14px; font-size:21px; font-weight:800; }
+.ct{ font-size:19px; color:var(--ink3); font-weight:500; }
+.bt{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; }
+.bt span{ height:46px; border-radius:12px; background:#EFEFF2; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; }
+.hl{ display:flex; gap:18px; margin-top:16px; }
+.hl div{ text-align:center; font-size:15px; color:#3b3b40; font-weight:600; }
+.hl i{ display:block; width:68px; height:68px; border-radius:50%; border:2px solid #E3E3E8; margin-bottom:6px; padding:4px; }
+.hl i::after{ content:''; display:block; width:100%; height:100%; border-radius:50%; background:var(--g); }
+.tabs{ display:flex; justify-content:space-around; margin:16px -22px 0; border-top:1px solid #E6E6EA; height:52px; align-items:center; }
+.tabs svg{ width:26px; height:26px; stroke:#1d1d1f; stroke-width:2; fill:none; }
+.grid9{ display:grid; grid-template-columns:repeat(3,1fr); gap:3px; margin:0 -22px; }
+.grid9 div{ aspect-ratio:1/1.12; position:relative; overflow:hidden; }
+#gain{ position:absolute; z-index:4; left:226px; top:208px; padding:6px 12px; border-radius:999px; background:var(--brand); color:#fff; font-size:17px; font-weight:800; white-space:nowrap; box-shadow:0 10px 24px -10px rgba(69,57,201,.7); }
+.glare{ position:absolute; inset:0; border-radius:78px; pointer-events:none;
+  background:linear-gradient(115deg, rgba(255,255,255,0) 35%, rgba(255,255,255,.22) 47%, rgba(255,255,255,.04) 53%, rgba(255,255,255,0) 62%); background-size:300% 100%; }
+
+/* glass notification pills floating out of the phone */
+.pill{ position:absolute; width:410px; height:112px; border-radius:32px; display:flex; align-items:center; gap:18px; padding:0 24px;
+  background:rgba(255,255,255,.72); border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 30px 60px -28px rgba(29,29,31,.35), 0 0 0 1px rgba(29,29,31,.05); -webkit-backdrop-filter:blur(24px) saturate(1.6); backdrop-filter:blur(24px) saturate(1.6); }
+.pill .av{ width:64px; height:64px; border-radius:50%; color:#fff; font-weight:800; font-size:21px; display:flex; align-items:center; justify-content:center; flex:none; }
+.pill b{ display:block; font-size:26px; letter-spacing:-0.01em; }
+.pill span{ font-size:21px; color:var(--ink2); font-weight:500; }
+.pill em{ margin-left:auto; font-style:normal; font-size:17px; font-weight:800; color:var(--brand); white-space:nowrap; }
+
+/* ---------- stats ---------- */
+.big{ font-weight:700; letter-spacing:-0.055em; line-height:0.95; font-variant-numeric:tabular-nums; }
+.cols{ display:grid; grid-template-columns:repeat(3,1fr); }
+.cols div{ text-align:center; padding:0 10px; }
+.cols b{ display:block; font-size:84px; font-weight:700; letter-spacing:-0.05em; line-height:1; }
+.cols span{ display:block; margin-top:12px; font-size:27px; color:var(--ink2); font-weight:600; letter-spacing:-0.01em; line-height:1.25; }
+.vline{ position:absolute; top:6px; bottom:6px; width:1px; background:#D2D2D7; }
+#rule{ position:absolute; left:120px; right:120px; top:800px; height:1px; background:#D2D2D7; transform-origin:50% 50%; }
+
+/* ---------- glass report over a soft orb ---------- */
+.orb{ position:absolute; border-radius:50%; filter:blur(70px); }
+#rep{ position:absolute; left:150px; width:780px; top:600px; height:520px; border-radius:48px; padding:40px 46px;
+  background:rgba(255,255,255,.62); border:1px solid rgba(255,255,255,.95); -webkit-backdrop-filter:blur(30px) saturate(1.5); backdrop-filter:blur(30px) saturate(1.5);
+  box-shadow:0 60px 120px -60px rgba(29,29,31,.45), 0 0 0 1px rgba(29,29,31,.04); transform-style:preserve-3d; }
+.rh{ display:flex; align-items:center; gap:16px; }
+.rh .tl{ width:56px; height:56px; border-radius:17px; background:var(--brand); display:flex; align-items:center; justify-content:center; }
+.rh .tl svg{ width:32px; height:32px; stroke:#fff; stroke-width:2; fill:none; stroke-linecap:round; }
+.rh b{ font-size:32px; letter-spacing:-0.02em; }
+.rh span{ margin-left:auto; font-size:21px; font-weight:700; color:var(--ink2); padding:8px 16px; border-radius:999px; background:rgba(29,29,31,.05); }
+#n4{ font-size:120px; font-weight:700; letter-spacing:-0.05em; line-height:1; margin-top:26px; font-variant-numeric:tabular-nums; }
+.rl{ font-size:26px; color:var(--ink2); font-weight:600; margin-top:8px; }
+#chart{ position:absolute; left:46px; right:46px; bottom:40px; height:150px; }
+
+/* ---------- end card ---------- */
+.logo{ display:inline-flex; align-items:center; justify-content:center; width:150px; height:150px; border-radius:46px; background:linear-gradient(145deg,#7C71F7,#5B4FE8 55%,#4539C9);
+  box-shadow:0 40px 80px -30px rgba(69,57,201,.6), inset 0 2px 0 rgba(255,255,255,.35); }
+.logo svg{ width:84px; height:84px; stroke:#fff; stroke-width:2; fill:none; stroke-linecap:round; }
+.bio{ display:inline-flex; align-items:center; gap:14px; padding:20px 38px; border-radius:999px; border:2px solid var(--brand); color:var(--brand); font-size:36px; font-weight:700; letter-spacing:-0.01em; }
+.bio svg{ width:34px; height:34px; stroke:currentColor; stroke-width:2.4; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- A · title -->
+  <div class="layer" id="A">
+    <div class="c" id="aT" style="top:420px">
+      <h1 class="h" style="font-size:128px"><span class="ln"><span id="a1">Je Instagram.</span></span><span class="ln"><span id="a2" class="grad">Maar dan groeiend.</span></span></h1>
+      <p class="sub" id="a3" style="margin:40px 0 0;font-size:44px">Organisch. Met echte mensen.</p>
+    </div>
+  </div>
+
+  <!-- B · the phone -->
+  <div class="layer" id="B">
+    <div class="c" id="bT" style="top:92px">
+      <h2 class="h" style="font-size:84px"><span class="ln"><span id="b1">Echte volgers.</span></span><span class="ln"><span id="b2" class="grad">Uit jouw doelgroep.</span></span></h2>
+    </div>
+    <div id="shadow"></div>
+    <div id="cam">
+      <div id="pillsBack"></div>
+      <div id="rig">
+        <span class="btnr" style="left:-5px;top:210px;height:60px"></span><span class="btnr" style="left:-5px;top:300px;height:100px"></span>
+        <span class="btnr" style="left:-5px;top:420px;height:100px"></span><span class="btnr" style="right:-5px;top:300px;height:150px"></span>
+        <div class="phone"><div class="screen">
+          <div class="island"></div>
+          <div class="sbar"><span>9:41</span><span><i></i></span></div>
+          <div class="app">
+            <div class="nav">jouwbedrijf<svg viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+              <span class="r"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span></div>
+            <div class="prow"><div class="ring"><div>JB</div></div>
+              <div class="st"><div><b>48</b><small>berichten</small></div><div><b id="fol">1.204</b><small>volgers</small></div><div><b>312</b><small>volgend</small></div></div></div>
+            <div class="nm">Jouw Bedrijf</div>
+            <div class="ct">Lokale ondernemer · Utrecht</div>
+            <div class="bt"><span>Profiel bewerken</span><span>Profiel delen</span></div>
+            <div class="hl" id="hls"></div>
+            <div class="tabs"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9.3h16M4 14.6h16M9.3 4v16M14.6 4v16"/></svg><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="3"/><path d="M10.5 9.5l4 2.5-4 2.5z"/></svg><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.4"/><path d="M5.5 19c1.2-3.2 3.8-4.6 6.5-4.6s5.3 1.4 6.5 4.6"/></svg></div>
+            <div class="grid9" id="g9"></div>
+          </div>
+          <div id="gain">+412 deze maand</div>
+        </div></div>
+        <div class="glare" id="glare"></div>
+      </div>
+      <div id="pillsFront"></div>
+    </div>
+  </div>
+
+  <!-- C · what to expect -->
+  <div class="layer" id="C">
+    <div class="c" style="top:150px"><p class="sub" id="c0" style="margin:0;font-size:46px">Wat je mag verwachten.</p></div>
+    <div class="c" style="top:300px"><div class="big grad" id="c1" style="font-size:196px;white-space:nowrap">200–400+</div></div>
+    <div class="c" style="top:560px"><p class="sub" id="c2" style="margin:0;font-size:46px;color:var(--ink)">nieuwe volgers per maand*</p></div>
+    <div id="rule"></div>
+    <div class="c cols" id="cc" style="top:880px">
+      <div id="k1"><b>€0</b><span>advertentie&shy;budget</span></div>
+      <div id="k2" style="position:relative"><i class="vline" style="left:0"></i><b>100%</b><span>echte profielen</span><i class="vline" style="right:0"></i></div>
+      <div id="k3"><b>1 mnd</b><span>opzegtermijn</span></div>
+    </div>
+    <div class="c" style="top:1230px"><p id="c3" style="margin:0;font-size:24px;color:var(--ink3);font-weight:500">*Bij de meeste zakelijke accounts.</p></div>
+  </div>
+
+  <!-- D · you post, we grow -->
+  <div class="layer" id="D">
+    <div class="orb" id="o1" style="width:620px;height:620px;background:#8C82FF"></div>
+    <div class="orb" id="o2" style="width:520px;height:520px;background:#C4BDFF"></div>
+    <div class="orb" id="o3" style="width:420px;height:420px;background:#5B4FE8;opacity:.55"></div>
+    <div class="c" style="top:120px">
+      <h2 class="h" style="font-size:104px"><span class="ln"><span id="d1">Jij post.</span></span><span class="ln"><span id="d2" class="grad">Wij laten je groeien.</span></span></h2>
+      <p class="sub" id="d3" style="margin:28px 0 0;font-size:38px">Eén keer inloggen. De groei loopt op de achtergrond.</p>
+    </div>
+    <div id="rep">
+      <div class="rh"><span class="tl"><svg viewBox="0 0 24 24"><path d="M5 19V11M12 19V5M19 19v-6"/></svg></span><b>Maandrapport</b><span>Voorbeeld</span></div>
+      <div id="n4">+0</div>
+      <div class="rl">nieuwe volgers · afgelopen 4 weken</div>
+      <svg id="chart" viewBox="0 0 688 150" preserveAspectRatio="none">
+        <defs><linearGradient id="fillG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B4FE8" stop-opacity=".28"/><stop offset="1" stop-color="#5B4FE8" stop-opacity="0"/></linearGradient></defs>
+        <path id="area" fill="url(#fillG)"/>
+        <path id="line" fill="none" stroke="#5B4FE8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle id="dot" r="9" fill="#5B4FE8" stroke="#fff" stroke-width="4"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- E · end card -->
+  <div class="layer" id="E">
+    <div class="c" style="top:250px"><span class="logo" id="e0"><svg viewBox="0 0 24 24"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="6" r="3"/><circle cx="17" cy="18" r="3"/><path d="M9.6 10.6l4.8-3.2M9.6 13.4l4.8 3.2"/></svg></span></div>
+    <div class="c" style="top:450px"><h2 class="h" id="e1" style="font-size:96px">GrowthSourced</h2></div>
+    <div class="c" style="top:590px"><p class="sub" id="e2" style="margin:0;font-size:40px">Instagram-groei zonder gedoe.</p></div>
+    <div class="c" style="top:760px"><p id="e3" style="margin:0;font-size:60px;font-weight:700;letter-spacing:-0.03em">€249,99 per maand.</p>
+      <p id="e4" style="margin:12px 0 0;font-size:34px;font-weight:600;color:var(--ink2)">Maandelijks opzegbaar.</p>
+      <p id="e5" style="margin:14px 0 0;font-size:24px;font-weight:500;color:var(--ink3)">Excl. btw · eenmalig €75 opstartkosten</p></div>
+    <div class="c" style="top:1080px"><span class="bio" id="e6">Link in bio<svg id="e7" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var DURATION = 28.0;
+  var clamp = function(x, a, b){ a = a == null ? 0 : a; b = b == null ? 1 : b; return Math.min(b, Math.max(a, x)); };
+  var lerp = function(a, b, p){ return a + (b - a) * p; };
+  var E = {
+    outExpo: function(x){ return x >= 1 ? 1 : 1 - Math.pow(2, -10 * x); },
+    outQuint: function(x){ return 1 - Math.pow(1 - x, 5); },
+    inOutQuint: function(x){ return x < .5 ? 16 * Math.pow(x, 5) : 1 - Math.pow(-2 * x + 2, 5) / 2; },
+    inOutSine: function(x){ return -(Math.cos(Math.PI * x) - 1) / 2; },
+    inCubic: function(x){ return x * x * x; }
+  };
+  var seg = function(t, a, d, e){ return (e || E.outQuint)(clamp((t - a) / d)); };
+  var $ = function(id){ return document.getElementById(id); };
+  var nl = function(n){ return Math.round(n).toLocaleString('nl-NL'); };
+
+  // masked line: rises from below its own clip edge
+  function line(el, t, t0, d){ var p = seg(t, t0, d || 0.9, E.outExpo); el.style.transform = 'translateY(' + ((1 - p) * 110) + '%)'; }
+  // blur-in: sharpens and settles
+  function soft(el, t, t0, d, dy){ var p = seg(t, t0, d || 0.8, E.outQuint);
+    el.style.opacity = p; el.style.filter = 'blur(' + ((1 - p) * 14).toFixed(2) + 'px)'; el.style.transform = 'translateY(' + ((1 - p) * (dy == null ? 24 : dy)) + 'px)'; }
+  // layer on/off with a blur-out exit
+  function layer(id, t, tin, tout, xd){
+    var el = $(id), on = t >= tin && t < tout + (xd || 0.6);
+    el.style.display = on ? 'block' : 'none';
+    if (!on) return false;
+    var o = seg(t, tout, xd || 0.6, E.inCubic);
+    el.style.opacity = 1 - o; el.style.filter = o > 0 ? 'blur(' + (o * 16).toFixed(2) + 'px)' : 'none';
+    return true;
+  }
+
+  /* ---------- phone content ---------- */
+  var G = [['#FFD8C2','#F7A58A'],['#E7E3FF','#9A92F2'],['#D5F2E9','#7CCFB5'],['#FFF1C9','#F5C45B'],['#DCEBFF','#86AEF0'],['#F8D9E8','#E58EB4'],['#EEECFF','#5B4FE8'],['#E3F6D8','#9ED58A'],['#FFE3D3','#EE9A6B']];
+  $('g9').innerHTML = G.map(function(g, i){
+    var shape = i % 3 === 0 ? '<i style="position:absolute;left:22%;top:20%;width:56%;height:56%;border-radius:50%;background:rgba(255,255,255,.55)"></i>'
+      : i % 3 === 1 ? '<i style="position:absolute;left:-10%;right:-10%;bottom:-30%;height:70%;border-radius:50%;background:rgba(255,255,255,.4)"></i>'
+      : '<i style="position:absolute;left:30%;top:28%;width:40%;height:46%;border-radius:18px;background:rgba(255,255,255,.5);transform:rotate(12deg)"></i>';
+    return '<div style="background:linear-gradient(150deg,' + g[0] + ',' + g[1] + ')">' + shape + '</div>';
+  }).join('');
+  $('hls').innerHTML = [['Nieuw','#C4BDFF,#5B4FE8'],['Team','#FFD8C2,#EE9A6B'],['Werk','#D5F2E9,#7CCFB5'],['Reviews','#FFF1C9,#F5C45B']].map(function(h){
+    return '<div><i style="--g:linear-gradient(135deg,' + h[1] + ')"></i>' + h[0] + '</div>';
+  }).join('');
+
+  // glass "new follower" pills: [side, y, z, start, initials, colour, title, place]
+  // notifications stacking on the right of the phone: [slot y, start, initials, colour, title, place]
+  var PILLS = [
+    [470, 6.0, 'SV', '#2E9E7A', 'Sportliefhebber', 'Utrecht'],
+    [606, 7.0, 'LB', '#E58E6B', 'Foodie', 'Amsterdam'],
+    [742, 8.0, 'TK', '#6F9BE0', 'Ondernemer', 'Eindhoven'],
+    [878, 9.0, 'KO', '#9A6BD8', 'Koffieliefhebber', 'Utrecht'],
+    [1014, 10.0, 'NW', '#D9768F', 'Beauty-enthousiast', 'Utrecht']
+  ];
+  PILLS.forEach(function(p){
+    var el = document.createElement('div'); el.className = 'pill';
+    el.innerHTML = '<span class="av" style="background:' + p[3] + '">' + p[2] + '</span><div><b>' + p[4] + '</b><span>' + p[5] + '</span></div><em>Volgt je nu</em>';
+    $('pillsFront').appendChild(el); p.el = el;
+  });
+
+  /* ---------- report chart ---------- */
+  var PTS = [];
+  (function(){ var v = 0, s = 7; for (var i = 0; i <= 28; i++) { s = (s * 9301 + 49297) % 233280; v += 10 + 8 * (s / 233280) + i * 0.22; PTS.push(v); } })();
+  var MAX = PTS[PTS.length - 1];
+  function chart(p){
+    var n = Math.max(1, Math.round(p * 28)), d = '', a = '';
+    for (var i = 0; i <= n; i++) {
+      var x = i / 28 * 688, y = 140 - PTS[i] / MAX * 128;
+      d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+    }
+    var lx = n / 28 * 688, ly = 140 - PTS[n] / MAX * 128;
+    a = d + 'L' + lx.toFixed(1) + ' 150L0 150Z';
+    $('line').setAttribute('d', d); $('area').setAttribute('d', a);
+    $('dot').setAttribute('cx', lx); $('dot').setAttribute('cy', ly);
+  }
+
+  function render(t){
+    /* A · title (0 – 4.4) */
+    if (layer('A', t, 0, 3.9, 0.7)) {
+      line($('a1'), t, 0.35, 1.1); line($('a2'), t, 0.85, 1.1);
+      $('a2').style.backgroundPosition = (100 - seg(t, 0.85, 3.4, E.inOutSine) * 100) + '% 50%';
+      soft($('a3'), t, 1.8, 0.9);
+      $('aT').style.transform = 'scale(' + (1.04 - 0.04 * seg(t, 0, 4.4, E.inOutSine)) + ')';
+    }
+
+    /* B · the phone (3.9 – 12.6) */
+    if (layer('B', t, 3.9, 12.0, 0.75)) {
+      line($('b1'), t, 4.5, 1.0); line($('b2'), t, 4.85, 1.0);
+      $('b2').style.backgroundPosition = (100 - seg(t, 4.85, 4, E.inOutSine) * 100) + '% 50%';
+      var up = seg(t, 3.9, 1.6, E.outExpo), drift = seg(t, 4.6, 7.4, E.inOutSine), push = seg(t, 11.6, 1.2, E.inCubic);
+      var rx = lerp(26, 4, up) - 4 * drift, ry = lerp(-24, -10, up) + 20 * drift;
+      var ty = (1 - up) * 820 - push * 80, sc = lerp(0.9, 1, up) * (1 + 0.04 * drift) * (1 + 1.4 * push);
+      $('rig').style.transform = 'translateY(' + ty.toFixed(1) + 'px) scale(' + sc.toFixed(4) + ') rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+      $('shadow').style.opacity = up * (1 - push) * 0.9;
+      $('shadow').style.transform = 'scaleX(' + (0.85 + 0.15 * up + 0.05 * Math.abs(ry) / 20) + ')';
+      $('glare').style.backgroundPosition = (90 - drift * 70 - up * 20) + '% 50%';
+      var g = seg(t, 6.0, 5.2, E.inOutSine);
+      $('fol').textContent = nl(1204 + 412 * g);
+      var gi = seg(t, 6.3, 0.7, E.outExpo);
+      $('gain').style.opacity = gi; $('gain').style.transform = 'translateY(' + ((1 - gi) * 14) + 'px) scale(' + (0.8 + 0.2 * gi) + ')';
+      PILLS.forEach(function(p){
+        var e = seg(t, p[1], 1.1, E.outExpo), lift = Math.sin(t * 1.1 + p[0]) * 4;
+        p.el.style.left = (612 + (1 - e) * 360) + 'px'; p.el.style.top = (p[0] + lift) + 'px';
+        p.el.style.transform = 'translateZ(' + (60 + 60 * (1 - e)).toFixed(1) + 'px) rotateY(' + (-14 * (1 - e)).toFixed(2) + 'deg)';
+        p.el.style.opacity = t < p[1] ? 0 : clamp((t - p[1]) / 0.25);
+      });
+    }
+
+    /* C · what to expect (12.2 – 18.7) */
+    if (layer('C', t, 12.2, 18.2, 0.7)) {
+      soft($('c0'), t, 12.4, 0.9);
+      var cg = seg(t, 12.8, 1.6, E.outQuint);
+      $('c1').textContent = Math.round(200 * cg) + '–' + Math.round(400 * cg) + '+';
+      soft($('c1'), t, 12.7, 1.0, 40);
+      $('c1').style.backgroundPosition = (100 - seg(t, 12.7, 5, E.inOutSine) * 100) + '% 50%';
+      soft($('c2'), t, 13.6, 0.9);
+      $('rule').style.transform = 'scaleX(' + seg(t, 14.4, 1.2, E.outExpo) + ')';
+      soft($('k1'), t, 14.9, 0.9, 30); soft($('k2'), t, 15.15, 0.9, 30); soft($('k3'), t, 15.4, 0.9, 30);
+      soft($('c3'), t, 16.0, 0.8, 0);
+      var cz = seg(t, 12.2, 6.5, E.inOutSine);
+      $('C').style.transform = 'scale(' + (1.03 - 0.03 * cz) + ')';
+    }
+
+    /* D · you post, we grow (18.2 – 23.6) */
+    if (layer('D', t, 18.2, 23.0, 0.7)) {
+      line($('d1'), t, 18.5, 1.0); line($('d2'), t, 18.85, 1.0);
+      $('d2').style.backgroundPosition = (100 - seg(t, 18.85, 4, E.inOutSine) * 100) + '% 50%';
+      soft($('d3'), t, 19.5, 0.9);
+      $('o1').style.transform = 'translate(' + (120 + Math.sin(t * .5) * 60) + 'px,' + (640 + Math.cos(t * .4) * 50) + 'px)';
+      $('o2').style.transform = 'translate(' + (520 + Math.cos(t * .45) * 60) + 'px,' + (760 + Math.sin(t * .55) * 50) + 'px)';
+      $('o3').style.transform = 'translate(' + (360 + Math.sin(t * .6) * 40) + 'px,' + (560 + Math.cos(t * .5) * 40) + 'px)';
+      var ri = seg(t, 19.2, 1.4, E.outExpo), rd = seg(t, 19.2, 4.4, E.inOutSine);
+      $('rep').style.opacity = ri;
+      $('rep').style.transform = 'perspective(2200px) translateY(' + ((1 - ri) * 160) + 'px) rotateX(' + (lerp(18, 6, ri) - 6 * rd) + 'deg) rotateY(' + (lerp(-10, -4, ri) + 8 * rd) + 'deg)';
+      var cp = seg(t, 19.8, 2.6, E.inOutSine);
+      $('n4').textContent = '+' + Math.round(412 * cp);
+      chart(cp);
+    }
+
+    /* E · end card (23.0 – 28) */
+    if (layer('E', t, 23.0, 99, 0.5)) {
+      var lp = seg(t, 23.2, 1.2, E.outExpo);
+      $('e0').style.opacity = lp; $('e0').style.transform = 'translateY(' + ((1 - lp) * 40) + 'px) scale(' + (0.7 + 0.3 * lp) + ')';
+      soft($('e1'), t, 23.6, 1.0); soft($('e2'), t, 24.0, 0.9);
+      soft($('e3'), t, 24.6, 0.9); soft($('e4'), t, 24.85, 0.9); soft($('e5'), t, 25.05, 0.9);
+      soft($('e6'), t, 25.5, 0.9);
+      $('e7').style.transform = 'translateY(' + (Math.abs(Math.sin(Math.max(0, t - 25.9) * 3.2)) * 6) + 'px)';
+    }
+  }
+
+  window.DURATION = DURATION;
+  window.render = render;
+  var m = /[?&#]t=([\d.]+)/.exec(location.href);
+  render(m ? +m[1] : 0);
+})();
+</script>
+</body>
+</html>
