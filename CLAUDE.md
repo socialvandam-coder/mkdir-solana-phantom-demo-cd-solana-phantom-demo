@@ -23,6 +23,7 @@ Elke nieuwe video voldoet hieraan. Voorbeelden: advertentie 28 (`growthsourced-v
 - Eén boodschap per scène, veel witruimte. Overgangen: wazig wegvagen met een lichte schaalbeweging, of de camera duwt de telefoon in.
 - Realistische iPhone (titanium rand, dynamic island, statusbalk 9:41) die langzaam in 3D draait, met zachte schaduw en glans.
 - Glazen kaarten (wit 60–72 %, backdrop-filter blur) boven zachte indigo-gloed. Meldingen netjes gestapeld náást de telefoon, nooit over het scherm.
+- Variant op verzoek ("andere achtergrond, zelfde Apple-stijl"): zwarte "Pro"-versie, advertentie 34 (`growthsourced-video/premium-zwart-meer-dan-een-getal.html`): achtergrond #000, witte koppen, lichtere indigo-gradient, titanium iPhone in donkere modus, donkere glazen kaarten, zachte indigo-gloed. Laat een nieuwe scène pas beginnen als de vorige helemaal weg is.
 - Eindkaart: logotegel, "GrowthSourced", tagline, "€249,99 per maand.", "Maandelijks opzegbaar.", "Excl. btw · eenmalig €75 opstartkosten" en een "Link in bio"-pill.
 
 ## Merk en feiten (alleen claims van de website)

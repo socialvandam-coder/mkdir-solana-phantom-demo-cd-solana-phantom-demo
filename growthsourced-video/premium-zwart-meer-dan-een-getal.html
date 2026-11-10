@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>GrowthSourced Ad 35</title>
+<style>
+@font-face{ font-family:'PJS'; src:url(fonts/pjs-latin.woff2) format('woff2'); font-weight:200 800; font-display:block;
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face{ font-family:'PJS'; src:url(fonts/pjs-latin-ext.woff2) format('woff2'); font-weight:200 800; font-display:block;
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+/* Premium, minimal product-film look: near-white canvas, big tight type, a 3D phone, glass cards, depth of field.
+   Brand colours from the GrowthSourced website (indigo #5B4FE8). */
+:root{ --bg:#FBFBFD; --ink:#1D1D1F; --ink2:#6E6E73; --ink3:#86868B; --brand:#5B4FE8; --brand-dark:#4539C9; --brand-light:#EEECFF; --violet:#8C82FF; }
+*{ box-sizing:border-box; }
+html,body{ margin:0; background:#000; }
+#stage{ position:relative; width:1080px; height:1350px; overflow:hidden; background:var(--bg); color:var(--ink);
+  font-family:'PJS', sans-serif; -webkit-font-smoothing:antialiased; }
+.layer{ position:absolute; inset:0; display:none; }
+.c{ position:absolute; left:60px; right:60px; text-align:center; }
+.h{ font-weight:700; letter-spacing:-0.045em; line-height:1.02; margin:0; }
+.grad{ background:linear-gradient(100deg, #4539C9 0%, #7C71F7 35%, #A79FFF 50%, #7C71F7 65%, #4539C9 100%); background-size:260% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  padding:0 0.04em 0.2em; margin:0 -0.04em -0.2em; }   /* room under the line so descenders (g, j, p) keep their gradient */
+/* masked line reveal: the line slides up from behind its own edge */
+.ln{ display:block; overflow:hidden; padding:0.04em 0 0.22em; margin-bottom:-0.14em; }
+.ln > span{ display:inline-block; will-change:transform; white-space:nowrap; }
+.sub{ font-weight:600; letter-spacing:-0.02em; color:var(--ink2); }
+
+/* ---------- the phone ---------- */
+#cam{ position:absolute; inset:0; perspective:2400px; perspective-origin:40% 45%; }
+#rig{ position:absolute; left:110px; top:350px; width:460px; height:940px; transform-style:preserve-3d; }
+#shadow{ position:absolute; left:50px; top:1210px; width:580px; height:90px; border-radius:50%; background:radial-gradient(closest-side, rgba(29,29,31,.32), rgba(29,29,31,0)); filter:blur(14px); }
+.phone{ position:absolute; inset:0; border-radius:78px; padding:15px;
+  background:linear-gradient(140deg,#4a4a50 0%,#232327 28%,#38383d 55%,#18181b 80%,#3c3c42 100%);
+  box-shadow:inset 0 0 0 2px #6d6d74, inset 0 0 0 7px #111113, 0 70px 120px -50px rgba(23,21,43,.55); }
+.btnr{ position:absolute; width:7px; border-radius:3px; background:linear-gradient(90deg,#2a2a2e,#55555b); }
+.screen{ position:relative; width:100%; height:100%; border-radius:64px; overflow:hidden; background:#fff; }
+.island{ position:absolute; left:50%; top:20px; width:132px; height:38px; margin-left:-66px; border-radius:20px; background:#000; z-index:3; }
+.sbar{ position:absolute; left:0; right:0; top:22px; padding:0 44px 0 52px; display:flex; justify-content:space-between; font-size:21px; font-weight:700; z-index:2; }
+.sbar i{ display:inline-block; width:30px; height:14px; border-radius:4px; border:2px solid #1d1d1f; position:relative; margin-left:6px; }
+.sbar i::after{ content:''; position:absolute; inset:2px; right:6px; background:#1d1d1f; border-radius:1px; }
+.app{ position:absolute; left:0; right:0; top:74px; bottom:0; padding:0 22px; }
+.nav{ display:flex; align-items:center; gap:8px; font-size:27px; font-weight:800; letter-spacing:-0.02em; height:56px; }
+.nav svg{ width:20px; height:20px; }
+.nav .r{ margin-left:auto; display:flex; gap:22px; }
+.nav .r svg{ width:28px; height:28px; stroke:#1d1d1f; stroke-width:2; fill:none; stroke-linecap:round; }
+.prow{ display:flex; align-items:center; gap:18px; margin-top:16px; }
+.ring{ width:118px; height:118px; border-radius:50%; padding:4px; background:conic-gradient(from 210deg,#4539C9,#8C82FF,#C4BDFF,#5B4FE8,#4539C9); flex:none; }
+.ring div{ width:100%; height:100%; border-radius:50%; border:4px solid #fff; background:linear-gradient(135deg,#7C71F7,#4539C9); color:#fff; font-weight:800; font-size:36px; display:flex; align-items:center; justify-content:center; }
+.st{ flex:1; display:grid; grid-template-columns:repeat(3,1fr); text-align:center; }
+.st b{ display:block; font-size:28px; font-weight:800; letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
+.st small{ font-size:18px; color:#3b3b40; font-weight:500; }
+.nm{ margin-top:14px; font-size:21px; font-weight:800; }
+.ct{ font-size:19px; color:var(--ink3); font-weight:500; }
+.bt{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; }
+.bt span{ height:46px; border-radius:12px; background:#EFEFF2; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; }
+.hl{ display:flex; gap:18px; margin-top:16px; }
+.hl div{ text-align:center; font-size:15px; color:#3b3b40; font-weight:600; }
+.hl i{ display:block; width:68px; height:68px; border-radius:50%; border:2px solid #E3E3E8; margin-bottom:6px; padding:4px; }
+.hl i::after{ content:''; display:block; width:100%; height:100%; border-radius:50%; background:var(--g); }
+.tabs{ display:flex; justify-content:space-around; margin:16px -22px 0; border-top:1px solid #E6E6EA; height:52px; align-items:center; }
+.tabs svg{ width:26px; height:26px; stroke:#1d1d1f; stroke-width:2; fill:none; }
+.grid9{ display:grid; grid-template-columns:repeat(3,1fr); gap:3px; margin:0 -22px; }
+.grid9 div{ aspect-ratio:1/1.12; position:relative; overflow:hidden; }
+#gain{ position:absolute; z-index:4; left:226px; top:208px; padding:6px 12px; border-radius:999px; background:var(--brand); color:#fff; font-size:17px; font-weight:800; white-space:nowrap; box-shadow:0 10px 24px -10px rgba(69,57,201,.7); }
+.glare{ position:absolute; inset:0; border-radius:78px; pointer-events:none;
+  background:linear-gradient(115deg, rgba(255,255,255,0) 35%, rgba(255,255,255,.22) 47%, rgba(255,255,255,.04) 53%, rgba(255,255,255,0) 62%); background-size:300% 100%; }
+
+/* glass notification pills floating out of the phone */
+.pill{ position:absolute; width:410px; height:112px; border-radius:32px; display:flex; align-items:center; gap:18px; padding:0 24px;
+  background:rgba(255,255,255,.72); border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 30px 60px -28px rgba(29,29,31,.35), 0 0 0 1px rgba(29,29,31,.05); -webkit-backdrop-filter:blur(24px) saturate(1.6); backdrop-filter:blur(24px) saturate(1.6); }
+.pill .av{ width:64px; height:64px; border-radius:50%; color:#fff; font-weight:800; font-size:21px; display:flex; align-items:center; justify-content:center; flex:none; }
+.pill b{ display:block; font-size:26px; letter-spacing:-0.01em; }
+.pill span{ font-size:21px; color:var(--ink2); font-weight:500; }
+.pill em{ margin-left:auto; font-style:normal; font-size:17px; font-weight:800; color:var(--brand); white-space:nowrap; }
+
+/* ---------- stats ---------- */
+.big{ font-weight:700; letter-spacing:-0.055em; line-height:0.95; font-variant-numeric:tabular-nums; }
+.cols{ display:grid; grid-template-columns:repeat(3,1fr); }
+.cols div{ text-align:center; padding:0 10px; }
+.cols b{ display:block; font-size:84px; font-weight:700; letter-spacing:-0.05em; line-height:1; }
+.cols span{ display:block; margin-top:12px; font-size:27px; color:var(--ink2); font-weight:600; letter-spacing:-0.01em; line-height:1.25; }
+.vline{ position:absolute; top:6px; bottom:6px; width:1px; background:#D2D2D7; }
+#rule{ position:absolute; left:120px; right:120px; top:800px; height:1px; background:#D2D2D7; transform-origin:50% 50%; }
+
+/* ---------- glass report over a soft orb ---------- */
+.orb{ position:absolute; border-radius:50%; filter:blur(70px); }
+#rep{ position:absolute; left:150px; width:780px; top:600px; height:520px; border-radius:48px; padding:40px 46px;
+  background:rgba(255,255,255,.62); border:1px solid rgba(255,255,255,.95); -webkit-backdrop-filter:blur(30px) saturate(1.5); backdrop-filter:blur(30px) saturate(1.5);
+  box-shadow:0 60px 120px -60px rgba(29,29,31,.45), 0 0 0 1px rgba(29,29,31,.04); transform-style:preserve-3d; }
+.rh{ display:flex; align-items:center; gap:16px; }
+.rh .tl{ width:56px; height:56px; border-radius:17px; background:var(--brand); display:flex; align-items:center; justify-content:center; }
+.rh .tl svg{ width:32px; height:32px; stroke:#fff; stroke-width:2; fill:none; stroke-linecap:round; }
+.rh b{ font-size:32px; letter-spacing:-0.02em; }
+.rh span{ margin-left:auto; font-size:21px; font-weight:700; color:var(--ink2); padding:8px 16px; border-radius:999px; background:rgba(29,29,31,.05); }
+#n4{ font-size:120px; font-weight:700; letter-spacing:-0.05em; line-height:1; margin-top:26px; font-variant-numeric:tabular-nums; }
+.rl{ font-size:26px; color:var(--ink2); font-weight:600; margin-top:8px; }
+#chart{ position:absolute; left:46px; right:46px; bottom:40px; height:150px; }
+
+/* ---------- end card ---------- */
+.logo{ display:inline-flex; align-items:center; justify-content:center; width:150px; height:150px; border-radius:46px; background:linear-gradient(145deg,#7C71F7,#5B4FE8 55%,#4539C9);
+  box-shadow:0 40px 80px -30px rgba(69,57,201,.6), inset 0 2px 0 rgba(255,255,255,.35); }
+.logo svg{ width:84px; height:84px; stroke:#fff; stroke-width:2; fill:none; stroke-linecap:round; }
+.bio{ display:inline-flex; align-items:center; gap:14px; padding:20px 38px; border-radius:999px; border:2px solid var(--brand); color:var(--brand); font-size:36px; font-weight:700; letter-spacing:-0.01em; }
+.bio svg{ width:34px; height:34px; stroke:currentColor; stroke-width:2.4; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+
+/* ===== dark "Pro" variant: same premium style on a deep black canvas ===== */
+#stage{ background:#000; color:#F5F5F7; }
+.sub{ color:#A1A1A6; }
+.grad{ background-image:linear-gradient(100deg, #6F63F5 0%, #9A92F2 30%, #D9D4FF 50%, #9A92F2 70%, #6F63F5 100%); }
+#glow{ position:absolute; left:140px; top:520px; width:800px; height:800px; border-radius:50%; background:radial-gradient(closest-side, rgba(91,79,232,.55), rgba(91,79,232,0)); filter:blur(30px); }
+.phone{ background:linear-gradient(140deg,#9A9AA2 0%,#45454B 26%,#7A7A82 52%,#2E2E33 78%,#8C8C94 100%);
+  box-shadow:inset 0 0 0 2px #B9B9C0, inset 0 0 0 7px #0B0B0D, 0 80px 160px -60px rgba(91,79,232,.65); }
+.screen{ background:#000; color:#F5F5F7; }
+.sbar i{ border-color:#F5F5F7; } .sbar i::after{ background:#F5F5F7; }
+.nav svg path{ stroke:#F5F5F7; } .nav .r svg{ stroke:#F5F5F7; }
+.ring div{ border-color:#000; }
+.st small{ color:#A1A1A6; } .ct{ color:#8E8E93; }
+.bt span{ background:#1C1C1E; color:#F5F5F7; }
+.hl div{ color:#A1A1A6; } .hl i{ border-color:#3A3A3C; }
+.tabs{ border-top-color:#2C2C2E; } .tabs svg{ stroke:#F5F5F7; }
+.glare{ background:linear-gradient(115deg, rgba(255,255,255,0) 35%, rgba(255,255,255,.16) 47%, rgba(255,255,255,.03) 53%, rgba(255,255,255,0) 62%); background-size:300% 100%; }
+#shadow{ display:none; }
+.pill{ background:rgba(28,28,30,.72); border-color:rgba(255,255,255,.1); box-shadow:0 30px 60px -28px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.04); color:#F5F5F7; }
+.pill span{ color:#A1A1A6; } .pill em{ color:#B4ACFF; }
+#vb{ position:absolute; left:612px; top:1150px; font-size:20px; color:#6E6E73; font-weight:600; }
+/* benefit cards */
+.bc{ position:absolute; left:110px; width:860px; height:196px; border-radius:40px; display:flex; align-items:center; gap:30px; padding:0 40px;
+  background:rgba(28,28,30,.78); border:1px solid rgba(255,255,255,.09); -webkit-backdrop-filter:blur(26px); backdrop-filter:blur(26px);
+  box-shadow:0 40px 80px -40px rgba(0,0,0,.9); }
+.bc .ic{ width:96px; height:96px; border-radius:28px; flex:none; display:flex; align-items:center; justify-content:center; background:linear-gradient(145deg,#8C82FF,#5B4FE8 55%,#4539C9); box-shadow:0 20px 40px -18px rgba(91,79,232,.8), inset 0 2px 0 rgba(255,255,255,.3); }
+.bc .ic svg{ width:52px; height:52px; stroke:#fff; stroke-width:1.9; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+.bc b{ display:block; font-size:38px; font-weight:700; letter-spacing:-0.025em; color:#F5F5F7; }
+.bc span{ display:block; margin-top:6px; font-size:25px; color:#A1A1A6; font-weight:500; line-height:1.35; }
+/* end card on black */
+.logo{ box-shadow:0 0 0 1px rgba(255,255,255,.12), 0 40px 120px -20px rgba(91,79,232,.9), inset 0 2px 0 rgba(255,255,255,.35); }
+.bio{ border-color:#9A92F2; color:#C9C3FF; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- A · title -->
+  <div class="layer" id="A">
+    <div id="glow"></div>
+    <div class="c" id="aT" style="top:420px">
+      <h1 class="h" style="font-size:128px"><span class="ln"><span id="a1">Meer dan</span></span><span class="ln"><span id="a2" class="grad">een getal.</span></span></h1>
+      <p class="sub" id="a3" style="margin:40px 0 0;font-size:42px">Wat echte volgers voor je bedrijf doen.</p>
+    </div>
+  </div>
+
+  <!-- B · the phone -->
+  <div class="layer" id="B">
+    <div class="c" id="bT" style="top:70px">
+      <h2 class="h" style="font-size:84px"><span class="ln"><span id="b1">Echte volgers.</span></span><span class="ln"><span id="b2" class="grad">Echte kansen.</span></span></h2>
+    </div>
+    <div id="shadow"></div>
+    <div id="cam">
+      <div id="pillsBack"></div>
+      <div id="rig">
+        <span class="btnr" style="left:-5px;top:210px;height:60px"></span><span class="btnr" style="left:-5px;top:300px;height:100px"></span>
+        <span class="btnr" style="left:-5px;top:420px;height:100px"></span><span class="btnr" style="right:-5px;top:300px;height:150px"></span>
+        <div class="phone"><div class="screen">
+          <div class="island"></div>
+          <div class="sbar"><span>9:41</span><span><i></i></span></div>
+          <div class="app">
+            <div class="nav">jouwbedrijf<svg viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+              <span class="r"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span></div>
+            <div class="prow"><div class="ring"><div>JB</div></div>
+              <div class="st"><div><b>48</b><small>berichten</small></div><div><b id="fol">1.204</b><small>volgers</small></div><div><b>312</b><small>volgend</small></div></div></div>
+            <div class="nm">Jouw Bedrijf</div>
+            <div class="ct">Lokale ondernemer · Utrecht</div>
+            <div class="bt"><span>Profiel bewerken</span><span>Profiel delen</span></div>
+            <div class="hl" id="hls"></div>
+            <div class="tabs"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9.3h16M4 14.6h16M9.3 4v16M14.6 4v16"/></svg><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="3"/><path d="M10.5 9.5l4 2.5-4 2.5z"/></svg><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.4"/><path d="M5.5 19c1.2-3.2 3.8-4.6 6.5-4.6s5.3 1.4 6.5 4.6"/></svg></div>
+            <div class="grid9" id="g9"></div>
+          </div>
+          <div id="gain">+412 deze maand</div>
+        </div></div>
+        <div class="glare" id="glare"></div>
+      </div>
+      <div id="pillsFront"></div>
+      <div id="vb">Voorbeeld</div>
+    </div>
+  </div>
+
+  <!-- C · what it brings -->
+  <div class="layer" id="C">
+    <div class="c" style="top:110px">
+      <h2 class="h" style="font-size:100px"><span class="ln"><span id="c1">Wat het je</span></span><span class="ln"><span id="c2" class="grad">oplevert.</span></span></h2>
+    </div>
+    <div class="bc" id="q1" style="top:470px"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4"/><path d="M3 20c.8-3.6 3.2-5.4 6-5.4s5.2 1.8 6 5.4"/><path d="M16 4.6a3.4 3.4 0 0 1 0 6.8M18.5 14.9c1.5.9 2.3 2.6 2.5 5.1"/></svg></span><div><b>Potentiële klanten</b><span>Je nieuwe volgers passen bij wat je aanbiedt.</span></div></div>
+    <div class="bc" id="q2" style="top:696px"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/></svg></span><div><b>Herkenbaarheid</b><span>Mensen herkennen je al, nog voordat ze je echt leren kennen.</span></div></div>
+    <div class="bc" id="q3" style="top:922px"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5.5c0 4.6-3 8.1-7 9.5-4-1.4-7-4.9-7-9.5V6z"/><path d="M8.8 12.2l2.2 2.2 4.4-4.6"/></svg></span><div><b>Geloofwaardigheid</b><span>Een groeiend publiek wekt vertrouwen bij nieuwe klanten.</span></div></div>
+  </div>
+
+  <!-- E · end card -->
+  <div class="layer" id="E">
+    <div class="c" style="top:250px"><span class="logo" id="e0"><svg viewBox="0 0 24 24"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="6" r="3"/><circle cx="17" cy="18" r="3"/><path d="M9.6 10.6l4.8-3.2M9.6 13.4l4.8 3.2"/></svg></span></div>
+    <div class="c" style="top:450px"><h2 class="h" id="e1" style="font-size:96px">GrowthSourced</h2></div>
+    <div class="c" style="top:590px"><p class="sub" id="e2" style="margin:0;font-size:40px">Meer dan alleen een getal.</p></div>
+    <div class="c" style="top:760px"><p id="e3" style="margin:0;font-size:60px;font-weight:700;letter-spacing:-0.03em">€249,99 per maand.</p>
+      <p id="e4" style="margin:12px 0 0;font-size:34px;font-weight:600;color:#A1A1A6">Maandelijks opzegbaar.</p>
+      <p id="e5" style="margin:14px 0 0;font-size:24px;font-weight:500;color:#6E6E73">Excl. btw · eenmalig €75 opstartkosten</p></div>
+    <div class="c" style="top:1080px"><span class="bio" id="e6">Link in bio<svg id="e7" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var DURATION = 26.4;
+  var clamp = function(x, a, b){ a = a == null ? 0 : a; b = b == null ? 1 : b; return Math.min(b, Math.max(a, x)); };
+  var lerp = function(a, b, p){ return a + (b - a) * p; };
+  var E = {
+    outExpo: function(x){ return x >= 1 ? 1 : 1 - Math.pow(2, -10 * x); },
+    outQuint: function(x){ return 1 - Math.pow(1 - x, 5); },
+    inOutQuint: function(x){ return x < .5 ? 16 * Math.pow(x, 5) : 1 - Math.pow(-2 * x + 2, 5) / 2; },
+    inOutSine: function(x){ return -(Math.cos(Math.PI * x) - 1) / 2; },
+    inCubic: function(x){ return x * x * x; }
+  };
+  var seg = function(t, a, d, e){ return (e || E.outQuint)(clamp((t - a) / d)); };
+  var $ = function(id){ return document.getElementById(id); };
+  var nl = function(n){ return Math.round(n).toLocaleString('nl-NL'); };
+
+  // masked line: rises from below its own clip edge
+  function line(el, t, t0, d){ var p = seg(t, t0, d || 0.9, E.outExpo); el.style.transform = 'translateY(' + ((1 - p) * 110) + '%)'; }
+  // blur-in: sharpens and settles
+  function soft(el, t, t0, d, dy){ var p = seg(t, t0, d || 0.8, E.outQuint);
+    el.style.opacity = p; el.style.filter = 'blur(' + ((1 - p) * 14).toFixed(2) + 'px)'; el.style.transform = 'translateY(' + ((1 - p) * (dy == null ? 24 : dy)) + 'px)'; }
+  // layer on/off with a blur-out exit
+  function layer(id, t, tin, tout, xd){
+    var el = $(id), on = t >= tin && t < tout + (xd || 0.6);
+    el.style.display = on ? 'block' : 'none';
+    if (!on) return false;
+    var o = seg(t, tout, xd || 0.6, E.inCubic);
+    el.style.opacity = 1 - o; el.style.filter = o > 0 ? 'blur(' + (o * 16).toFixed(2) + 'px)' : 'none';
+    return true;
+  }
+
+  /* ---------- phone content ---------- */
+  var G = [['#FFD8C2','#F7A58A'],['#E7E3FF','#9A92F2'],['#D5F2E9','#7CCFB5'],['#FFF1C9','#F5C45B'],['#DCEBFF','#86AEF0'],['#F8D9E8','#E58EB4'],['#EEECFF','#5B4FE8'],['#E3F6D8','#9ED58A'],['#FFE3D3','#EE9A6B']];
+  $('g9').innerHTML = G.map(function(g, i){
+    var shape = i % 3 === 0 ? '<i style="position:absolute;left:22%;top:20%;width:56%;height:56%;border-radius:50%;background:rgba(255,255,255,.55)"></i>'
+      : i % 3 === 1 ? '<i style="position:absolute;left:-10%;right:-10%;bottom:-30%;height:70%;border-radius:50%;background:rgba(255,255,255,.4)"></i>'
+      : '<i style="position:absolute;left:30%;top:28%;width:40%;height:46%;border-radius:18px;background:rgba(255,255,255,.5);transform:rotate(12deg)"></i>';
+    return '<div style="background:linear-gradient(150deg,' + g[0] + ',' + g[1] + ')">' + shape + '</div>';
+  }).join('');
+  $('hls').innerHTML = [['Nieuw','#C4BDFF,#5B4FE8'],['Team','#FFD8C2,#EE9A6B'],['Werk','#D5F2E9,#7CCFB5'],['Reviews','#FFF1C9,#F5C45B']].map(function(h){
+    return '<div><i style="--g:linear-gradient(135deg,' + h[1] + ')"></i>' + h[0] + '</div>';
+  }).join('');
+
+  // glass "new follower" pills: [side, y, z, start, initials, colour, title, place]
+  // notifications stacking on the right of the phone: [slot y, start, initials, colour, title, place]
+  var PILLS = [
+    [470, 6.0, 'SV', '#2E9E7A', 'Sportliefhebber', 'Utrecht'],
+    [606, 7.0, 'LB', '#E58E6B', 'Foodie', 'Amsterdam'],
+    [742, 8.0, 'TK', '#6F9BE0', 'Ondernemer', 'Eindhoven'],
+    [878, 9.0, 'KO', '#9A6BD8', 'Koffieliefhebber', 'Utrecht'],
+    [1014, 10.0, 'NW', '#D9768F', 'Beauty-enthousiast', 'Utrecht']
+  ];
+  PILLS.forEach(function(p){
+    var el = document.createElement('div'); el.className = 'pill';
+    el.innerHTML = '<span class="av" style="background:' + p[3] + '">' + p[2] + '</span><div><b>' + p[4] + '</b><span>' + p[5] + '</span></div><em>Volgt je nu</em>';
+    $('pillsFront').appendChild(el); p.el = el;
+  });
+
+  /* ---------- report chart ---------- */
+  var PTS = [];
+  (function(){ var v = 0, s = 7; for (var i = 0; i <= 28; i++) { s = (s * 9301 + 49297) % 233280; v += 10 + 8 * (s / 233280) + i * 0.22; PTS.push(v); } })();
+  var MAX = PTS[PTS.length - 1];
+  function chart(p){
+    var n = Math.max(1, Math.round(p * 28)), d = '', a = '';
+    for (var i = 0; i <= n; i++) {
+      var x = i / 28 * 688, y = 140 - PTS[i] / MAX * 128;
+      d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+    }
+    var lx = n / 28 * 688, ly = 140 - PTS[n] / MAX * 128;
+    a = d + 'L' + lx.toFixed(1) + ' 150L0 150Z';
+    $('line').setAttribute('d', d); $('area').setAttribute('d', a);
+    $('dot').setAttribute('cx', lx); $('dot').setAttribute('cy', ly);
+  }
+
+  function render(t){
+    /* A · title (0 – 4.4) */
+    if (layer('A', t, 0, 3.9, 0.7)) {
+      line($('a1'), t, 0.35, 1.1); line($('a2'), t, 0.85, 1.1);
+      $('a2').style.backgroundPosition = (100 - seg(t, 0.85, 3.4, E.inOutSine) * 100) + '% 50%';
+      soft($('a3'), t, 1.8, 0.9);
+      $('glow').style.opacity = 0.9 * seg(t, 0, 2.0, E.inOutSine); $('glow').style.transform = 'translateY(' + (120 - 160 * seg(t, 0, 4.4, E.inOutSine)) + 'px)';
+      $('aT').style.transform = 'scale(' + (1.04 - 0.04 * seg(t, 0, 4.4, E.inOutSine)) + ')';
+    }
+
+    /* B · the phone (3.9 – 12.6) */
+    if (layer('B', t, 3.9, 12.0, 0.75)) {
+      line($('b1'), t, 4.5, 1.0); line($('b2'), t, 4.85, 1.0);
+      $('b2').style.backgroundPosition = (100 - seg(t, 4.85, 4, E.inOutSine) * 100) + '% 50%';
+      var up = seg(t, 3.9, 1.6, E.outExpo), drift = seg(t, 4.6, 7.4, E.inOutSine), push = seg(t, 11.6, 1.2, E.inCubic);
+      var rx = lerp(26, 4, up) - 4 * drift, ry = lerp(-24, -10, up) + 20 * drift;
+      var ty = (1 - up) * 820 - push * 80, sc = lerp(0.9, 1, up) * (1 + 0.04 * drift) * (1 + 1.4 * push);
+      $('rig').style.transform = 'translateY(' + ty.toFixed(1) + 'px) scale(' + sc.toFixed(4) + ') rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+      $('shadow').style.opacity = up * (1 - push) * 0.9;
+      $('shadow').style.transform = 'scaleX(' + (0.85 + 0.15 * up + 0.05 * Math.abs(ry) / 20) + ')';
+      $('glare').style.backgroundPosition = (90 - drift * 70 - up * 20) + '% 50%';
+      var g = seg(t, 6.0, 5.2, E.inOutSine);
+      $('fol').textContent = nl(1204 + 412 * g);
+      var gi = seg(t, 6.3, 0.7, E.outExpo);
+      $('gain').style.opacity = gi; $('gain').style.transform = 'translateY(' + ((1 - gi) * 14) + 'px) scale(' + (0.8 + 0.2 * gi) + ')';
+      PILLS.forEach(function(p){
+        var e = seg(t, p[1], 1.1, E.outExpo), lift = Math.sin(t * 1.1 + p[0]) * 4;
+        p.el.style.left = (612 + (1 - e) * 360) + 'px'; p.el.style.top = (p[0] + lift) + 'px';
+        p.el.style.transform = 'translateZ(' + (60 + 60 * (1 - e)).toFixed(1) + 'px) rotateY(' + (-14 * (1 - e)).toFixed(2) + 'deg)';
+        p.el.style.opacity = t < p[1] ? 0 : clamp((t - p[1]) / 0.25);
+      });
+    }
+
+    /* C · what it brings (12.2 – 19.4) */
+    if (layer('C', t, 12.75, 18.8, 0.6)) {
+      line($('c1'), t, 12.95, 1.0); line($('c2'), t, 13.3, 1.0);
+      $('c2').style.backgroundPosition = (100 - seg(t, 12.75, 4, E.inOutSine) * 100) + '% 50%';
+      var Q = [['q1', 14.0], ['q2', 15.3], ['q3', 16.6]];
+      Q.forEach(function(q, i){
+        var el = $(q[0]); soft(el, t, q[1], 1.0, 40);
+        // the newest card is in focus; earlier ones step back a little until all three are shown
+        var next = i < 2 ? Q[i + 1][1] : 99, back = seg(t, next, 0.6, E.inOutSine) * (1 - seg(t, 17.7, 0.6, E.inOutSine));
+        el.style.opacity = (parseFloat(el.style.opacity) * (1 - 0.5 * back)).toFixed(3);
+      });
+      $('C').style.transform = 'scale(' + (1.02 - 0.02 * seg(t, 12.2, 7, E.inOutSine)) + ')';
+    }
+
+    /* E · end card (18.8 – 26.4) */
+    if (layer('E', t, 18.8, 99, 0.5)) {
+      var lp = seg(t, 19.0, 1.2, E.outExpo);
+      $('e0').style.opacity = lp; $('e0').style.transform = 'translateY(' + ((1 - lp) * 40) + 'px) scale(' + (0.7 + 0.3 * lp) + ')';
+      soft($('e1'), t, 19.4, 1.0); soft($('e2'), t, 19.8, 0.9);
+      soft($('e3'), t, 20.5, 0.9); soft($('e4'), t, 20.75, 0.9); soft($('e5'), t, 20.95, 0.9);
+      soft($('e6'), t, 21.5, 0.9);
+      $('e7').style.transform = 'translateY(' + (Math.abs(Math.sin(Math.max(0, t - 21.9) * 3.2)) * 6) + 'px)';
+    }
+  }
+
+  window.DURATION = DURATION;
+  window.render = render;
+  var m = /[?&#]t=([\d.]+)/.exec(location.href);
+  render(m ? +m[1] : 0);
+})();
+</script>
+</body>
+</html>
