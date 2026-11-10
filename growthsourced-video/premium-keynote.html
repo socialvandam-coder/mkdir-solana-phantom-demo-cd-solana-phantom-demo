@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>GrowthSourced Ad 36</title>
+<style>
+@font-face{ font-family:'PJS'; src:url(fonts/pjs-latin.woff2) format('woff2'); font-weight:200 800; font-display:block;
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face{ font-family:'PJS'; src:url(fonts/pjs-latin-ext.woff2) format('woff2'); font-weight:200 800; font-display:block;
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+/* Keynote-style launch film: a 3D logo reveal, a bento grid of glass tiles on an aurora, and a type-only rhythm.
+   Brand indigo #5B4FE8; white type on a deep indigo canvas. */
+*{ box-sizing:border-box; }
+html,body{ margin:0; background:#000; }
+#stage{ position:relative; width:1080px; height:1350px; overflow:hidden; background:#07061A; color:#fff; font-family:'PJS', sans-serif; -webkit-font-smoothing:antialiased; }
+.layer{ position:absolute; inset:0; display:none; }
+.c{ position:absolute; left:60px; right:60px; text-align:center; }
+.h{ font-weight:700; letter-spacing:-0.045em; line-height:1.02; margin:0; }
+.ln{ display:block; overflow:hidden; padding:0.04em 0 0.22em; margin-bottom:-0.14em; }
+.ln > span{ display:inline-block; white-space:nowrap; will-change:transform; }
+.grad{ background:linear-gradient(100deg, #FFFFFF 0%, #E4E0FF 30%, #A79FFF 50%, #E4E0FF 70%, #FFFFFF 100%); background-size:260% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent; padding:0 0.04em 0.2em; margin:0 -0.04em -0.2em; }
+.sub{ font-weight:600; letter-spacing:-0.02em; color:#C9C3FF; }
+
+/* aurora: big blurred colour fields drifting behind everything */
+#aurora{ position:absolute; inset:0; }
+.au{ position:absolute; border-radius:50%; filter:blur(90px); }
+
+/* 3D logo: a front face, an extruded edge built from thin slices, and a moving reflection */
+#logo3d{ position:absolute; left:390px; top:300px; width:300px; height:300px; perspective:1400px; }
+#cube{ position:absolute; inset:0; transform-style:preserve-3d; }
+.slice{ position:absolute; inset:0; border-radius:88px; background:#3328A8; }
+#face{ position:absolute; inset:0; border-radius:88px; overflow:hidden;
+  background:linear-gradient(145deg,#8E84FF 0%,#5B4FE8 52%,#4236C4 100%); box-shadow:inset 0 2px 0 rgba(255,255,255,.45), inset 0 -3px 0 rgba(0,0,0,.25); }
+#face svg{ position:absolute; left:58px; top:58px; width:184px; height:184px; stroke:#fff; stroke-width:1.9; fill:none; stroke-linecap:round; }
+#spec{ position:absolute; inset:-40%; background:linear-gradient(115deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.55) 50%, rgba(255,255,255,0) 60%); }
+#lglow{ position:absolute; left:290px; top:560px; width:500px; height:160px; border-radius:50%; background:radial-gradient(closest-side, rgba(124,113,247,.75), rgba(124,113,247,0)); filter:blur(20px); }
+
+/* bento grid: visionOS-like glass tiles */
+.t{ position:absolute; border-radius:44px; overflow:hidden; padding:30px 36px;
+  background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.16);
+  -webkit-backdrop-filter:blur(40px) saturate(1.6); backdrop-filter:blur(40px) saturate(1.6);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 40px 80px -40px rgba(0,0,0,.6); }
+.t .k{ font-size:110px; font-weight:700; letter-spacing:-0.055em; line-height:1.02; font-variant-numeric:tabular-nums; }
+.t .lb{ font-size:28px; font-weight:600; color:#D7D2FF; letter-spacing:-0.01em; margin-top:6px; }
+.t .sm{ font-size:20px; font-weight:500; color:rgba(255,255,255,.55); margin-top:6px; }
+.t .ic{ width:72px; height:72px; border-radius:22px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; }
+.t .ic svg{ width:42px; height:42px; stroke:#fff; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; overflow:visible; }
+.sheen{ position:absolute; top:-20%; bottom:-20%; width:30%; background:linear-gradient(100deg, rgba(255,255,255,0), rgba(255,255,255,.16), rgba(255,255,255,0)); transform:skewX(-14deg); }
+#chart{ position:absolute; left:36px; right:36px; bottom:30px; height:110px; }
+
+/* end card */
+.bio{ display:inline-flex; align-items:center; gap:14px; padding:20px 38px; border-radius:999px; border:2px solid rgba(255,255,255,.55); color:#fff; font-size:36px; font-weight:700;
+  background:rgba(255,255,255,.08); -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px); }
+.bio svg{ width:34px; height:34px; stroke:currentColor; stroke-width:2.4; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="aurora">
+    <div class="au" id="u1" style="width:760px;height:760px;background:#5B4FE8"></div>
+    <div class="au" id="u2" style="width:620px;height:620px;background:#8C82FF"></div>
+    <div class="au" id="u3" style="width:560px;height:560px;background:#C45BE8"></div>
+    <div class="au" id="u4" style="width:600px;height:600px;background:#3D6BFF"></div>
+  </div>
+
+  <!-- the 3D logo is shared by the opening and the end card -->
+  <div id="lglow"></div>
+  <div id="logo3d"><div id="cube"><div id="slices"></div>
+    <div id="face"><svg viewBox="0 0 24 24"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="6" r="3"/><circle cx="17" cy="18" r="3"/><path d="M9.6 10.6l4.8-3.2M9.6 13.4l4.8 3.2"/></svg><div id="spec"></div></div>
+  </div></div>
+
+  <!-- A · introducing -->
+  <div class="layer" id="A">
+    <div class="c" style="top:720px"><p class="sub" id="a1" style="margin:0;font-size:46px">Maak kennis met</p></div>
+    <div class="c" style="top:790px"><h1 class="h" style="font-size:124px"><span class="ln"><span id="a2" class="grad">GrowthSourced.</span></span></h1></div>
+    <div class="c" style="top:990px"><p class="sub" id="a3" style="margin:0;font-size:38px;color:rgba(255,255,255,.7)">Instagram-groei zonder gedoe.</p></div>
+  </div>
+
+  <!-- B · everything in one -->
+  <div class="layer" id="B">
+    <div class="c" style="top:62px"><h2 class="h" style="font-size:84px"><span class="ln"><span id="b1">Alles in één.</span></span></h2></div>
+    <div class="t" id="t1" style="left:60px;top:210px;width:960px;height:280px">
+      <div class="k grad" id="k1">200–400+</div><div class="lb">nieuwe volgers per maand*</div><div class="sm">*bij de meeste zakelijke accounts</div>
+      <div class="sheen" id="sh1"></div></div>
+    <div class="t" id="t2" style="left:60px;top:510px;width:470px;height:260px">
+      <div class="k">€0</div><div class="lb">advertentiebudget</div><div class="sheen" id="sh2"></div></div>
+    <div class="t" id="t3" style="left:550px;top:510px;width:470px;height:260px">
+      <div class="ic"><svg viewBox="0 0 24 24"><path id="shk" d="M8 11V7.5a4 4 0 0 1 8 0V11"/><rect x="5" y="11" width="14" height="10" rx="2.6"/></svg></div>
+      <div style="margin-top:22px;font-size:44px;font-weight:700;letter-spacing:-0.03em;line-height:1.08">Eén keer<br>inloggen.</div><div class="sheen" id="sh3"></div></div>
+    <div class="t" id="t4" style="left:60px;top:790px;width:470px;height:260px">
+      <div style="font-size:30px;font-weight:700;letter-spacing:-0.02em">Maandrapport</div><div class="sm" style="margin-top:2px">+<span id="k4">0</span> volgers · voorbeeld</div>
+      <svg id="chart" viewBox="0 0 400 110" preserveAspectRatio="none"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C4BDFF" stop-opacity=".45"/><stop offset="1" stop-color="#C4BDFF" stop-opacity="0"/></linearGradient></defs>
+        <path id="ca" fill="url(#cg)"/><path id="cl" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="sheen" id="sh4"></div></div>
+    <div class="t" id="t5" style="left:550px;top:790px;width:470px;height:260px">
+      <div class="k" id="k5">0%</div><div class="lb">echte profielen</div><div class="sheen" id="sh5"></div></div>
+    <div class="t" id="t6" style="left:60px;top:1070px;width:960px;height:170px;display:flex;align-items:center;gap:30px">
+      <div style="font-size:60px;font-weight:700;letter-spacing:-0.04em;white-space:nowrap">€249,99<span style="font-size:30px;font-weight:600;color:#D7D2FF;letter-spacing:-0.01em"> per maand</span></div>
+      <div style="margin-left:auto;text-align:right;font-size:22px;line-height:1.45;color:rgba(255,255,255,.7);font-weight:500">Maandelijks opzegbaar<br>Excl. btw · eenmalig €75 opstartkosten</div>
+      <div class="sheen" id="sh6"></div></div>
+  </div>
+
+  <!-- C · three words -->
+  <div class="layer" id="C">
+    <div class="c" id="w1" style="top:470px"><h2 class="h" style="font-size:250px"><span class="ln"><span id="w1t" class="grad">Echt.</span></span></h2><p class="sub" id="w1s" style="margin:26px 0 0;font-size:40px">Echte profielen uit jouw doelgroep.</p></div>
+    <div class="c" id="w2" style="top:500px"><h2 class="h" style="font-size:176px"><span class="ln"><span id="w2t" class="grad">Organisch.</span></span></h2><p class="sub" id="w2s" style="margin:26px 0 0;font-size:40px">Geen advertenties. Geen bots.</p></div>
+    <div class="c" id="w3" style="top:470px"><h2 class="h" style="font-size:230px"><span class="ln"><span id="w3t" class="grad">Van jou.</span></span></h2><p class="sub" id="w3s" style="margin:26px 0 0;font-size:40px">Je volgers blijven van jou.</p></div>
+  </div>
+
+  <!-- E · end card -->
+  <div class="layer" id="E">
+    <div class="c" style="top:500px"><h2 class="h" id="e1" style="font-size:96px">GrowthSourced</h2></div>
+    <div class="c" style="top:640px"><p class="sub" id="e2" style="margin:0;font-size:40px">Instagram-groei zonder gedoe.</p></div>
+    <div class="c" style="top:790px"><p id="e3" style="margin:0;font-size:60px;font-weight:700;letter-spacing:-0.03em">€249,99 per maand.</p>
+      <p id="e4" style="margin:12px 0 0;font-size:34px;font-weight:600;color:#C9C3FF">Maandelijks opzegbaar.</p>
+      <p id="e5" style="margin:14px 0 0;font-size:24px;font-weight:500;color:rgba(255,255,255,.55)">Excl. btw · eenmalig €75 opstartkosten</p></div>
+    <div class="c" style="top:1100px"><span class="bio" id="e6">Link in bio<svg id="e7" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var DURATION = 27.6;
+  var clamp = function(x, a, b){ a = a == null ? 0 : a; b = b == null ? 1 : b; return Math.min(b, Math.max(a, x)); };
+  var lerp = function(a, b, p){ return a + (b - a) * p; };
+  var E = {
+    outExpo: function(x){ return x >= 1 ? 1 : 1 - Math.pow(2, -10 * x); },
+    outQuint: function(x){ return 1 - Math.pow(1 - x, 5); },
+    inOutQuint: function(x){ return x < .5 ? 16 * Math.pow(x, 5) : 1 - Math.pow(-2 * x + 2, 5) / 2; },
+    inOutSine: function(x){ return -(Math.cos(Math.PI * x) - 1) / 2; },
+    inCubic: function(x){ return x * x * x; },
+    outBack: function(x){ var c1 = 1.4, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); }
+  };
+  var seg = function(t, a, d, e){ return (e || E.outQuint)(clamp((t - a) / d)); };
+  var $ = function(id){ return document.getElementById(id); };
+  function line(el, t, t0, d){ var p = seg(t, t0, d || 0.9, E.outExpo); el.style.transform = 'translateY(' + ((1 - p) * 110) + '%)'; }
+  function lineOut(el, t, t0, d){ var p = seg(t, t0, d || 0.6, E.inCubic); if (p > 0) el.style.transform = 'translateY(' + (-p * 110) + '%)'; }
+  function soft(el, t, t0, d, dy){ var p = seg(t, t0, d || 0.8, E.outQuint);
+    el.style.opacity = p; el.style.filter = 'blur(' + ((1 - p) * 14).toFixed(2) + 'px)'; el.style.transform = 'translateY(' + ((1 - p) * (dy == null ? 24 : dy)) + 'px)'; }
+  function layer(id, t, tin, tout, xd){
+    var el = $(id), on = t >= tin && t < tout + (xd || 0.6);
+    el.style.display = on ? 'block' : 'none';
+    if (!on) return false;
+    var o = seg(t, tout, xd || 0.6, E.inCubic);
+    el.style.opacity = 1 - o; el.style.filter = o > 0 ? 'blur(' + (o * 16).toFixed(2) + 'px)' : 'none';
+    return true;
+  }
+  var nl = function(n){ return Math.round(Math.max(0, n) + 0).toLocaleString('nl-NL'); };
+
+  // extruded edge of the logo: thin slices stacked behind the face
+  for (var i = 1; i <= 18; i++) {
+    var sl = document.createElement('div'); sl.className = 'slice';
+    sl.style.transform = 'translateZ(' + (-i * 2.2) + 'px)'; sl.style.background = i === 18 ? '#241C80' : 'hsl(246,' + (62 - i) + '%,' + (44 - i * 0.6) + '%)';
+    $('slices').appendChild(sl);
+  }
+  $('face').style.transform = 'translateZ(0.5px)';
+
+  // a rising monthly line (example)
+  var PTS = [], v = 0, s = 3;
+  for (var k = 0; k <= 24; k++) { s = (s * 9301 + 49297) % 233280; v += 8 + 7 * (s / 233280) + k * 0.25; PTS.push(v); }
+  var MX = PTS[PTS.length - 1];
+  function chart(p){
+    var n = Math.max(1, Math.round(p * 24)), d = '';
+    for (var k = 0; k <= n; k++) d += (k ? 'L' : 'M') + (k / 24 * 400).toFixed(1) + ' ' + (100 - PTS[k] / MX * 88).toFixed(1);
+    $('cl').setAttribute('d', d); $('ca').setAttribute('d', d + 'L' + (n / 24 * 400).toFixed(1) + ' 110L0 110Z');
+  }
+
+  function render(t){
+    /* aurora: fades up from black, then keeps drifting */
+    var aur = seg(t, 0.4, 2.6, E.inOutSine);
+    $('aurora').style.opacity = 0.25 + 0.75 * aur;
+    $('u1').style.transform = 'translate(' + (-120 + Math.sin(t * .22) * 120) + 'px,' + (-160 + Math.cos(t * .19) * 90) + 'px)';
+    $('u2').style.transform = 'translate(' + (560 + Math.cos(t * .25) * 110) + 'px,' + (120 + Math.sin(t * .21) * 120) + 'px)';
+    $('u3').style.transform = 'translate(' + (40 + Math.sin(t * .18 + 1) * 120) + 'px,' + (760 + Math.cos(t * .23) * 100) + 'px)';
+    $('u4').style.transform = 'translate(' + (600 + Math.cos(t * .2 + 2) * 110) + 'px,' + (840 + Math.sin(t * .17) * 110) + 'px)';
+    $('u3').style.opacity = 0.55; $('u4').style.opacity = 0.65;
+
+    /* the 3D logo: turns into view in the opening, rests small above the end card */
+    var inA = t < 6.4, inE = t >= 20.2;
+    $('logo3d').style.display = inA || inE ? 'block' : 'none'; $('lglow').style.display = $('logo3d').style.display;
+    if (inA) {
+      var turn = seg(t, 0.2, 3.6, E.inOutQuint), idle = Math.sin(t * 0.9) * seg(t, 2.5, 1.5, E.inOutSine);
+      var ry = lerp(78, -14, turn) + idle * 4, rx = lerp(22, 7, turn) + Math.cos(t * 0.8) * 2;
+      var out = seg(t, 5.7, 0.7, E.inCubic);
+      $('cube').style.transform = 'translateY(' + (-out * 40) + 'px) scale(' + (lerp(0.8, 1, turn) * (1 - 0.2 * out)) + ') rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+      $('logo3d').style.opacity = clamp((t - 0.3) / 0.6) * (1 - out); $('logo3d').style.filter = out > 0 ? 'blur(' + (out * 14) + 'px)' : 'none';
+      $('spec').style.transform = 'translateX(' + (lerp(-60, 60, seg(t, 0.6, 3.0, E.inOutSine))) + '%)';
+      $('lglow').style.opacity = 0.9 * turn * (1 - out);
+    } else if (inE) {
+      var lp = seg(t, 20.3, 1.6, E.outExpo);
+      $('logo3d').style.top = '170px';
+      $('cube').style.transform = 'scale(' + (0.62 * lerp(0.7, 1, lp)) + ') rotateX(' + (6 + Math.cos(t * 0.8) * 2) + 'deg) rotateY(' + (lerp(-70, -12, lp) + Math.sin(t * 0.9) * 4) + 'deg)';
+      $('logo3d').style.opacity = clamp((t - 20.3) / 0.5); $('logo3d').style.filter = 'none';
+      $('spec').style.transform = 'translateX(' + (lerp(-60, 60, seg(t, 20.6, 2.4, E.inOutSine))) + '%)';
+      $('lglow').style.top = '360px'; $('lglow').style.opacity = 0.7 * lp; $('lglow').style.transform = 'scale(.7)';
+    }
+
+    /* A · introducing (0 – 6.4) */
+    if (layer('A', t, 0, 5.7, 0.7)) {
+      soft($('a1'), t, 2.4, 0.9); line($('a2'), t, 2.8, 1.2);
+      $('a2').style.backgroundPosition = (100 - seg(t, 2.8, 3, E.inOutSine) * 100) + '% 50%';
+      soft($('a3'), t, 3.6, 0.9);
+    }
+
+    /* B · bento grid (6.2 – 15.8) */
+    if (layer('B', t, 6.2, 15.2, 0.6)) {
+      line($('b1'), t, 6.4, 1.0);
+      var T = [['t1', 7.0], ['t2', 7.6], ['t3', 8.0], ['t4', 8.6], ['t5', 9.0], ['t6', 9.7]];
+      T.forEach(function(q, i){
+        var el = $(q[0]), p = seg(t, q[1], 1.1, E.outExpo);
+        el.style.opacity = clamp((t - q[1]) / 0.35);
+        el.style.filter = p < 1 ? 'blur(' + ((1 - p) * 12).toFixed(2) + 'px)' : 'none';
+        el.style.transform = 'translateY(' + ((1 - p) * 60 + Math.sin(t * 0.7 + i) * 3) + 'px) scale(' + (0.92 + 0.08 * p) + ')';
+        // a glint travels across each tile once
+        var g = clamp((t - (12.0 + i * 0.18)) / 0.9);
+        $('sh' + (i + 1)).style.left = (-40 + 160 * E.inOutSine(g)) + '%';
+      });
+      var c1 = seg(t, 7.2, 1.6, E.outQuint);
+      $('k1').textContent = Math.round(200 * c1) + '–' + Math.round(400 * c1) + '+';
+      $('k1').style.backgroundPosition = (100 - seg(t, 7.2, 5, E.inOutSine) * 100) + '% 50%';
+      $('shk').setAttribute('transform', 'translate(0 ' + (-2.6 * (1 - seg(t, 8.9, 0.5, E.outBack))).toFixed(2) + ')');
+      var cp = seg(t, 8.9, 2.0, E.inOutSine); chart(cp); $('k4').textContent = nl(412 * cp);
+      $('k5').textContent = Math.round(100 * seg(t, 9.2, 1.4, E.outQuint)) + '%';
+      $('B').style.transform = 'scale(' + (1 + 0.025 * seg(t, 6.2, 9.6, E.inOutSine)) + ')';
+    }
+
+    /* C · three words (15.6 – 20.4) */
+    if (layer('C', t, 15.6, 20.0, 0.4)) {
+      [['w1', 15.8, 17.2], ['w2', 17.3, 18.7], ['w3', 18.8, 99]].forEach(function(w){
+        var on = t >= w[1] - 0.05 && t < w[2] + 0.7;
+        $(w[0]).style.display = on ? 'block' : 'none'; if (!on) return;
+        line($(w[0] + 't'), t, w[1], 0.9); lineOut($(w[0] + 't'), t, w[2], 0.55);
+        $(w[0] + 't').style.backgroundPosition = (100 - seg(t, w[1], 1.6, E.inOutSine) * 100) + '% 50%';
+        soft($(w[0] + 's'), t, w[1] + 0.35, 0.7, 16);
+        var o = seg(t, w[2], 0.45, E.inCubic); if (o > 0) $(w[0] + 's').style.opacity = 1 - o;
+        $(w[0]).style.transform = 'scale(' + (1.04 - 0.04 * seg(t, w[1], 1.6, E.outQuint)) + ')';
+      });
+    }
+
+    /* E · end card (20.0 – 27.6) */
+    if (layer('E', t, 20.0, 99, 0.5)) {
+      soft($('e1'), t, 20.9, 1.0); soft($('e2'), t, 21.3, 0.9);
+      soft($('e3'), t, 22.0, 0.9); soft($('e4'), t, 22.25, 0.9); soft($('e5'), t, 22.45, 0.9);
+      soft($('e6'), t, 23.0, 0.9);
+      $('e7').style.transform = 'translateY(' + (Math.abs(Math.sin(Math.max(0, t - 23.4) * 3.2)) * 6) + 'px)';
+    }
+  }
+
+  window.DURATION = DURATION;
+  window.render = render;
+  var m = /[?&#]t=([\d.]+)/.exec(location.href);
+  render(m ? +m[1] : 0);
+})();
+</script>
+</body>
+</html>
