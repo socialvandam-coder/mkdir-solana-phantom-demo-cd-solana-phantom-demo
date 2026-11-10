@@ -22,6 +22,9 @@ html,body{ margin:0; background:#000; }
 .grad{ background:linear-gradient(100deg, #FFFFFF 0%, #E4E0FF 30%, #A79FFF 50%, #E4E0FF 70%, #FFFFFF 100%); background-size:260% 100%;
   -webkit-background-clip:text; background-clip:text; color:transparent; padding:0 0.04em 0.2em; margin:0 -0.04em -0.2em; }
 .sub{ font-weight:600; letter-spacing:-0.02em; color:#C9C3FF; }
+.slot{ display:block; }
+.slot > span{ display:inline-block; white-space:nowrap; }
+.ws{ position:absolute; left:0; right:0; top:0; margin:0; font-size:40px; }
 
 /* aurora: big blurred colour fields drifting behind everything */
 #aurora{ position:absolute; inset:0; }
@@ -104,9 +107,11 @@ html,body{ margin:0; background:#000; }
 
   <!-- C · three words -->
   <div class="layer" id="C">
-    <div class="c" id="w1" style="top:470px"><h2 class="h" style="font-size:250px"><span class="ln"><span id="w1t" class="grad">Echt.</span></span></h2><p class="sub" id="w1s" style="margin:26px 0 0;font-size:40px">Echte profielen uit jouw doelgroep.</p></div>
-    <div class="c" id="w2" style="top:500px"><h2 class="h" style="font-size:176px"><span class="ln"><span id="w2t" class="grad">Organisch.</span></span></h2><p class="sub" id="w2s" style="margin:26px 0 0;font-size:40px">Geen advertenties. Geen bots.</p></div>
-    <div class="c" id="w3" style="top:470px"><h2 class="h" style="font-size:230px"><span class="ln"><span id="w3t" class="grad">Van jou.</span></span></h2><p class="sub" id="w3s" style="margin:26px 0 0;font-size:40px">Je volgers blijven van jou.</p></div>
+    <div class="c" id="wc" style="top:400px">
+      <h2 class="h" style="font-size:200px"><span class="ln"><span id="w0">Echte</span></span><span class="ln" style="position:relative"><span class="slot"><span id="w1t" class="grad">mensen.</span></span><span class="slot" style="position:absolute;left:0;right:0;top:0"><span id="w2t" class="grad">groei.</span></span><span class="slot" style="position:absolute;left:0;right:0;top:0"><span id="w3t" class="grad">kansen.</span></span></span></h2>
+      <div style="position:relative;height:60px;margin-top:30px">
+        <p class="sub ws" id="w1s">Uit jouw doelgroep, geen bots.</p><p class="sub ws" id="w2s">Organisch, zonder advertenties.</p><p class="sub ws" id="w3s">Op nieuwe klanten.</p></div>
+    </div>
   </div>
 
   <!-- E · end card -->
@@ -226,17 +231,18 @@ html,body{ margin:0; background:#000; }
       $('B').style.transform = 'scale(' + (1 + 0.025 * seg(t, 6.2, 9.6, E.inOutSine)) + ')';
     }
 
-    /* C · three words (15.6 – 20.4) */
+    /* C · "Echte" stays, the second word rolls: mensen → groei → kansen (15.6 – 20.4) */
     if (layer('C', t, 15.6, 20.0, 0.4)) {
-      [['w1', 15.8, 17.2], ['w2', 17.3, 18.7], ['w3', 18.8, 99]].forEach(function(w){
-        var on = t >= w[1] - 0.05 && t < w[2] + 0.7;
-        $(w[0]).style.display = on ? 'block' : 'none'; if (!on) return;
-        line($(w[0] + 't'), t, w[1], 0.9); lineOut($(w[0] + 't'), t, w[2], 0.55);
-        $(w[0] + 't').style.backgroundPosition = (100 - seg(t, w[1], 1.6, E.inOutSine) * 100) + '% 50%';
-        soft($(w[0] + 's'), t, w[1] + 0.35, 0.7, 16);
-        var o = seg(t, w[2], 0.45, E.inCubic); if (o > 0) $(w[0] + 's').style.opacity = 1 - o;
-        $(w[0]).style.transform = 'scale(' + (1.04 - 0.04 * seg(t, w[1], 1.6, E.outQuint)) + ')';
+      line($('w0'), t, 15.8, 0.9);
+      [['w1', 15.95, 17.0], ['w2', 17.3, 18.35], ['w3', 18.65, 99]].forEach(function(w){
+        var el = $(w[0] + 't'), pin = seg(t, w[1], 0.8, E.outExpo), pout = seg(t, w[2], 0.45, E.inCubic);
+        el.style.visibility = t < w[1] - 0.01 || t > w[2] + 0.46 ? 'hidden' : 'visible';
+        el.style.transform = 'translateY(' + ((1 - pin) * 110 - pout * 110) + '%)';
+        el.style.backgroundPosition = (100 - seg(t, w[1], 1.6, E.inOutSine) * 100) + '% 50%';
+        var sb = $(w[0] + 's'); soft(sb, t, w[1] + 0.3, 0.6, 14);
+        var so = seg(t, w[2] - 0.05, 0.35, E.inCubic); if (so > 0) sb.style.opacity = 1 - so;
       });
+      $('wc').style.transform = 'scale(' + (1.03 - 0.03 * seg(t, 15.8, 4.4, E.inOutSine)) + ')';
     }
 
     /* E · end card (20.0 – 27.6) */
