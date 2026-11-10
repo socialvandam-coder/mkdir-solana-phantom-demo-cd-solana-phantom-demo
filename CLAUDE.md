@@ -1,7 +1,7 @@
 # GrowthSourced Instagram-video's: vaste kwaliteitsstandaard
 
 Goedgekeurd door de eigenaar op 10 november 2026 ("echt perfect, deze kwaliteit zoals bij Apple moet blijven").
-Elke nieuwe video voldoet hieraan. Voorbeelden: advertentie 28 (`growthsourced-video/premium-template.html`) en advertentie 29 (`growthsourced-video/premium-volger-tot-klant.html`, met een grote iPhone die onderaan buiten beeld loopt, schermovergangen en een chatgesprek) en advertentie 30 (`growthsourced-video/premium-jouw-sleutels.html`, veiligheid: inlogscherm, een slot dat dichtklikt en een glazen instellingenkaart).
+Elke nieuwe video voldoet hieraan. Voorbeelden: advertentie 28 (`growthsourced-video/premium-template.html`) en advertentie 29 (`growthsourced-video/premium-volger-tot-klant.html`, met een grote iPhone die onderaan buiten beeld loopt, schermovergangen en een chatgesprek) en advertentie 30 (`growthsourced-video/premium-jouw-sleutels.html`, veiligheid: inlogscherm, een slot dat dichtklikt en een glazen instellingenkaart) en advertentie 31 (`growthsourced-video/premium-doelgroep.html`, targeting: een doelgroepscherm op de iPhone en een glazen kaart "Wie reageert het best?").
 
 ## Formaat en techniek
 - Altijd postformaat 4:5: 1080 × 1350, MP4 (H.264 high, yuv420p, bt709), **60 fps**, stille AAC-track. Geen Stories of 9:16 meer.
@@ -15,6 +15,11 @@ Elke nieuwe video voldoet hieraan. Voorbeelden: advertentie 28 (`growthsourced-v
 - Accentregels als gradienttekst (#4539C9 → #7C71F7 → #A79FFF) die langzaam glanst.
 - Lettertype Plus Jakarta Sans; koppen gewicht 700, letter-spacing -0.045em, groot en kort.
 - Koppen verschijnen per regel met een gemaskeerde slide-up (easeOutExpo); bijteksten worden van wazig naar scherp.
+- Tekst moet altijd perfect staan (na feedback "teksten staan niet goed / niet goed uitgelijnd"):
+  - gradienttekst krijgt ruimte onder de regel (`padding-bottom:0.2em; margin-bottom:-0.2em`), anders vallen de onderkanten van g, j, p en y weg;
+  - elke kopregel blijft op één regel (`white-space:nowrap`) en past binnen 960 px; anders de letters kleiner maken, nooit laten afbreken;
+  - koppen staan los van de telefoon en van kaarten, met duidelijke witruimte;
+  - controleer elke kop op ware grootte (uitsnede op 100 %) voordat de video wordt gerenderd.
 - Eén boodschap per scène, veel witruimte. Overgangen: wazig wegvagen met een lichte schaalbeweging, of de camera duwt de telefoon in.
 - Realistische iPhone (titanium rand, dynamic island, statusbalk 9:41) die langzaam in 3D draait, met zachte schaduw en glans.
 - Glazen kaarten (wit 60–72 %, backdrop-filter blur) boven zachte indigo-gloed. Meldingen netjes gestapeld náást de telefoon, nooit over het scherm.

@@ -20,15 +20,16 @@ html,body{ margin:0; background:#000; }
 .c{ position:absolute; left:60px; right:60px; text-align:center; }
 .h{ font-weight:700; letter-spacing:-0.045em; line-height:1.02; margin:0; }
 .grad{ background:linear-gradient(100deg, #4539C9 0%, #7C71F7 35%, #A79FFF 50%, #7C71F7 65%, #4539C9 100%); background-size:260% 100%;
-  -webkit-background-clip:text; background-clip:text; color:transparent; }
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  padding:0 0.04em 0.2em; margin:0 -0.04em -0.2em; }   /* room under the line so descenders (g, j, p) keep their gradient */
 /* masked line reveal: the line slides up from behind its own edge */
 .ln{ display:block; overflow:hidden; padding:0.04em 0 0.22em; margin-bottom:-0.14em; }
-.ln > span{ display:inline-block; will-change:transform; }
+.ln > span{ display:inline-block; will-change:transform; white-space:nowrap; }
 .sub{ font-weight:600; letter-spacing:-0.02em; color:var(--ink2); }
 
 /* ---------- the phone ---------- */
 #cam{ position:absolute; inset:0; perspective:2400px; perspective-origin:50% 45%; }
-#rig{ position:absolute; left:310px; top:320px; width:460px; height:940px; transform-style:preserve-3d; transform-origin:50% 0%; }
+#rig{ position:absolute; left:310px; top:345px; width:460px; height:940px; transform-style:preserve-3d; transform-origin:50% 0%; }
 #shadow{ position:absolute; left:250px; top:1210px; width:580px; height:90px; border-radius:50%; background:radial-gradient(closest-side, rgba(29,29,31,.32), rgba(29,29,31,0)); filter:blur(14px); }
 .phone{ position:absolute; inset:0; border-radius:78px; padding:15px;
   background:linear-gradient(140deg,#4a4a50 0%,#232327 28%,#38383d 55%,#18181b 80%,#3c3c42 100%);
@@ -162,10 +163,10 @@ html,body{ margin:0; background:#000; }
 
   <!-- B + C · the phone: new followers, then the conversation -->
   <div class="layer" id="B">
-    <div class="c" id="bT" style="top:92px">
+    <div class="c" id="bT" style="top:70px">
       <h2 class="h" style="font-size:84px"><span class="ln"><span id="b1">Eerst een nieuwe volger.</span></span><span class="ln"><span id="b2" class="grad">Uit jouw doelgroep.</span></span></h2>
     </div>
-    <div class="c" id="cT" style="top:92px">
+    <div class="c" id="cT" style="top:70px">
       <h2 class="h" style="font-size:84px"><span class="ln"><span id="c1">Dan een gesprek.</span></span><span class="ln"><span id="c2" class="grad">Dat voer jij zelf.</span></span></h2>
     </div>
     <div id="shadow"></div>
