@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>GrowthSourced Ad 37</title>
+<style>
+@font-face{ font-family:'PJS'; src:url(fonts/pjs-latin.woff2) format('woff2'); font-weight:200 800; font-display:block;
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face{ font-family:'PJS'; src:url(fonts/pjs-latin-ext.woff2) format('woff2'); font-weight:200 800; font-display:block;
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; background:#000; }
+#stage{ position:relative; width:1080px; height:1350px; overflow:hidden; color:#1D1D1F; font-family:'PJS', sans-serif; -webkit-font-smoothing:antialiased; }
+.layer{ position:absolute; inset:0; display:none; }
+.c{ position:absolute; left:60px; right:60px; text-align:center; }
+.h{ font-weight:700; letter-spacing:-0.045em; line-height:1.02; margin:0; }
+.ln{ display:block; overflow:hidden; padding:0.04em 0 0.22em; margin-bottom:-0.14em; }
+.ln > span{ display:inline-block; white-space:nowrap; will-change:transform; }
+.grad{ background:linear-gradient(100deg, #4539C9 0%, #7C71F7 35%, #A79FFF 50%, #7C71F7 65%, #4539C9 100%); background-size:260% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent; padding:0 0.04em 0.2em; margin:0 -0.04em -0.2em; }
+.sub{ font-weight:600; letter-spacing:-0.02em; color:#6E6E73; }
+.logo{ display:inline-flex; align-items:center; justify-content:center; width:150px; height:150px; border-radius:46px; background:linear-gradient(145deg,#7C71F7,#5B4FE8 55%,#4539C9);
+  box-shadow:0 40px 80px -30px rgba(69,57,201,.6), inset 0 2px 0 rgba(255,255,255,.35); }
+.logo svg{ width:84px; height:84px; stroke:#fff; stroke-width:2; fill:none; stroke-linecap:round; }
+.bio{ display:inline-flex; align-items:center; gap:14px; padding:20px 38px; border-radius:999px; border:2px solid #5B4FE8; color:#5B4FE8; font-size:36px; font-weight:700; letter-spacing:-0.01em; }
+.bio svg{ width:34px; height:34px; stroke:currentColor; stroke-width:2.4; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+
+#stage{ background:#FBFBFD; }
+#lp{ position:absolute; left:0; top:0; bottom:0; width:540px; background:#EFEFF3; }
+#rp{ position:absolute; left:540px; top:0; bottom:0; width:540px; background:#FBFBFD; }
+#rglow{ position:absolute; left:560px; top:20px; width:500px; height:1310px; border-radius:48px; border:2px solid rgba(91,79,232,.35); box-shadow:0 0 80px rgba(91,79,232,.18), inset 0 0 80px rgba(91,79,232,.08); }
+#mid{ position:absolute; left:539px; top:0; width:2px; height:1350px; background:#D2D2D7; transform-origin:50% 0; }
+.hd{ position:absolute; width:540px; text-align:center; }
+.hd .w{ display:inline-block; font-size:120px; font-weight:700; letter-spacing:-0.05em; line-height:1.05; transform-origin:50% 50%; white-space:nowrap; }
+.hd small{ display:block; font-size:28px; font-weight:600; letter-spacing:-0.01em; margin-top:8px; }
+.cat{ position:absolute; left:0; right:0; text-align:center; }
+.cat span{ display:inline-block; font-size:20px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#6E6E73; background:#FBFBFD; border:1px solid #E3E3E8; padding:8px 18px; border-radius:999px; box-shadow:0 6px 16px -10px rgba(29,29,31,.3); }
+.cell{ position:absolute; width:540px; padding:0 50px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:14px; font-size:31px; font-weight:600; letter-spacing:-0.015em; line-height:1.25; }
+.cell.L{ left:0; color:#6E6E73; } .cell.R{ left:540px; color:#1D1D1F; }
+.cell svg{ width:30px; height:30px; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+.ix{ width:52px; height:52px; border-radius:50%; background:#E3E3E8; display:flex; align-items:center; justify-content:center; } .ix svg{ stroke:#A8453C; }
+.iv{ width:52px; height:52px; border-radius:50%; background:#5B4FE8; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 24px -10px rgba(69,57,201,.7); } .iv svg{ stroke:#fff; }
+.hr{ position:absolute; left:80px; right:80px; height:1px; background:#E3E3E8; transform-origin:50% 50%; }
+#verdict{ position:absolute; left:0; right:0; top:1215px; text-align:center; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="lp"></div><div id="rp"></div><div id="rglow"></div><i id="mid"></i>
+
+  <div class="layer" id="B" style="display:block">
+    <div class="hd" id="hL" style="left:0"><span class="w" id="wL" style="color:#86868B">Kopen.</span><small id="sL" style="color:#86868B">Gekochte volgers</small></div>
+    <div class="hd" id="hR" style="left:540px"><span class="w grad" id="wR">Groeien.</span><small id="sR" style="color:#5B4FE8">Met GrowthSourced</small></div>
+
+    <div class="cat" id="cat0" style="top:348px"><span>Wie volgt je?</span></div>
+    <div class="cell L" id="L0" style="top:400px"><span class="ix"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span>Nepaccounts en bots</span></div>
+    <div class="cell R" id="R0" style="top:400px"><span class="iv"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Echte mensen uit je doelgroep</span></div>
+    <i class="hr" id="hr0" style="top:540px"></i>
+    <div class="cat" id="cat1" style="top:553px"><span>Interactie</span></div>
+    <div class="cell L" id="L1" style="top:605px"><span class="ix"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span>Doen nooit iets met je account</span></div>
+    <div class="cell R" id="R1" style="top:605px"><span class="iv"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Echte likes, reacties en berichten</span></div>
+    <i class="hr" id="hr1" style="top:745px"></i>
+    <div class="cat" id="cat2" style="top:758px"><span>Nieuwe klanten</span></div>
+    <div class="cell L" id="L2" style="top:810px"><span class="ix"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span>Leveren nooit klanten op</span></div>
+    <div class="cell R" id="R2" style="top:810px"><span class="iv"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Mensen die klant kunnen worden</span></div>
+    <i class="hr" id="hr2" style="top:950px"></i>
+    <div class="cat" id="cat3" style="top:963px"><span>Je account</span></div>
+    <div class="cell L" id="L3" style="top:1015px"><span class="ix"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span>Instagram grijpt in bij verdachte groei</span></div>
+    <div class="cell R" id="R3" style="top:1015px"><span class="iv"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Gerichte, organische groei</span></div>
+    <i class="hr" id="hr3" style="top:1155px"></i>
+    <div id="verdict"><h2 class="h" style="font-size:66px"><span class="ln"><span id="v1" class="grad">Kies voor echte groei.</span></span></h2></div>
+  </div>
+
+  <div class="layer" id="E">
+    <div class="c" style="top:250px"><span class="logo" id="e0"><svg viewBox="0 0 24 24"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="6" r="3"/><circle cx="17" cy="18" r="3"/><path d="M9.6 10.6l4.8-3.2M9.6 13.4l4.8 3.2"/></svg></span></div>
+    <div class="c" style="top:450px"><h2 class="h" id="e1" style="font-size:96px">GrowthSourced</h2></div>
+    <div class="c" style="top:590px"><p class="sub" id="e2" style="margin:0;font-size:40px">Echt groeien, niet kopen.</p></div>
+    <div class="c" style="top:760px"><p id="e3" style="margin:0;font-size:60px;font-weight:700;letter-spacing:-0.03em">€249,99 per maand.</p>
+      <p id="e4" style="margin:12px 0 0;font-size:34px;font-weight:600;color:#6E6E73">Maandelijks opzegbaar.</p>
+      <p id="e5" style="margin:14px 0 0;font-size:24px;font-weight:500;color:#86868B">Excl. btw · eenmalig €75 opstartkosten</p></div>
+    <div class="c" style="top:1080px"><span class="bio" id="e6">Link in bio<svg id="e7" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span></div>
+  </div>
+</div>
+<script>
+(function(){
+  var DURATION = 25.4;
+
+  var clamp = function(x, a, b){ a = a == null ? 0 : a; b = b == null ? 1 : b; return Math.min(b, Math.max(a, x)); };
+  var lerp = function(a, b, p){ return a + (b - a) * p; };
+  var E = {
+    outExpo: function(x){ return x >= 1 ? 1 : 1 - Math.pow(2, -10 * x); },
+    outQuint: function(x){ return 1 - Math.pow(1 - x, 5); },
+    inOutQuint: function(x){ return x < .5 ? 16 * Math.pow(x, 5) : 1 - Math.pow(-2 * x + 2, 5) / 2; },
+    inOutSine: function(x){ return -(Math.cos(Math.PI * x) - 1) / 2; },
+    inCubic: function(x){ return x * x * x; },
+    outBack: function(x){ var c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); }
+  };
+  var seg = function(t, a, d, e){ return (e || E.outQuint)(clamp((t - a) / d)); };
+  var $ = function(id){ return document.getElementById(id); };
+  function line(el, t, t0, d){ var p = seg(t, t0, d || 0.9, E.outExpo); el.style.transform = 'translateY(' + ((1 - p) * 110) + '%)'; }
+  function soft(el, t, t0, d, dy){ var p = seg(t, t0, d || 0.8, E.outQuint);
+    el.style.opacity = p; el.style.filter = 'blur(' + ((1 - p) * 14).toFixed(2) + 'px)'; el.style.transform = 'translateY(' + ((1 - p) * (dy == null ? 24 : dy)) + 'px)'; }
+  function layer(id, t, tin, tout, xd){
+    var el = $(id), on = t >= tin && t < tout + (xd || 0.6);
+    el.style.display = on ? 'block' : 'none';
+    if (!on) return false;
+    var o = seg(t, tout, xd || 0.6, E.inCubic);
+    el.style.opacity = 1 - o; el.style.filter = o > 0 ? 'blur(' + (o * 16).toFixed(2) + 'px)' : 'none';
+    return true;
+  }
+
+  var R0 = [5.4, 7.3, 9.2, 11.1];   // when each row arrives
+  function render(t){
+    // the canvas splits: a line draws down the middle, the left half turns grey
+    var split = seg(t, 0.2, 1.0, E.inOutQuint);
+    $('mid').style.transform = 'scaleY(' + split + ')';
+    var endF = seg(t, 18.0, 0.8, E.inOutSine);
+    $('lp').style.opacity = split * (1 - endF); $('mid').style.opacity = 1 - endF;
+    var verdict = seg(t, 13.6, 1.2, E.inOutSine);
+    $('rglow').style.opacity = verdict * (1 - endF); $('rglow').style.transform = 'scale(' + (0.96 + 0.04 * verdict) + ')';
+
+    if (layer('B', t, 0, 17.9, 0.7)) {
+      // the two big words, then they rise to become column headers
+      var up = seg(t, 3.6, 1.2, E.inOutQuint);
+      [['hL', 'wL', 0.9, 'sL'], ['hR', 'wR', 1.5, 'sR']].forEach(function(h){
+        var p = seg(t, h[2], 1.0, E.outExpo);
+        $(h[0]).style.top = lerp(560, 120, up) + 'px';
+        $(h[1]).style.opacity = clamp((t - h[2]) / 0.3); $(h[1]).style.filter = p < 1 ? 'blur(' + ((1 - p) * 14) + 'px)' : 'none';
+        $(h[1]).style.transform = 'translateY(' + ((1 - p) * 60) + 'px) scale(' + lerp(1, 0.6, up) + ')';
+        soft($(h[3]), t, 4.4 + (h[0] === 'hR' ? 0.15 : 0), 0.7, 12);
+      });
+      $('wR').style.backgroundPosition = (100 - seg(t, 1.5, 4, E.inOutSine) * 100) + '% 50%';
+      // rows: category, then the left cell, then the right cell
+      R0.forEach(function(r0, i){
+        soft($('cat' + i), t, r0, 0.6, 10);
+        soft($('L' + i), t, r0 + 0.3, 0.7, 18);
+        soft($('R' + i), t, r0 + 0.75, 0.7, 18);
+        $('hr' + i).style.transform = 'scaleX(' + seg(t, r0 + 1.0, 0.8, E.outQuint) + ')';
+        var iv = $('R' + i).querySelector('.iv'), pop = seg(t, r0 + 0.8, 0.5, E.outBack);
+        iv.style.transform = 'scale(' + (0.5 + 0.5 * pop) + ')';
+        // verdict: the left column steps back
+        $('L' + i).style.opacity = (parseFloat($('L' + i).style.opacity) * (1 - 0.55 * verdict)).toFixed(3);
+      });
+      $('hL').style.opacity = 1 - 0.55 * verdict;
+      line($('v1'), t, 14.2, 1.0);
+      $('v1').style.backgroundPosition = (100 - seg(t, 14.2, 3.5, E.inOutSine) * 100) + '% 50%';
+    }
+
+    if (layer('E', t, 17.9, 99, 0.5)) {
+      var lp = seg(t, 18.099999999999998, 1.2, E.outExpo);
+      $('e0').style.opacity = lp; $('e0').style.transform = 'translateY(' + ((1 - lp) * 40) + 'px) scale(' + (0.7 + 0.3 * lp) + ')';
+      soft($('e1'), t, 18.5, 1.0); soft($('e2'), t, 18.9, 0.9);
+      soft($('e3'), t, 19.599999999999998, 0.9); soft($('e4'), t, 19.849999999999998, 0.9); soft($('e5'), t, 20.049999999999997, 0.9);
+      soft($('e6'), t, 20.599999999999998, 0.9);
+      $('e7').style.transform = 'translateY(' + (Math.abs(Math.sin(Math.max(0, t - 21.0) * 3.2)) * 6) + 'px)';
+    }
+  }
+  window.DURATION = DURATION;
+  window.render = render;
+  var m = /[?&#]t=([\d.]+)/.exec(location.href);
+  render(m ? +m[1] : 0);
+})();
+</script>
+</body>
+</html>
