@@ -1,0 +1,223 @@
+<title>GrowthSourced Reels</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: brand header, then grids of players, each with its own download button.
+   Colours and type follow the GrowthSourced website. */
+:root{
+  --bg:#FAF8F2; --surface:#FFFFFF; --ink:#1B211E; --ink-soft:#5E6960; --line:#E9E4D6;
+  --brand:#5B4FE8; --brand-strong:#4539C9; --brand-tint:#EEECFF; --on-brand:#FFFFFF;
+  --sans:'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12161C; --surface:#1B212B; --ink:#F2F0EA; --ink-soft:#A8B0BC; --line:rgba(255,255,255,.12);
+    --brand:#6F63F5; --brand-strong:#A89FFF; --brand-tint:#1F1D38; --on-brand:#FFFFFF; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161C; --surface:#1B212B; --ink:#F2F0EA; --ink-soft:#A8B0BC; --line:rgba(255,255,255,.12);
+  --brand:#6F63F5; --brand-strong:#A89FFF; --brand-tint:#1F1D38; --on-brand:#FFFFFF; color-scheme:dark;
+}
+*{ box-sizing:border-box; }
+body{ background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+.wrap{ max-width:1180px; margin:0 auto; padding-block:36px 64px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+
+header{ display:flex; flex-direction:column; gap:14px; margin-bottom:32px; }
+.mark{ display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.1rem; }
+.mark span{ width:30px; height:30px; border-radius:9px; background:var(--brand); display:flex; align-items:center; justify-content:center; }
+.mark svg{ width:17px; height:17px; stroke:var(--on-brand); stroke-width:2; fill:none; }
+h1{ margin:0; font-size:clamp(2rem, 5vw, 3rem); line-height:1.08; letter-spacing:-0.025em; font-weight:800; text-wrap:balance; }
+.lede{ margin:0; color:var(--ink-soft); font-size:1.06rem; max-width:62ch; }
+.specs{ display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 0; padding:0; list-style:none; }
+.specs li{ font-size:.82rem; font-weight:700; color:var(--brand-strong); background:var(--brand-tint); padding:5px 12px; border-radius:999px; }
+
+.grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:28px 22px; }
+.reel{ display:flex; flex-direction:column; gap:12px; min-width:0; }
+.reel video{ display:block; width:100%; max-width:100%; aspect-ratio:9/16; border-radius:20px; background:#0E1130; object-fit:cover;
+  box-shadow:0 22px 44px -30px rgba(69,57,201,.55); }
+.meta{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+.meta h2{ margin:0; font-size:1.02rem; font-weight:800; letter-spacing:-0.01em; }
+.meta span{ font-size:.85rem; color:var(--ink-soft); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.dl{ display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:11px 16px; border-radius:999px;
+  border:1px solid var(--brand); background:var(--brand); color:var(--on-brand); font:inherit; font-weight:700; font-size:.92rem; cursor:pointer; text-decoration:none; }
+.dl:hover{ background:var(--brand-strong); border-color:var(--brand-strong); }
+.dl:disabled{ opacity:.6; cursor:default; }
+.dl:focus-visible{ outline:2px solid var(--brand); outline-offset:3px; }
+.dl svg{ width:16px; height:16px; stroke:currentColor; stroke-width:2.2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+.status{ min-height:1.2em; margin:-4px 0 0; font-size:.82rem; color:var(--ink-soft); }
+.open{ display:none; font-size:.88rem; font-weight:700; color:var(--brand-strong); }
+body.no-dl .dl{ display:none; }
+body.no-dl .open{ display:inline; }
+
+.full{ margin-top:48px; padding-top:32px; border-top:1px solid var(--line); }
+.sec h3, .tips h3{ margin:0 0 6px; font-size:1.25rem; font-weight:800; letter-spacing:-0.015em; }
+.sec > p, .tips > p{ margin:0 0 20px; color:var(--ink-soft); max-width:62ch; }
+.grid.narrow{ grid-template-columns:repeat(auto-fill, minmax(230px, 280px)); }
+.grid.film{ grid-template-columns:minmax(230px, 380px); }
+
+.tips{ margin-top:48px; padding:24px; border-radius:20px; background:var(--surface); border:1px solid var(--line); max-width:760px; }
+.tips ol{ margin:0; padding-left:1.3em; display:flex; flex-direction:column; gap:8px; }
+.tips li{ padding-left:4px; }
+.tips li::marker{ color:var(--brand-strong); font-weight:800; }
+
+@media (max-width:520px){
+  .grid{ grid-template-columns:1fr 1fr; gap:22px 12px; }
+  .grid.narrow{ grid-template-columns:1fr 1fr; }
+  .grid.film{ grid-template-columns:1fr; }
+  .meta{ flex-direction:column; gap:0; }
+  .dl{ padding:10px 12px; font-size:.85rem; }
+}
+@media (prefers-reduced-motion:reduce){ *{ transition:none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="mark"><span><svg viewBox="0 0 24 24"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="6" r="3"/><circle cx="17" cy="18" r="3"/><path d="M9.6 10.6l4.8-3.2M9.6 13.4l4.8 3.2"/></svg></span>GrowthSourced</div>
+    <h1>Instagram-video's voor GrowthSourced</h1>
+    <p class="lede">Een film van één minuut met alles erin, advertenties in de premiumstijl en eerdere versies. De nieuwste staan bovenaan.</p>
+    <ul class="specs"><li>Post 4:5 · 1080 × 1350</li><li>MP4 · 60 fps</li><li>Klaar voor Instagram</li></ul>
+  </header>
+
+  <main>
+    <section class="sec">
+      <h3>Film van één minuut</h3>
+      <p>Alles in één film: het 3D-logo, één iPhone met nieuwe volgers, je doelgroep en het gesprek dat een klant oplevert, nep tegenover echt, veiligheid, de cijfers uit het maandrapport, de rekensom en "Echte mensen. Echte groei. Echte kansen."</p>
+      <div class="grid film" id="filmGrid"></div>
+    </section>
+
+    <section class="sec full">
+      <h3>Advertenties</h3>
+      <p>Gericht op verkoop, elk met een eigen invalshoek. Advertentie 37 laat met een draaiende 3D-kubus zien voor wie GrowthSourced is. Advertentie 36 zet gekochte nepvolgers en echte volgers naast elkaar, als een vergelijkingspagina. Advertentie 35 is een keynote-lancering: een 3D-logo dat in beeld draait, een bento grid van glastegels op een aurora en drie reuzewoorden. Advertentie 34 is dezelfde premiumstijl op een diepzwarte achtergrond, over wat echte volgers je opleveren. Advertentie 33 rekent voor wat 200 volgers via advertenties kosten tegenover GrowthSourced. Advertentie 32 toont het maandrapport op de iPhone, met grote cijfers. Advertentie 31 laat op de iPhone zien hoe je doelgroep wordt ingesteld en elke maand wordt bijgestuurd. Advertentie 30 gaat over veiligheid: één keer inloggen, een slot dat dichtklikt en stoppen met één nieuw wachtwoord. Advertentie 29 laat in dezelfde premiumstijl zien hoe een nieuwe volger via een gesprek een nieuwe klant wordt. Advertentie 28 is de premiumstijl: rustig en strak, met een iPhone die in 3D draait, glazen kaartjes en 60 beelden per seconde. Advertentie 27 is de eerste met de nieuwe naam GrowthSourced en de vaste prijs van €249,99 per maand: een getekende presentator vertelt het verhaal. Advertentie 1 tot en met 26 en de Stories hebben nog de oude naam ScaleLink en de oude prijs. Ze eindigen allemaal met een verwijzing naar de link in je bio.</p>
+      <div class="grid narrow" id="adGrid"></div>
+    </section>
+
+    <section class="sec full">
+      <h3>Stories</h3>
+      <p>Korte versies van advertentie 11, 12 en 14, staand (9:16) voor je Instagram Stories, nog met de oude naam ScaleLink. Alle tekst staat binnen de veilige zone, dus niets verdwijnt achter je profielnaam of het antwoordveld.</p>
+      <div class="grid" id="storyGrid"></div>
+    </section>
+
+    <section class="sec full">
+      <h3>Losse Reels per onderwerp</h3>
+      <p>De eerste reeks, nog met de oude naam ScaleLink. Elke video behandelt één onderwerp van de website.</p>
+      <div class="grid" id="clips"></div>
+    </section>
+
+    <section class="sec full">
+      <h3>Alles in één video (eerste versie)</h3>
+      <p>Dezelfde onderwerpen achter elkaar, als één Reel van 66 seconden, nog met de oude naam ScaleLink.</p>
+      <div class="grid narrow" id="fullGrid"></div>
+    </section>
+
+    <section class="tips">
+      <h3>Zo zet je ze op Instagram</h3>
+      <ol>
+        <li>Download de video en open Instagram op je telefoon.</li>
+        <li>Tik op <strong>+</strong>, kies <strong>Bericht</strong> of <strong>Reel</strong> en selecteer de video.</li>
+        <li>Voeg muziek toe via Instagram. De video's hebben bewust geen eigen geluid, zodat je een populair nummer kunt kiezen.</li>
+        <li>Kies bij <strong>Omslag bewerken</strong> een moment waarop de kop goed leesbaar is.</li>
+      </ol>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  var FILM = [['GrowthSourced-Film-1-minuut-post', 'Film: alles in één minuut · 60 fps · post 4:5', '1:00', '4/5']];
+  var CLIPS = [
+    ['ScaleLink-1-herkenbaar', 'Herkenbaar?', '0:15'],
+    ['ScaleLink-2-van-volger-tot-klant', 'Van volger tot klant', '0:13'],
+    ['ScaleLink-3-targeting', 'Slimme targeting', '0:13'],
+    ['ScaleLink-4-werkwijze', 'Zo pakken we het aan', '0:16'],
+    ['ScaleLink-5-geschikt-voor', 'Geschikt voor', '0:11'],
+    ['ScaleLink-6-resultaten', 'Een maand groei', '0:13'],
+    ['ScaleLink-7-kosten', 'Voordeliger dan adverteren', '0:12']
+  ];
+  var FULL = [['ScaleLink-Reel-volledig', 'Volledige versie', '1:06']];
+  var STORY = [['ScaleLink-Story-11-eerste-indruk', 'Story: eerste indruk', '0:19'],
+               ['ScaleLink-Story-12-veilig', 'Story: veiligheid', '0:18'],
+               ['ScaleLink-Story-14-organisch', 'Story: organisch groeien', '0:17']];
+  var AD = [['GrowthSourced-Advertentie-37-voor-wie-post', 'Advertentie 37: voor wie · 3D-kubus · 60 fps', '0:27', '4/5'],
+            ['GrowthSourced-Advertentie-36-nep-of-echt-post', 'Advertentie 36: nep of echt · vergelijking · 60 fps', '0:25', '4/5'],
+            ['GrowthSourced-Advertentie-35-keynote-post', 'Advertentie 35: keynote · 3D-logo en bento grid · 60 fps', '0:28', '4/5'],
+            ['GrowthSourced-Advertentie-34-meer-dan-een-getal-post', 'Advertentie 34: meer dan een getal · zwart · premium · 60 fps', '0:26', '4/5'],
+            ['GrowthSourced-Advertentie-33-rekensom-post', 'Advertentie 33: de rekensom · premium · 60 fps', '0:26', '4/5'],
+            ['GrowthSourced-Advertentie-32-maandrapport-post', 'Advertentie 32: het maandrapport · premium · 60 fps', '0:26', '4/5'],
+            ['GrowthSourced-Advertentie-31-doelgroep-post', 'Advertentie 31: precies jouw doelgroep · premium · 60 fps', '0:26', '4/5'],
+            ['GrowthSourced-Advertentie-30-jouw-sleutels-post', 'Advertentie 30: jouw account, jouw sleutels · premium · 60 fps', '0:28', '4/5'],
+            ['GrowthSourced-Advertentie-29-volger-tot-klant-post', 'Advertentie 29: van volger tot klant · premium · 60 fps', '0:28', '4/5'],
+            ['GrowthSourced-Advertentie-28-premium-post', 'Advertentie 28: premium · 60 fps · post 4:5', '0:28', '4/5'],
+            ['GrowthSourced-Advertentie-27-presentator-post', 'Advertentie 27: presentator · GrowthSourced · post 4:5', '0:28', '4/5'],
+            ['ScaleLink-Advertentie-26-webshop-post', 'Advertentie 26: webshop · post 4:5', '0:23', '4/5'],
+            ['ScaleLink-Advertentie-25-sportschool-post', 'Advertentie 25: sportschool · post 4:5', '0:23', '4/5'],
+            ['ScaleLink-Advertentie-24-restaurant-post', 'Advertentie 24: restaurant · post 4:5', '0:23', '4/5'],
+            ['ScaleLink-Advertentie-23-kapsalon-post', 'Advertentie 23: kapsalon · post 4:5', '0:23', '4/5'],
+            ['ScaleLink-Advertentie-22-vragen-post', 'Advertentie 22: drie vragen · post 4:5', '0:27', '4/5'],
+            ['ScaleLink-Advertentie-20-week-post', 'Advertentie 20: een week met ScaleLink · post 4:5', '0:27', '4/5'],
+            ['ScaleLink-Advertentie-19-wie-doet-wat-post', 'Advertentie 19: wie doet wat · post 4:5', '0:27', '4/5'],
+            ['ScaleLink-Advertentie-18-bijsturen-post', 'Advertentie 18: slim bijsturen · post 4:5', '0:26', '4/5'],
+            ['ScaleLink-Advertentie-17-creators-post', 'Advertentie 17: creators & influencers · post 4:5', '0:28', '4/5'],
+            ['ScaleLink-Advertentie-16-content-post', 'Advertentie 16: je content gezien · post 4:5', '0:28', '4/5'],
+            ['ScaleLink-Advertentie-15-zo-begin-je-post', 'Advertentie 15: zo begin je · post 4:5', '0:28', '4/5'],
+            ['ScaleLink-Advertentie-14-organisch-post', 'Advertentie 14: organisch groeien · post 4:5', '0:30', '4/5'],
+            ['ScaleLink-Advertentie-13-maandrapport-post', 'Advertentie 13: maandrapport · post 4:5', '0:27', '4/5'],
+            ['ScaleLink-Advertentie-12-veilig-post', 'Advertentie 12: veiligheid · post 4:5', '0:30', '4/5'],
+            ['ScaleLink-Advertentie-11-eerste-indruk-post', 'Advertentie 11: eerste indruk · post 4:5', '0:30', '4/5'],
+            ['ScaleLink-Advertentie-10-dertig-dagen-post', 'Advertentie 10: dertig dagen · post 4:5', '0:28', '4/5'],
+            ['ScaleLink-Advertentie-6-chat-post', 'Advertentie 6: chatgesprek · post 4:5', '0:29', '4/5'],
+            ['ScaleLink-Advertentie-5-regio-post', 'Advertentie 5: jouw regio · post 4:5', '0:30', '4/5'],
+            ['ScaleLink-Advertentie-4-quiz-post', 'Advertentie 4: quiz · post 4:5', '0:29', '4/5'],
+            ['ScaleLink-Advertentie-3-geen-tijd-post', 'Advertentie 3: geen tijd · post 4:5', '0:26', '4/5'],
+            ['ScaleLink-Advertentie-2-besparing-post', 'Advertentie 2: besparing · post 4:5', '0:24', '4/5'],
+            ['ScaleLink-Advertentie-20s-post', 'Advertentie 1: van volger tot klant · post 4:5', '0:27', '4/5'],
+            ['ScaleLink-Advertentie-20s', 'Advertentie 1 · Reel 9:16', '0:27']];
+  var ICON = '<svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
+
+  function card(c, i){
+    var el = document.createElement('article'); el.className = 'reel';
+    var label = (i == null ? '' : (i + 1) + '. ') + c[1];
+    el.innerHTML = '<video controls playsinline preload="metadata" style="aspect-ratio:' + (c[3] || '9/16') + '" poster="' + c[0] + '.jpg" src="' + c[0] + '.mp4"></video>' +
+      '<div class="meta"><h2></h2><span>' + c[2] + '</span></div>' +
+      '<button class="dl" type="button" id="dl-' + c[0] + '">' + ICON + 'Download MP4</button>' +
+      '<a class="open" href="' + c[0] + '.mp4" target="_blank" rel="noopener">Video openen om op te slaan</a>' +
+      '<p class="status" aria-live="polite"></p>';
+    el.querySelector('h2').textContent = label;
+    el.querySelector('.dl').addEventListener('click', function(){ save(c[0] + '.mp4', this, el.querySelector('.status')); });
+    return el;
+  }
+  FILM.forEach(function(c){ document.getElementById('filmGrid').appendChild(card(c, null)); });
+  CLIPS.forEach(function(c, i){ document.getElementById('clips').appendChild(card(c, i)); });
+  FULL.forEach(function(c){ document.getElementById('fullGrid').appendChild(card(c, null)); });
+  AD.forEach(function(c){ document.getElementById('adGrid').appendChild(card(c, null)); });
+  STORY.forEach(function(c){ document.getElementById('storyGrid').appendChild(card(c, null)); });
+
+  // Saving goes through the viewer's downloads capability; without it, each card shows a link to the file instead.
+  var dlReady = (window.claude && window.claude.use) ? window.claude.use('downloads').catch(function(){ return null; }) : Promise.resolve(null);
+  dlReady.then(function(dl){ if (!dl) document.body.classList.add('no-dl'); });
+
+  function save(file, btn, status){
+    btn.disabled = true; status.textContent = 'Video ophalen…';
+    dlReady.then(function(dl){
+      if (!dl) { document.body.classList.add('no-dl'); status.textContent = ''; return; }
+      return fetch(file).then(function(r){
+        if (!r.ok) throw { code: 'fetch' };
+        return r.blob();
+      }).then(function(blob){
+        status.textContent = 'Bevestig het opslaan in het venster.';
+        return dl.save({ filename: file, data: blob });
+      }).then(function(){
+        status.textContent = 'Opgeslagen.';
+      });
+    }).catch(function(e){
+      var code = e && e.code;
+      if (code === 'declined') status.textContent = '';
+      else if (code === 'rate_limited') status.textContent = 'Er staat al een opslagvenster open.';
+      else { document.body.classList.add('no-dl'); status.textContent = 'Opslaan lukt hier niet. Open de video via de link en sla hem daar op.'; }
+    }).then(function(){ btn.disabled = false; });
+  }
+})();
+</script>

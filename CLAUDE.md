@@ -26,6 +26,7 @@ Elke nieuwe video voldoet hieraan. Voorbeelden: advertentie 28 (`growthsourced-v
 - Variant op verzoek ("andere achtergrond, zelfde Apple-stijl"): zwarte "Pro"-versie, advertentie 34 (`growthsourced-video/premium-zwart-meer-dan-een-getal.html`): achtergrond #000, witte koppen, lichtere indigo-gradient, titanium iPhone in donkere modus, donkere glazen kaarten, zachte indigo-gloed. Laat een nieuwe scène pas beginnen als de vorige helemaal weg is.
 - Wissel het concept af: de eigenaar wil steeds iets echt nieuws ("dit hebben we al ongeveer"). Niet steeds telefoon + meldingen + kaarten. Advertentie 35 (`growthsourced-video/premium-keynote.html`) is een keynote-lancering: 3D-logo dat van opzij in beeld draait, bento grid van glastegels (visionOS-stijl) op een aurora-kleurverloop, "Echte" blijft staan en het tweede woord rolt door: mensen → groei → kansen. (Losse woorden als "Echt. Organisch. Van jou." klopten niet: woorden moeten samen een lopende zin of herhaling vormen. Laat nooit twee woorden tegelijk in en uit over elkaar heen schuiven.)
 - Meer concepten: advertentie 36 (`growthsourced-video/premium-nep-of-echt.html`): Apple-vergelijkingspagina, gesplitst scherm "Nep." tegenover "Echt." dat een tabel wordt (nooit "kopen tegenover groeien": bij GrowthSourced koop je ook een pakket; het verschil is nepvolgers tegenover echte volgers), labels op de naad, rechterkolom licht op. Advertentie 37 (`growthsourced-video/premium-voor-wie-kubus.html`): glazen 3D-kubus die van doelgroep naar doelgroep draait op een lavendel-zilveren achtergrond, met paginapuntjes.
+- Film van één minuut (`growthsourced-video/premium-film-1-minuut.html`): aurora-opening met 3D-logo → wit: één iPhone met drie schermen (volgers, doelgroep, chat), nep/echt, beveiligd, cijfers, rekensom → aurora: "Echte mensen/groei/kansen" en eindkaart. Gebouwd uit de stijlblokken van de sjablonen.
 - Eindkaart: logotegel, "GrowthSourced", tagline, "€249,99 per maand.", "Maandelijks opzegbaar.", "Excl. btw · eenmalig €75 opstartkosten" en een "Link in bio"-pill.
 
 ## Merk en feiten (alleen claims van de website)
@@ -44,4 +45,5 @@ Elke nieuwe video voldoet hieraan. Voorbeelden: advertentie 28 (`growthsourced-v
 
 ## Waar alles staat
 - Website (bron voor alle teksten): https://claude.ai/artifact/8EkPhdFe7GBM2dDcB5kKau
-- Videopagina met alle video's: https://claude.ai/artifact/MvpcCxKRqg9TcCUDMp3Zp7
+- Videopagina met alle video's: https://claude.ai/artifact/MvpcCxKRqg9TcCUDMp3Zp7 (bron: `growthsourced-video/videopagina.html`; publiceer de video's met de Artifact-tool via `url` en `files`, zodat eerdere video's blijven staan).
+- De werkmap van een sessie kan leeg raken; zet alles terug vanuit `growthsourced-video/`.

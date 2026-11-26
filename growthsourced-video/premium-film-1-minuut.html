@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>GrowthSourced Film 1 minuut</title>
+<style>
+:root{ --bg:#FBFBFD; --ink:#1D1D1F; --ink2:#6E6E73; --ink3:#86868B; --brand:#5B4FE8; --brand-dark:#4539C9; --brand-light:#EEECFF; --violet:#8C82FF; }
+@font-face{ font-family:'PJS'; src:url(fonts/pjs-latin.woff2) format('woff2'); font-weight:200 800; font-display:block;
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face{ font-family:'PJS'; src:url(fonts/pjs-latin-ext.woff2) format('woff2'); font-weight:200 800; font-display:block;
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; background:#000; }
+#stage{ position:relative; width:1080px; height:1350px; overflow:hidden; background:#07061A; color:#1D1D1F; font-family:'PJS', sans-serif; -webkit-font-smoothing:antialiased; }
+#white{ position:absolute; inset:0; background:#FBFBFD; }
+.layer{ position:absolute; inset:0; display:none; }
+.c{ position:absolute; left:60px; right:60px; text-align:center; }
+.h{ font-weight:700; letter-spacing:-0.045em; line-height:1.02; margin:0; }
+.ln{ display:block; overflow:hidden; padding:0.04em 0 0.22em; margin-bottom:-0.14em; }
+.ln > span{ display:inline-block; white-space:nowrap; will-change:transform; }
+.grad{ background:linear-gradient(100deg, #4539C9 0%, #7C71F7 35%, #A79FFF 50%, #7C71F7 65%, #4539C9 100%); background-size:260% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent; padding:0 0.04em 0.2em; margin:0 -0.04em -0.2em; }
+.gradw{ background:linear-gradient(100deg, #FFFFFF 0%, #E4E0FF 30%, #A79FFF 50%, #E4E0FF 70%, #FFFFFF 100%); background-size:260% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent; padding:0 0.04em 0.2em; margin:0 -0.04em -0.2em; }
+.sub{ font-weight:600; letter-spacing:-0.02em; color:#6E6E73; }
+.subw{ font-weight:600; letter-spacing:-0.02em; color:#C9C3FF; }
+.orb{ position:absolute; border-radius:50%; filter:blur(70px); }
+.slot{ display:block; } .slot > span{ display:inline-block; white-space:nowrap; }
+.ws{ position:absolute; left:0; right:0; top:0; margin:0; font-size:40px; }
+.bio{ display:inline-flex; align-items:center; gap:14px; padding:20px 38px; border-radius:999px; border:2px solid rgba(255,255,255,.55); color:#fff; font-size:36px; font-weight:700;
+  background:rgba(255,255,255,.08); -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px); }
+.bio svg{ width:34px; height:34px; stroke:currentColor; stroke-width:2.4; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+#scr2{ background:#fff; }
+#mcard{ position:absolute; left:110px; width:860px; top:330px; border-radius:44px; padding:30px 44px 34px;
+  background:rgba(255,255,255,.66); border:1px solid rgba(255,255,255,.95); -webkit-backdrop-filter:blur(30px) saturate(1.5); backdrop-filter:blur(30px) saturate(1.5);
+  box-shadow:0 60px 120px -60px rgba(29,29,31,.45), 0 0 0 1px rgba(29,29,31,.04); }
+/* aurora: big blurred colour fields drifting behind everything */
+#aurora{ position:absolute; inset:0; }
+.au{ position:absolute; border-radius:50%; filter:blur(90px); }
+
+/* 3D logo: a front face, an extruded edge built from thin slices, and a moving reflection */
+#logo3d{ position:absolute; left:390px; top:300px; width:300px; height:300px; perspective:1400px; }
+#cube{ position:absolute; inset:0; transform-style:preserve-3d; }
+.slice{ position:absolute; inset:0; border-radius:88px; background:#3328A8; }
+#face{ position:absolute; inset:0; border-radius:88px; overflow:hidden;
+  background:linear-gradient(145deg,#8E84FF 0%,#5B4FE8 52%,#4236C4 100%); box-shadow:inset 0 2px 0 rgba(255,255,255,.45), inset 0 -3px 0 rgba(0,0,0,.25); }
+#face svg{ position:absolute; left:58px; top:58px; width:184px; height:184px; stroke:#fff; stroke-width:1.9; fill:none; stroke-linecap:round; }
+#spec{ position:absolute; inset:-40%; background:linear-gradient(115deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.55) 50%, rgba(255,255,255,0) 60%); }
+#lglow{ position:absolute; left:290px; top:560px; width:500px; height:160px; border-radius:50%; background:radial-gradient(closest-side, rgba(124,113,247,.75), rgba(124,113,247,0)); filter:blur(20px); }
+
+/* ---------- the phone ---------- */
+#cam{ position:absolute; inset:0; perspective:2400px; perspective-origin:50% 45%; }
+#rig{ position:absolute; left:310px; top:345px; width:460px; height:940px; transform-style:preserve-3d; transform-origin:50% 0%; }
+#shadow{ position:absolute; left:250px; top:1210px; width:580px; height:90px; border-radius:50%; background:radial-gradient(closest-side, rgba(29,29,31,.32), rgba(29,29,31,0)); filter:blur(14px); }
+.phone{ position:absolute; inset:0; border-radius:78px; padding:15px;
+  background:linear-gradient(140deg,#4a4a50 0%,#232327 28%,#38383d 55%,#18181b 80%,#3c3c42 100%);
+  box-shadow:inset 0 0 0 2px #6d6d74, inset 0 0 0 7px #111113, 0 70px 120px -50px rgba(23,21,43,.55); }
+.btnr{ position:absolute; width:7px; border-radius:3px; background:linear-gradient(90deg,#2a2a2e,#55555b); }
+.screen{ position:relative; width:100%; height:100%; border-radius:64px; overflow:hidden; background:#fff; }
+.island{ position:absolute; left:50%; top:20px; width:132px; height:38px; margin-left:-66px; border-radius:20px; background:#000; z-index:3; }
+.sbar{ position:absolute; left:0; right:0; top:22px; padding:0 44px 0 52px; display:flex; justify-content:space-between; font-size:21px; font-weight:700; z-index:2; }
+.sbar i{ display:inline-block; width:30px; height:14px; border-radius:4px; border:2px solid #1d1d1f; position:relative; margin-left:6px; }
+.sbar i::after{ content:''; position:absolute; inset:2px; right:6px; background:#1d1d1f; border-radius:1px; }
+.app{ position:absolute; left:0; right:0; top:74px; bottom:0; padding:0 22px; }
+.nav{ display:flex; align-items:center; gap:8px; font-size:27px; font-weight:800; letter-spacing:-0.02em; height:56px; }
+.nav svg{ width:20px; height:20px; }
+.nav .r{ margin-left:auto; display:flex; gap:22px; }
+.nav .r svg{ width:28px; height:28px; stroke:#1d1d1f; stroke-width:2; fill:none; stroke-linecap:round; }
+.prow{ display:flex; align-items:center; gap:18px; margin-top:16px; }
+.ring{ width:118px; height:118px; border-radius:50%; padding:4px; background:conic-gradient(from 210deg,#4539C9,#8C82FF,#C4BDFF,#5B4FE8,#4539C9); flex:none; }
+.ring div{ width:100%; height:100%; border-radius:50%; border:4px solid #fff; background:linear-gradient(135deg,#7C71F7,#4539C9); color:#fff; font-weight:800; font-size:36px; display:flex; align-items:center; justify-content:center; }
+.st{ flex:1; display:grid; grid-template-columns:repeat(3,1fr); text-align:center; }
+.st b{ display:block; font-size:28px; font-weight:800; letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
+.st small{ font-size:18px; color:#3b3b40; font-weight:500; }
+.nm{ margin-top:14px; font-size:21px; font-weight:800; }
+.ct{ font-size:19px; color:var(--ink3); font-weight:500; }
+.bt{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; }
+.bt span{ height:46px; border-radius:12px; background:#EFEFF2; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; }
+.hl{ display:flex; gap:18px; margin-top:16px; }
+.hl div{ text-align:center; font-size:15px; color:#3b3b40; font-weight:600; }
+.hl i{ display:block; width:68px; height:68px; border-radius:50%; border:2px solid #E3E3E8; margin-bottom:6px; padding:4px; }
+.hl i::after{ content:''; display:block; width:100%; height:100%; border-radius:50%; background:var(--g); }
+.tabs{ display:flex; justify-content:space-around; margin:16px -22px 0; border-top:1px solid #E6E6EA; height:52px; align-items:center; }
+.tabs svg{ width:26px; height:26px; stroke:#1d1d1f; stroke-width:2; fill:none; }
+.grid9{ display:grid; grid-template-columns:repeat(3,1fr); gap:3px; margin:0 -22px; }
+.grid9 div{ aspect-ratio:1/1.12; position:relative; overflow:hidden; }
+#gain{ position:absolute; z-index:4; left:226px; top:208px; padding:6px 12px; border-radius:999px; background:var(--brand); color:#fff; font-size:17px; font-weight:800; white-space:nowrap; box-shadow:0 10px 24px -10px rgba(69,57,201,.7); }
+.glare{ position:absolute; inset:0; border-radius:78px; pointer-events:none;
+  background:linear-gradient(115deg, rgba(255,255,255,0) 35%, rgba(255,255,255,.22) 47%, rgba(255,255,255,.04) 53%, rgba(255,255,255,0) 62%); background-size:300% 100%; }
+
+/* ---------- screens inside the phone ---------- */
+.scr{ position:absolute; left:0; right:0; top:74px; bottom:0; background:#fff; }
+.t2{ font-size:30px; font-weight:800; letter-spacing:-0.02em; padding:8px 24px 0; height:58px; }
+.secl{ font-size:20px; font-weight:800; padding:10px 24px 6px; }
+.nr{ position:absolute; left:0; right:0; height:108px; display:flex; align-items:center; gap:14px; padding:0 18px 0 24px; }
+.nr .av{ width:58px; height:58px; border-radius:50%; color:#fff; font-weight:800; font-size:20px; display:flex; align-items:center; justify-content:center; flex:none; }
+.nr .tx{ flex:1; font-size:21px; line-height:1.3; color:#1d1d1f; }
+.nr .tx b{ font-weight:800; }
+.nr .tx span{ color:var(--ink3); }
+.nr .fb{ flex:none; font-size:17px; font-weight:800; color:#fff; background:var(--brand); padding:10px 16px; border-radius:12px; }
+#tap{ position:absolute; border-radius:50%; background:rgba(91,79,232,.18); width:40px; height:40px; margin:-20px 0 0 -20px; }
+.ch{ display:flex; align-items:center; gap:14px; height:84px; padding:0 22px; border-bottom:1px solid #EDEDF0; }
+.ch svg{ width:26px; height:26px; stroke:#1d1d1f; stroke-width:2.4; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+.ch .av{ width:52px; height:52px; border-radius:50%; background:#2E9E7A; color:#fff; font-weight:800; font-size:19px; display:flex; align-items:center; justify-content:center; }
+.ch b{ display:block; font-size:22px; }
+.ch small{ font-size:17px; color:var(--ink3); font-weight:500; }
+.msg{ position:absolute; max-width:330px; padding:16px 20px; font-size:23px; line-height:1.32; font-weight:500; border-radius:24px; transform-origin:100% 100%; }
+.msg.me{ right:18px; background:var(--brand); color:#fff; border-bottom-right-radius:8px; }
+.msg.them{ left:18px; background:#EFEFF2; color:#1d1d1f; border-bottom-left-radius:8px; transform-origin:0 100%; }
+.typing{ position:absolute; left:18px; width:86px; height:48px; border-radius:24px; border-bottom-left-radius:8px; background:#EFEFF2; display:flex; align-items:center; justify-content:center; gap:7px; }
+.typing i{ width:10px; height:10px; border-radius:50%; background:#9A9AA2; }
+.inp{ position:absolute; left:18px; right:18px; bottom:34px; height:56px; border-radius:28px; border:1px solid #E2E2E7; display:flex; align-items:center; padding:0 22px; font-size:19px; color:var(--ink3); }
+
+/* ---------- audience settings screen ---------- */
+.au2{ position:absolute; left:0; right:0; top:74px; bottom:0; padding:0 22px; }
+.au2 .nv{ display:flex; align-items:center; gap:10px; height:60px; font-size:30px; font-weight:800; letter-spacing:-0.02em; }
+.au2 .nv svg{ width:26px; height:26px; stroke:#1d1d1f; stroke-width:2.4; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+.au2 .nv em{ margin-left:auto; font-style:normal; font-size:15px; font-weight:700; color:var(--ink2); background:#F2F2F5; padding:6px 12px; border-radius:999px; }
+.lb{ margin:18px 0 10px; font-size:17px; font-weight:800; color:var(--ink3); letter-spacing:.02em; text-transform:uppercase; }
+.cps{ display:flex; flex-wrap:wrap; gap:9px; }
+.cp{ display:inline-flex; align-items:center; gap:7px; height:46px; padding:0 16px; border-radius:999px; font-size:18px; font-weight:700; background:#F2F2F5; color:#3b3b40; border:2px solid transparent; }
+.cp svg{ width:18px; height:18px; stroke:#fff; stroke-width:3.2; fill:none; stroke-linecap:round; stroke-linejoin:round; display:none; }
+.cp.on{ background:#EEECFF; color:#4539C9; border-color:rgba(91,79,232,.35); }
+.cp.on svg{ display:block; stroke:#4539C9; }
+.loc{ border-radius:20px; background:#F6F6F9; padding:16px 18px; }
+.loc .r1{ display:flex; align-items:center; gap:10px; font-size:21px; font-weight:800; }
+.loc .r1 svg{ width:24px; height:24px; stroke:#5B4FE8; stroke-width:2.2; fill:none; }
+.loc .r1 span{ margin-left:auto; font-size:19px; color:#4539C9; font-variant-numeric:tabular-nums; }
+.trk{ position:relative; height:8px; border-radius:4px; background:#E3E3E8; margin:20px 6px 8px; }
+.trk u{ position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:#5B4FE8; }
+.trk i{ position:absolute; top:50%; width:30px; height:30px; margin:-15px 0 0 -15px; border-radius:50%; background:#fff; box-shadow:0 2px 8px rgba(29,29,31,.3); }
+#save{ margin-top:22px; height:62px; border-radius:18px; background:var(--brand); color:#fff; font-size:21px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:10px; }
+#save svg{ width:24px; height:24px; stroke:#fff; stroke-width:3; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+#tap{ position:absolute; border-radius:50%; background:rgba(91,79,232,.22); width:40px; height:40px; margin:-20px 0 0 -20px; }
+
+/* ---------- the lock ---------- */
+#lockT{ position:absolute; left:390px; top:400px; width:300px; height:300px; border-radius:88px;
+  background:rgba(255,255,255,.66); border:1px solid rgba(255,255,255,.95); -webkit-backdrop-filter:blur(30px) saturate(1.5); backdrop-filter:blur(30px) saturate(1.5);
+  box-shadow:0 60px 120px -50px rgba(69,57,201,.55), 0 0 0 1px rgba(29,29,31,.04); display:flex; align-items:center; justify-content:center; }
+#lockT svg{ width:170px; height:170px; overflow:visible; }
+#ring2{ position:absolute; left:390px; top:400px; width:300px; height:300px; border-radius:88px; border:3px solid #7C71F7; }
+.chk2{ position:absolute; left:200px; width:680px; height:96px; border-radius:30px; display:flex; align-items:center; gap:18px; padding:0 28px; font-size:30px; font-weight:700; letter-spacing:-0.01em;
+  background:rgba(255,255,255,.72); border:1px solid rgba(255,255,255,.95); box-shadow:0 24px 48px -28px rgba(29,29,31,.35); -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px); }
+.chk2 svg{ width:40px; height:40px; flex:none; }
+.chk2 circle{ fill:var(--brand); }
+.chk2 path{ fill:none; stroke:#fff; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+
+/* ---------- keynote numbers ---------- */
+.kn{ position:absolute; left:50px; right:50px; top:560px; display:grid; grid-template-columns:repeat(3,1fr); }
+.kn div{ text-align:center; position:relative; }
+.kn b{ display:block; font-size:90px; font-weight:700; letter-spacing:-0.055em; line-height:1.05; font-variant-numeric:tabular-nums; padding-bottom:0.12em; margin-bottom:-0.12em; }
+.kn span{ display:block; margin-top:14px; font-size:28px; color:var(--ink2); font-weight:600; }
+.kn i{ position:absolute; top:20px; bottom:20px; width:1px; background:#D2D2D7; }
+.cr{ margin-top:22px; }
+.cr .t{ display:flex; justify-content:space-between; align-items:baseline; font-size:27px; font-weight:700; }
+.cr .t b{ font-size:36px; font-weight:800; letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
+.cr .t b small{ font-size:22px; font-weight:600; color:var(--ink3); }
+.cr .bar{ height:22px; border-radius:11px; background:rgba(29,29,31,.05); margin-top:12px; overflow:hidden; }
+.cr .bar u{ display:block; height:100%; border-radius:11px; }
+/* ---------- savings ---------- */
+#sv{ font-size:170px; font-weight:700; letter-spacing:-0.055em; line-height:1.05; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.ypill{ display:inline-flex; align-items:center; gap:10px; padding:16px 30px; border-radius:999px; font-size:36px; font-weight:700; letter-spacing:-0.01em;
+  background:rgba(255,255,255,.75); border:1px solid rgba(255,255,255,.95); box-shadow:0 24px 50px -28px rgba(29,29,31,.4); -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px); }
+#lp{ position:absolute; left:0; top:0; bottom:0; width:540px; background:#EFEFF3; }
+#rp{ position:absolute; left:540px; top:0; bottom:0; width:540px; background:#FBFBFD; }
+#rglow{ position:absolute; left:560px; top:20px; width:500px; height:1310px; border-radius:48px; border:2px solid rgba(91,79,232,.35); box-shadow:0 0 80px rgba(91,79,232,.18), inset 0 0 80px rgba(91,79,232,.08); }
+#mid{ position:absolute; left:539px; top:0; width:2px; height:1350px; background:#D2D2D7; transform-origin:50% 0; }
+.hd{ position:absolute; width:540px; text-align:center; }
+.hd .w{ display:inline-block; font-size:140px; font-weight:700; letter-spacing:-0.05em; line-height:1.05; transform-origin:50% 50%; white-space:nowrap; }
+.hd small{ display:block; font-size:28px; font-weight:600; letter-spacing:-0.01em; margin-top:8px; }
+.cat{ position:absolute; left:0; right:0; text-align:center; }
+.cat span{ display:inline-block; font-size:20px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#6E6E73; background:#FBFBFD; border:1px solid #E3E3E8; padding:8px 18px; border-radius:999px; box-shadow:0 6px 16px -10px rgba(29,29,31,.3); }
+.cell{ position:absolute; width:540px; padding:0 50px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:14px; font-size:31px; font-weight:600; letter-spacing:-0.015em; line-height:1.25; }
+.cell.L{ left:0; color:#6E6E73; } .cell.R{ left:540px; color:#1D1D1F; }
+.cell svg{ width:30px; height:30px; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+.ix{ width:52px; height:52px; border-radius:50%; background:#E3E3E8; display:flex; align-items:center; justify-content:center; } .ix svg{ stroke:#A8453C; }
+.iv{ width:52px; height:52px; border-radius:50%; background:#5B4FE8; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 24px -10px rgba(69,57,201,.7); } .iv svg{ stroke:#fff; }
+.hr{ position:absolute; left:80px; right:80px; height:1px; background:#E3E3E8; transform-origin:50% 50%; }
+
+.cat{ position:absolute; left:0; right:0; text-align:center; }
+.cat span{ display:inline-block; font-size:20px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#6E6E73; background:#FBFBFD; border:1px solid #E3E3E8; padding:8px 18px; border-radius:999px; box-shadow:0 6px 16px -10px rgba(29,29,31,.3); }
+.cell{ position:absolute; width:540px; padding:0 50px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:14px; font-size:31px; font-weight:600; letter-spacing:-0.015em; line-height:1.25; }
+.cell.L{ left:0; color:#6E6E73; } .cell.R{ left:540px; color:#1D1D1F; }
+.cell svg{ width:30px; height:30px; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+.ix{ width:52px; height:52px; border-radius:50%; background:#E3E3E8; display:flex; align-items:center; justify-content:center; } .ix svg{ stroke:#A8453C; }
+.iv{ width:52px; height:52px; border-radius:50%; background:#5B4FE8; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 24px -10px rgba(69,57,201,.7); } .iv svg{ stroke:#fff; }
+.hr{ position:absolute; left:80px; right:80px; height:1px; background:#E3E3E8; transform-origin:50% 50%; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="aurora">
+    <div class="au" id="u1" style="width:760px;height:760px;background:#5B4FE8"></div>
+    <div class="au" id="u2" style="width:620px;height:620px;background:#8C82FF"></div>
+    <div class="au" id="u3" style="width:560px;height:560px;background:#C45BE8"></div>
+    <div class="au" id="u4" style="width:600px;height:600px;background:#3D6BFF"></div>
+  </div>
+  <div id="white"></div>
+
+  <!-- the 3D logo opens and closes the film -->
+  <div id="lglow"></div>
+  <div id="logo3d"><div id="cube"><div id="slices"></div>
+    <div id="face"><svg viewBox="0 0 24 24"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="6" r="3"/><circle cx="17" cy="18" r="3"/><path d="M9.6 10.6l4.8-3.2M9.6 13.4l4.8 3.2"/></svg><div id="spec"></div></div>
+  </div></div>
+
+  <!-- 1 · introducing (aurora) -->
+  <div class="layer" id="A">
+    <div class="c" style="top:720px"><p class="subw" id="a1" style="margin:0;font-size:46px">Maak kennis met</p></div>
+    <div class="c" style="top:790px"><h1 class="h" style="font-size:124px;color:#fff"><span class="ln"><span id="a2" class="gradw">GrowthSourced.</span></span></h1></div>
+    <div class="c" style="top:990px"><p class="subw" id="a3" style="margin:0;font-size:38px;color:rgba(255,255,255,.72)">Instagram-groei zonder gedoe.</p></div>
+  </div>
+
+  <!-- 2 · one phone, three screens -->
+  <div class="layer" id="P">
+    <div class="c" id="pa" style="top:70px"><h2 class="h" style="font-size:84px"><span class="ln"><span id="pa1">Echte volgers.</span></span><span class="ln"><span id="pa2" class="grad">Uit jouw doelgroep.</span></span></h2></div>
+    <div class="c" id="pb" style="top:70px"><h2 class="h" style="font-size:84px"><span class="ln"><span id="pb1">Precies afgesteld.</span></span><span class="ln"><span id="pb2" class="grad">Samen met jou.</span></span></h2></div>
+    <div class="c" id="pc" style="top:70px"><h2 class="h" style="font-size:84px"><span class="ln"><span id="pc1">Jij legt het contact.</span></span><span class="ln"><span id="pc2" class="grad">Van volger tot klant.</span></span></h2></div>
+    <div id="cam">
+      <div id="rig">
+        <span class="btnr" style="left:-5px;top:210px;height:60px"></span><span class="btnr" style="left:-5px;top:300px;height:100px"></span>
+        <span class="btnr" style="left:-5px;top:420px;height:100px"></span><span class="btnr" style="right:-5px;top:300px;height:150px"></span>
+        <div class="phone"><div class="screen">
+          <div class="island"></div>
+          <div class="sbar"><span>9:41</span><span><i></i></span></div>
+          <div class="scr" id="s1"><div class="t2">Meldingen</div><div class="secl">Vandaag</div><div id="rows"></div></div>
+          <div class="au2" id="scr2">
+            <div class="nv"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Doelgroep<em>Voorbeeld</em></div>
+            <div class="lb">Interesses</div>
+            <div class="cps"><span class="cp" id="i1"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Sport &amp; gezondheid</span><span class="cp" id="i2"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Eten &amp; drinken</span><span class="cp"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Reizen</span><span class="cp" id="i3"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Lokaal</span></div>
+            <div class="lb">Locatie</div>
+            <div class="loc"><div class="r1"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>Utrecht<span id="km">+ 5 km</span></div>
+              <div class="trk"><u id="tu"></u><i id="ti"></i></div></div>
+            <div class="lb">Vergelijkbaar met</div>
+            <div class="cps"><span class="cp" id="vv1"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Merken in jouw branche</span><span class="cp" id="vv2"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Lokale zaken</span></div>
+            <div id="save"><span id="svT">Opslaan</span><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+          </div>
+          <div class="scr" id="s3">
+            <div class="ch"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="av">SV</span><div><b>Sanne</b><small>sanne.utrecht</small></div></div>
+            <div class="msg me" id="m1" style="top:130px">Hoi Sanne, leuk dat je ons volgt!</div>
+            <div class="typing" id="ty1" style="top:262px"><i></i><i></i><i></i></div>
+            <div class="msg them" id="m2" style="top:262px">Hoi! Hebben jullie deze week nog plek?</div>
+            <div class="msg me" id="m3" style="top:420px">Zeker! Donderdag om 14:00?</div>
+            <div class="typing" id="ty2" style="top:520px"><i></i><i></i><i></i></div>
+            <div class="msg them" id="m4" style="top:520px">Top, tot donderdag!</div>
+            <div class="inp">Bericht…</div>
+          </div>
+          <div id="tap"></div>
+        </div></div>
+        <div class="glare" id="glare"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 · fake or real -->
+  <div class="layer" id="Q">
+    <div id="lp"></div><div id="rp"></div><div id="rglow"></div><i id="mid"></i>
+    <div class="hd" id="hL" style="left:0"><span class="w" id="wL" style="color:#86868B">Nep.</span><small id="sL" style="color:#86868B">Gekochte nepvolgers</small></div>
+    <div class="hd" id="hR" style="left:540px"><span class="w grad" id="wR">Echt.</span><small id="sR" style="color:#5B4FE8">Organisch via GrowthSourced</small></div>
+
+    <div class="cat" id="cat0" style="top:368px"><span>Wie volgt je?</span></div>
+    <div class="cell L" id="L0" style="top:420px"><span class="ix"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span>Nepaccounts en bots</span></div>
+    <div class="cell R" id="R0" style="top:420px"><span class="iv"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Echte mensen uit je doelgroep</span></div>
+    <i class="hr" id="hr0" style="top:570px"></i>
+    <div class="cat" id="cat1" style="top:598px"><span>Nieuwe klanten</span></div>
+    <div class="cell L" id="L1" style="top:650px"><span class="ix"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span>Leveren nooit klanten op</span></div>
+    <div class="cell R" id="R1" style="top:650px"><span class="iv"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Mensen die klant kunnen worden</span></div>
+    <i class="hr" id="hr1" style="top:800px"></i>
+    <div class="cat" id="cat2" style="top:828px"><span>Je account</span></div>
+    <div class="cell L" id="L2" style="top:880px"><span class="ix"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span>Instagram grijpt in bij verdachte groei</span></div>
+    <div class="cell R" id="R2" style="top:880px"><span class="iv"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Gerichte, organische groei</span></div>
+    <i class="hr" id="hr2" style="top:1030px"></i>
+    <div class="c" style="top:1110px"><h2 class="h" style="font-size:66px"><span class="ln"><span id="qv" class="grad">Kies voor echte volgers.</span></span></h2></div>
+  </div>
+
+  <!-- 4 · secured -->
+  <div class="layer" id="S">
+    <div class="orb" id="o1" style="width:600px;height:600px;background:#8C82FF"></div>
+    <div class="orb" id="o2" style="width:460px;height:460px;background:#C4BDFF"></div>
+    <div class="c" style="top:110px"><h2 class="h" style="font-size:96px"><span class="ln"><span id="sc1">Beveiligd.</span></span><span class="ln"><span id="sc2" class="grad">Vanaf de eerste stap.</span></span></h2></div>
+    <div id="ring2"></div>
+    <div id="lockT"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C71F7"/><stop offset="1" stop-color="#4539C9"/></linearGradient></defs>
+      <path id="shackle" d="M8 11V7.5a4 4 0 0 1 8 0V11" stroke="#4539C9" stroke-width="2.2"/>
+      <rect x="4.5" y="10.5" width="15" height="11" rx="3" fill="url(#lg1)"/>
+      <circle cx="12" cy="15.4" r="1.5" fill="#fff"/><path d="M12 16.4v2" stroke="#fff" stroke-width="1.6"/></svg></div>
+    <div class="chk2" id="lk1" style="top:790px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.3 3.3L17 9"/></svg>Eén keer inloggen</div>
+    <div class="chk2" id="lk2" style="top:904px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.3 3.3L17 9"/></svg>256-bit versleuteling</div>
+    <div class="chk2" id="lk3" style="top:1018px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.3 3.3L17 9"/></svg>Wachtwoord nergens opgeslagen</div>
+  </div>
+
+  <!-- 5 · numbers you can see -->
+  <div class="layer" id="K">
+    <div class="orb" id="o3" style="width:620px;height:620px;background:#C4BDFF"></div>
+    <div class="orb" id="o4" style="width:480px;height:480px;background:#8C82FF;opacity:.6"></div>
+    <div class="c" style="top:150px"><h2 class="h" style="font-size:100px"><span class="ln"><span id="kc1">Groei die je</span></span><span class="ln"><span id="kc2" class="grad">kunt zien.</span></span></h2></div>
+    <div class="kn">
+      <div id="kk1"><b class="grad" id="kn1">+0</b><span>nieuwe volgers</span></div>
+      <div id="kk2"><i style="left:0"></i><b class="grad" id="kn2">+0%</b><span>accounts bereikt</span></div>
+      <div id="kk3"><i style="left:0"></i><b class="grad" id="kn3">+0%</b><span>interacties</span></div>
+    </div>
+    <div class="c" style="top:1120px"><p id="kfn" style="margin:0;font-size:26px;color:#86868B;font-weight:500">Voorbeeld uit het maandrapport · zakelijk account · 4 weken</p></div>
+  </div>
+
+  <!-- 6 · the sum -->
+  <div class="layer" id="M">
+    <div class="orb" id="o5" style="width:640px;height:640px;background:#C4BDFF"></div>
+    <div class="c" style="top:90px"><h2 class="h" style="font-size:88px"><span class="ln"><span id="mc1">Reken even mee.</span></span><span class="ln"><span id="mc2" class="grad">200 volgers per maand.</span></span></h2></div>
+    <div id="mcard">
+      <div class="cr"><div class="t"><span>Via Instagram-advertenties</span><b id="ca">€0<small> / maand</small></b></div><div class="bar"><u id="ba" style="background:#B8B8C0"></u></div></div>
+      <div class="cr" style="margin-top:26px"><div class="t"><span>Via GrowthSourced</span><b id="cb" style="color:#4539C9">€0<small> / maand</small></b></div><div class="bar"><u id="bb" style="background:linear-gradient(90deg,#7C71F7,#5B4FE8)"></u></div></div>
+    </div>
+    <div class="c" style="top:690px"><p class="sub" id="ms1" style="margin:0;font-size:48px;color:#1D1D1F">Je bespaart</p></div>
+    <div class="c" style="top:760px"><div id="sv" class="grad" style="font-size:150px">€0</div></div>
+    <div class="c" style="top:950px"><span class="ypill" id="yp">= €16.125,12 per jaar</span></div>
+    <div class="c" style="top:1110px"><p id="mfn" style="margin:0;font-size:24px;color:#86868B;font-weight:500;line-height:1.45">Rekenvoorbeeld van de website: 200 volgers à €8 via advertenties.<br>Per jaar na aftrek van eenmalig €75 opstartkosten. Excl. btw.</p></div>
+  </div>
+
+  <!-- 7 · Echte … (aurora) -->
+  <div class="layer" id="W">
+    <div class="c" id="wc" style="top:400px">
+      <h2 class="h" style="font-size:200px;color:#fff"><span class="ln"><span id="w0">Echte</span></span><span class="ln" style="position:relative"><span class="slot"><span id="w1t" class="gradw">mensen.</span></span><span class="slot" style="position:absolute;left:0;right:0;top:0"><span id="w2t" class="gradw">groei.</span></span><span class="slot" style="position:absolute;left:0;right:0;top:0"><span id="w3t" class="gradw">kansen.</span></span></span></h2>
+      <div style="position:relative;height:60px;margin-top:30px">
+        <p class="subw ws" id="w1s">Uit jouw doelgroep, geen bots.</p><p class="subw ws" id="w2s">Organisch, zonder advertenties.</p><p class="subw ws" id="w3s">Op nieuwe klanten.</p></div>
+    </div>
+  </div>
+
+  <!-- 8 · end card (aurora) -->
+  <div class="layer" id="E">
+    <div class="c" style="top:500px"><h2 class="h" id="e1" style="font-size:96px;color:#fff">GrowthSourced</h2></div>
+    <div class="c" style="top:640px"><p class="subw" id="e2" style="margin:0;font-size:40px">Instagram-groei zonder gedoe.</p></div>
+    <div class="c" style="top:790px"><p id="e3" style="margin:0;font-size:60px;font-weight:700;letter-spacing:-0.03em;color:#fff">€249,99 per maand.</p>
+      <p id="e4" style="margin:12px 0 0;font-size:34px;font-weight:600;color:#C9C3FF">Maandelijks opzegbaar.</p>
+      <p id="e5" style="margin:14px 0 0;font-size:24px;font-weight:500;color:rgba(255,255,255,.55)">Excl. btw · eenmalig €75 opstartkosten</p></div>
+    <div class="c" style="top:1100px"><span class="bio" id="e6">Link in bio<svg id="e7" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var DURATION = 60.0;
+  var clamp = function(x, a, b){ a = a == null ? 0 : a; b = b == null ? 1 : b; return Math.min(b, Math.max(a, x)); };
+  var lerp = function(a, b, p){ return a + (b - a) * p; };
+  var E = {
+    outExpo: function(x){ return x >= 1 ? 1 : 1 - Math.pow(2, -10 * x); },
+    outQuint: function(x){ return 1 - Math.pow(1 - x, 5); },
+    inOutQuint: function(x){ return x < .5 ? 16 * Math.pow(x, 5) : 1 - Math.pow(-2 * x + 2, 5) / 2; },
+    inOutSine: function(x){ return -(Math.cos(Math.PI * x) - 1) / 2; },
+    inCubic: function(x){ return x * x * x; },
+    outBack: function(x){ var c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); }
+  };
+  var seg = function(t, a, d, e){ return (e || E.outQuint)(clamp((t - a) / d)); };
+  var $ = function(id){ return document.getElementById(id); };
+  var nl = function(n, d){ n = Math.max(0, n) + 0; return n.toLocaleString('nl-NL', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
+  function line(el, t, t0, d){ var p = seg(t, t0, d || 0.9, E.outExpo); el.style.transform = 'translateY(' + ((1 - p) * 110) + '%)'; }
+  function lineOut(el, t, t0, d){ var p = seg(t, t0, d || 0.5, E.inCubic); if (p > 0) el.style.transform = 'translateY(' + (-p * 110) + '%)'; }
+  function soft(el, t, t0, d, dy){ var p = seg(t, t0, d || 0.8, E.outQuint);
+    el.style.opacity = p; el.style.filter = 'blur(' + ((1 - p) * 14).toFixed(2) + 'px)'; el.style.transform = 'translateY(' + ((1 - p) * (dy == null ? 24 : dy)) + 'px)'; }
+  function out(el, t, t0, d){ var o = seg(t, t0, d || 0.45, E.inCubic); el.style.opacity = 1 - o; el.style.filter = o > 0 ? 'blur(' + (o * 14).toFixed(2) + 'px)' : 'none'; }
+  function layer(id, t, tin, tout, xd){
+    var el = $(id), on = t >= tin && t < tout + (xd || 0.6);
+    el.style.display = on ? 'block' : 'none';
+    if (!on) return false;
+    var o = seg(t, tout, xd || 0.6, E.inCubic);
+    el.style.opacity = 1 - o; el.style.filter = o > 0 ? 'blur(' + (o * 16).toFixed(2) + 'px)' : 'none';
+    return true;
+  }
+  function orb(id, t, x, y, ax, ay, sp, op){ $(id).style.transform = 'translate(' + (x + Math.sin(t * sp) * ax) + 'px,' + (y + Math.cos(t * sp * 0.85) * ay) + 'px)'; if (op != null) $(id).style.opacity = op; }
+  function shine(el, t, t0, d){ el.style.backgroundPosition = (100 - seg(t, t0, d || 4, E.inOutSine) * 100) + '% 50%'; }
+
+  /* the 3D logo's extruded edge */
+  for (var i = 1; i <= 18; i++) {
+    var sl = document.createElement('div'); sl.className = 'slice';
+    sl.style.transform = 'translateZ(' + (-i * 2.2) + 'px)'; sl.style.background = i === 18 ? '#241C80' : 'hsl(246,' + (62 - i) + '%,' + (44 - i * 0.6) + '%)';
+    $('slices').appendChild(sl);
+  }
+  $('face').style.transform = 'translateZ(0.5px)';
+
+  /* phone screen 1: new followers arrive on top */
+  var ROWS = [[7.0, 'noor.beauty', 'NW', '#D9768F'], [7.7, 'koffie.kim', 'KO', '#9A6BD8'], [8.4, 'mark.eindhoven', 'TK', '#6F9BE0'],
+              [9.1, 'lisa.amsterdam', 'LB', '#E58E6B'], [9.8, 'sanne.utrecht', 'SV', '#2E9E7A']];
+  ROWS.forEach(function(r){
+    var el = document.createElement('div'); el.className = 'nr';
+    el.innerHTML = '<span class="av" style="background:' + r[3] + '">' + r[2] + '</span><div class="tx"><b>' + r[1] + '</b> volgt je nu. <span>nu</span></div><span class="fb">Volg terug</span>';
+    $('rows').appendChild(el); r.el = el;
+  });
+  function chip(id, t, t0){ var el = $(id), on = t >= t0; el.className = on ? 'cp on' : 'cp';
+    el.style.transform = 'scale(' + (t > t0 - 0.12 && t < t0 + 0.15 ? 0.94 : 1) + ')'; }
+  var TAPS = [[12.9, 'i1'], [13.4, 'i2'], [13.9, 'i3'], [15.9, 'vv1'], [16.3, 'vv2'], [16.7, 'save']];
+
+  function render(t){
+    /* backgrounds: aurora at the start and the end, the white world in between */
+    $('aurora').style.opacity = 0.25 + 0.75 * seg(t, 0.4, 2.6, E.inOutSine);
+    $('u1').style.transform = 'translate(' + (-120 + Math.sin(t * .22) * 120) + 'px,' + (-160 + Math.cos(t * .19) * 90) + 'px)';
+    $('u2').style.transform = 'translate(' + (560 + Math.cos(t * .25) * 110) + 'px,' + (120 + Math.sin(t * .21) * 120) + 'px)';
+    $('u3').style.transform = 'translate(' + (40 + Math.sin(t * .18 + 1) * 120) + 'px,' + (760 + Math.cos(t * .23) * 100) + 'px)';
+    $('u4').style.transform = 'translate(' + (600 + Math.cos(t * .2 + 2) * 110) + 'px,' + (840 + Math.sin(t * .17) * 110) + 'px)';
+    $('u3').style.opacity = 0.55; $('u4').style.opacity = 0.65;
+    var wOn = seg(t, 5.0, 1.0, E.inOutSine) * (1 - seg(t, 48.9, 1.2, E.inOutSine));
+    $('white').style.opacity = wOn; $('white').style.display = wOn > 0.001 ? 'block' : 'none';
+
+    /* the 3D logo */
+    var inA = t < 6.0, inE = t >= 54.3;
+    $('logo3d').style.display = inA || inE ? 'block' : 'none'; $('lglow').style.display = $('logo3d').style.display;
+    if (inA) {
+      var turn = seg(t, 0.2, 3.6, E.inOutQuint), idle = Math.sin(t * 0.9) * seg(t, 2.5, 1.5, E.inOutSine);
+      var ry = lerp(78, -14, turn) + idle * 4, rx = lerp(22, 7, turn) + Math.cos(t * 0.8) * 2, lo = seg(t, 5.0, 0.7, E.inCubic);
+      $('cube').style.transform = 'translateY(' + (-lo * 40) + 'px) scale(' + (lerp(0.8, 1, turn) * (1 - 0.2 * lo)) + ') rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+      $('logo3d').style.top = '300px'; $('logo3d').style.opacity = clamp((t - 0.3) / 0.6) * (1 - lo); $('logo3d').style.filter = lo > 0 ? 'blur(' + (lo * 14) + 'px)' : 'none';
+      $('spec').style.transform = 'translateX(' + lerp(-60, 60, seg(t, 0.6, 3.0, E.inOutSine)) + '%)';
+      $('lglow').style.top = '560px'; $('lglow').style.transform = 'none'; $('lglow').style.opacity = 0.9 * turn * (1 - lo);
+    } else if (inE) {
+      var lp = seg(t, 54.4, 1.6, E.outExpo);
+      $('logo3d').style.top = '170px';
+      $('cube').style.transform = 'scale(' + (0.62 * lerp(0.7, 1, lp)) + ') rotateX(' + (6 + Math.cos(t * 0.8) * 2) + 'deg) rotateY(' + (lerp(-70, -12, lp) + Math.sin(t * 0.9) * 4) + 'deg)';
+      $('logo3d').style.opacity = clamp((t - 54.4) / 0.5); $('logo3d').style.filter = 'none';
+      $('spec').style.transform = 'translateX(' + lerp(-60, 60, seg(t, 54.7, 2.4, E.inOutSine)) + '%)';
+      $('lglow').style.top = '360px'; $('lglow').style.opacity = 0.7 * lp; $('lglow').style.transform = 'scale(.7)';
+    }
+
+    /* 1 · introducing (0 – 5.7) */
+    if (layer('A', t, 0, 5.0, 0.7)) {
+      soft($('a1'), t, 2.2, 0.9); line($('a2'), t, 2.6, 1.2); shine($('a2'), t, 2.6, 3); soft($('a3'), t, 3.4, 0.9);
+    }
+
+    /* 2 · one phone, three screens (5.8 – 24.3) */
+    if (layer('P', t, 5.8, 23.6, 0.7)) {
+      $('pa').style.display = t < 11.9 ? 'block' : 'none'; line($('pa1'), t, 6.2, 1.0); line($('pa2'), t, 6.55, 1.0); shine($('pa2'), t, 6.55); out($('pa'), t, 11.35);
+      $('pb').style.display = t >= 11.7 && t < 17.9 ? 'block' : 'none'; line($('pb1'), t, 11.85, 1.0); line($('pb2'), t, 12.2, 1.0); shine($('pb2'), t, 12.2); out($('pb'), t, 17.25);
+      $('pc').style.display = t >= 17.6 ? 'block' : 'none'; line($('pc1'), t, 17.75, 1.0); line($('pc2'), t, 18.1, 1.0); shine($('pc2'), t, 18.1);
+      var up = seg(t, 5.9, 1.6, E.outExpo), drift = seg(t, 6.6, 17, E.inOutSine), push = seg(t, 23.0, 1.0, E.inCubic);
+      var rx = lerp(26, 4, up) - 3 * drift, ry = lerp(-24, -9, up) + 16 * drift;
+      var sc = 1.32 * lerp(0.9, 1, up) * (1 + 0.04 * drift) * (1 + 1.1 * push);
+      $('rig').style.transform = 'translateY(' + ((1 - up) * 820 - push * 60).toFixed(1) + 'px) scale(' + sc.toFixed(4) + ') rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+      $('glare').style.backgroundPosition = (90 - drift * 70 - up * 20) + '% 50%';
+      ROWS.forEach(function(r, k){
+        var a = seg(t, r[0], 0.7, E.outExpo), slot = 0;
+        for (var j = k + 1; j < ROWS.length; j++) slot += seg(t, ROWS[j][0], 0.7, E.outExpo);
+        r.el.style.top = (118 + slot * 110) + 'px'; r.el.style.opacity = t < r[0] ? 0 : a;
+        r.el.style.transform = 'translateY(' + ((1 - a) * -30) + 'px) scale(' + (0.96 + 0.04 * a) + ')';
+      });
+      // screen pushes: followers → audience → chat
+      var p1 = seg(t, 11.5, 0.75, E.inOutQuint), p2 = seg(t, 17.4, 0.75, E.inOutQuint);
+      $('s1').style.transform = 'translateX(' + (-30 * p1) + '%)'; $('s1').style.display = p1 < 1 ? 'block' : 'none';
+      $('scr2').style.display = p1 > 0 && p2 < 1 ? 'block' : 'none'; $('scr2').style.transform = 'translateX(' + (100 - 100 * p1 - 30 * p2) + '%)';
+      $('scr2').style.boxShadow = '-20px 0 40px rgba(0,0,0,' + (0.08 * p1 * (1 - p2)) + ')';
+      $('s3').style.display = p2 > 0 ? 'block' : 'none'; $('s3').style.transform = 'translateX(' + (100 - 100 * p2) + '%)';
+      $('s3').style.boxShadow = '-20px 0 40px rgba(0,0,0,' + (0.08 * p2) + ')';
+      chip('i1', t, 12.9); chip('i2', t, 13.4); chip('i3', t, 13.9); chip('vv1', t, 15.9); chip('vv2', t, 16.3);
+      var km = seg(t, 14.4, 1.1, E.inOutSine);
+      $('km').textContent = '+ ' + Math.round(5 + 20 * km) + ' km'; $('tu').style.width = (20 + 60 * km) + '%'; $('ti').style.left = (20 + 60 * km) + '%';
+      var tap = null;
+      TAPS.forEach(function(q){ if (t >= q[0] && t < q[0] + 0.6) tap = q; });
+      if (t >= 14.3 && t < 15.6) tap = [14.3, 'ti', true];
+      if (tap && $('scr2').style.display === 'block') {
+        var el = $(tap[1]), sr = $('tap').parentNode.getBoundingClientRect(), rr = el.getBoundingClientRect(), k2 = sr.width / 430;
+        var q = tap[2] ? 0.3 : clamp((t - tap[0]) / 0.6);
+        $('tap').style.left = ((rr.left + rr.width / 2 - sr.left) / k2) + 'px'; $('tap').style.top = ((rr.top + rr.height / 2 - sr.top) / k2) + 'px';
+        $('tap').style.opacity = (1 - q) * 0.9; $('tap').style.transform = 'scale(' + (1 + (tap[2] ? 0.6 : 3.5 * E.outQuint(q))) + ')';
+      } else $('tap').style.opacity = 0;
+      var saved = t >= 16.9;
+      $('svT').textContent = saved ? 'Doelgroep actief' : 'Opslaan'; $('save').querySelector('svg').style.display = saved ? 'block' : 'none';
+      $('save').style.background = saved ? '#4539C9' : '#5B4FE8';
+      function bubble(id, t0){ var p = seg(t, t0, 0.55, E.outBack), el = $(id); el.style.opacity = t < t0 ? 0 : clamp((t - t0) / 0.15); el.style.transform = 'scale(' + (0.6 + 0.4 * p) + ')'; }
+      function typing(id, a, b){ var el = $(id); el.style.opacity = t >= a && t < b ? 1 : 0;
+        Array.prototype.forEach.call(el.children, function(d, i){ d.style.transform = 'translateY(' + (-5 * Math.max(0, Math.sin((t - a) * 9 - i * 0.9))) + 'px)'; }); }
+      bubble('m1', 18.6); typing('ty1', 19.2, 19.9); bubble('m2', 19.9); bubble('m3', 21.0); typing('ty2', 21.5, 22.1); bubble('m4', 22.1);
+    }
+
+    /* 3 · fake or real (24.3 – 32.0) */
+    if (layer('Q', t, 24.3, 31.4, 0.6)) {
+      var split = seg(t, 24.4, 0.9, E.inOutQuint);
+      $('mid').style.transform = 'scaleY(' + split + ')'; $('lp').style.opacity = split;
+      var verdict = seg(t, 30.4, 1.0, E.inOutSine);
+      $('rglow').style.opacity = verdict; $('rglow').style.transform = 'scale(' + (0.96 + 0.04 * verdict) + ')';
+      var upq = seg(t, 26.1, 1.1, E.inOutQuint);
+      [['hL', 'wL', 24.7, 'sL'], ['hR', 'wR', 25.2, 'sR']].forEach(function(h){
+        var p = seg(t, h[2], 1.0, E.outExpo);
+        $(h[0]).style.top = lerp(560, 120, upq) + 'px';
+        $(h[1]).style.opacity = clamp((t - h[2]) / 0.3); $(h[1]).style.filter = p < 1 ? 'blur(' + ((1 - p) * 14) + 'px)' : 'none';
+        $(h[1]).style.transform = 'translateY(' + ((1 - p) * 60) + 'px) scale(' + lerp(1, 0.6, upq) + ')';
+        soft($(h[3]), t, 26.9 + (h[0] === 'hR' ? 0.15 : 0), 0.7, 12);
+      });
+      shine($('wR'), t, 25.2);
+      [27.4, 28.4, 29.4].forEach(function(r0, i){
+        soft($('cat' + i), t, r0, 0.6, 10); soft($('L' + i), t, r0 + 0.25, 0.7, 18); soft($('R' + i), t, r0 + 0.6, 0.7, 18);
+        $('hr' + i).style.transform = 'scaleX(' + seg(t, r0 + 0.9, 0.8, E.outQuint) + ')';
+        $('R' + i).querySelector('.iv').style.transform = 'scale(' + (0.5 + 0.5 * seg(t, r0 + 0.65, 0.5, E.outBack)) + ')';
+        $('L' + i).style.opacity = (parseFloat($('L' + i).style.opacity) * (1 - 0.55 * verdict)).toFixed(3);
+      });
+      $('hL').style.opacity = 1 - 0.55 * verdict;
+      line($('qv'), t, 30.6, 1.0); shine($('qv'), t, 30.6, 3);
+    }
+
+    /* 4 · secured (32.0 – 37.6) */
+    if (layer('S', t, 32.0, 37.0, 0.6)) {
+      var gl = seg(t, 32.0, 1.0, E.inOutSine);
+      orb('o1', t, 240, 300, 60, 40, .5, gl); orb('o2', t, 420, 500, 50, 50, .45, gl);
+      line($('sc1'), t, 32.2, 1.0); line($('sc2'), t, 32.55, 1.0); shine($('sc2'), t, 32.55);
+      var li = seg(t, 32.4, 1.2, E.outExpo);
+      $('lockT').style.opacity = li; $('lockT').style.transform = 'perspective(1600px) translateY(' + ((1 - li) * 80) + 'px) scale(' + (0.86 + 0.14 * li) + ') rotateX(' + ((1 - li) * 20) + 'deg)';
+      $('shackle').setAttribute('transform', 'translate(0 ' + (-3.2 * (1 - seg(t, 33.5, 0.55, E.outBack))).toFixed(3) + ')');
+      var pulse = clamp((t - 33.95) / 0.9);
+      $('ring2').style.opacity = t < 33.95 ? 0 : (1 - pulse) * 0.8; $('ring2').style.transform = 'scale(' + (1 + 0.28 * E.outQuint(pulse)) + ')';
+      soft($('lk1'), t, 34.3, 0.8, 26); soft($('lk2'), t, 34.7, 0.8, 26); soft($('lk3'), t, 35.1, 0.8, 26);
+    }
+
+    /* 5 · numbers (37.6 – 43.2) */
+    if (layer('K', t, 37.6, 42.6, 0.6)) {
+      var g2 = seg(t, 37.6, 1.0, E.inOutSine);
+      orb('o3', t, 220, 420, 60, 40, .45, g2); orb('o4', t, 420, 560, 50, 40, .5, 0.6 * g2);
+      line($('kc1'), t, 37.8, 1.0); line($('kc2'), t, 38.15, 1.0); shine($('kc2'), t, 38.15);
+      [['kk1', 38.8, 'kn1', 412, ''], ['kk2', 39.1, 'kn2', 24, '%'], ['kk3', 39.4, 'kn3', 15, '%']].forEach(function(k){
+        soft($(k[0]), t, k[1], 0.9, 30); $(k[2]).textContent = '+' + Math.round(k[3] * seg(t, k[1], 1.6, E.outQuint)) + k[4]; shine($(k[2]), t, k[1]);
+      });
+      soft($('kfn'), t, 40.2, 0.8, 0);
+    }
+
+    /* 6 · the sum (43.2 – 49.4) */
+    if (layer('M', t, 43.2, 48.8, 0.6)) {
+      orb('o5', t, 230, 600, 60, 40, .45, 0.6 * seg(t, 43.2, 1.0, E.inOutSine));
+      line($('mc1'), t, 43.4, 1.0); line($('mc2'), t, 43.75, 1.0); shine($('mc2'), t, 43.75);
+      var ci = seg(t, 43.9, 1.2, E.outExpo);
+      $('mcard').style.opacity = ci; $('mcard').style.transform = 'perspective(2200px) translateY(' + ((1 - ci) * 120) + 'px) rotateX(' + lerp(14, 4, ci) + 'deg)';
+      var a = seg(t, 44.4, 1.5, E.inOutSine), b = seg(t, 44.4, 0.9, E.inOutSine);
+      $('ca').innerHTML = '€' + nl(1600 * a) + '<small> / maand</small>'; $('ba').style.width = (100 * a) + '%';
+      $('cb').innerHTML = '€' + nl(249.99 * b, b >= 1 ? 2 : 0) + '<small> / maand</small>'; $('bb').style.width = (100 * 249.99 / 1600 * b) + '%';
+      soft($('ms1'), t, 46.0, 0.8);
+      var sv = seg(t, 46.3, 1.6, E.outQuint);
+      $('sv').textContent = '€' + nl(1350.01 * sv, sv >= 0.999 ? 2 : 0); soft($('sv'), t, 46.2, 0.9, 40); shine($('sv'), t, 46.3, 4);
+      var pp = seg(t, 47.4, 0.7, E.outBack); $('yp').style.opacity = clamp((t - 47.4) / 0.25); $('yp').style.transform = 'scale(' + (0.8 + 0.2 * pp) + ')';
+      soft($('mfn'), t, 47.8, 0.8, 0);
+    }
+
+    /* 7 · Echte … (aurora, 49.4 – 54.6) */
+    if (layer('W', t, 49.4, 54.1, 0.4)) {
+      line($('w0'), t, 49.7, 0.9);
+      [['w1', 49.85, 50.95], ['w2', 51.25, 52.3], ['w3', 52.6, 99]].forEach(function(w){
+        var el = $(w[0] + 't'), pin = seg(t, w[1], 0.8, E.outExpo), pout = seg(t, w[2], 0.45, E.inCubic);
+        el.style.visibility = t < w[1] - 0.01 || t > w[2] + 0.46 ? 'hidden' : 'visible';
+        el.style.transform = 'translateY(' + ((1 - pin) * 110 - pout * 110) + '%)'; shine(el, t, w[1], 1.6);
+        var sb = $(w[0] + 's'); soft(sb, t, w[1] + 0.3, 0.6, 14);
+        var so = seg(t, w[2] - 0.05, 0.35, E.inCubic); if (so > 0) sb.style.opacity = 1 - so;
+      });
+      $('wc').style.transform = 'scale(' + (1.03 - 0.03 * seg(t, 49.7, 4.4, E.inOutSine)) + ')';
+    }
+
+    /* 8 · end card (54.1 – 60) */
+    if (layer('E', t, 54.1, 99, 0.5)) {
+      soft($('e1'), t, 54.9, 1.0); soft($('e2'), t, 55.3, 0.9);
+      soft($('e3'), t, 56.0, 0.9); soft($('e4'), t, 56.25, 0.9); soft($('e5'), t, 56.45, 0.9);
+      soft($('e6'), t, 57.0, 0.9);
+      $('e7').style.transform = 'translateY(' + (Math.abs(Math.sin(Math.max(0, t - 57.4) * 3.2)) * 6) + 'px)';
+    }
+  }
+
+  window.DURATION = DURATION;
+  window.render = render;
+  var m = /[?&#]t=([\d.]+)/.exec(location.href);
+  render(m ? +m[1] : 0);
+})();
+</script>
+</body>
+</html>
