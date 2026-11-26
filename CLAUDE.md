@@ -47,3 +47,4 @@ Elke nieuwe video voldoet hieraan. Voorbeelden: advertentie 28 (`growthsourced-v
 - Website (bron voor alle teksten): https://claude.ai/artifact/8EkPhdFe7GBM2dDcB5kKau
 - Videopagina met alle video's: https://claude.ai/artifact/MvpcCxKRqg9TcCUDMp3Zp7 (bron: `growthsourced-video/videopagina.html`; publiceer de video's met de Artifact-tool via `url` en `files`, zodat eerdere video's blijven staan).
 - De werkmap van een sessie kan leeg raken; zet alles terug vanuit `growthsourced-video/`.
+- Een bestand op de videopagina mag maximaal 16 MB zijn: een video van een minuut opnieuw coderen met CRF 14 (≈15 MB).
